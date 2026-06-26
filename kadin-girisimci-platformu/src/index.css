@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --color-fortuno-purple: #6d28d9;
+  --color-fortuno-navy: #0f172a;
+  --color-fortuno-green: #22c55e;
+  --color-fortuno-bg: #f8fafc;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── HERO GRADIENT WAVE ───────────────────────────────── */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-bg-light {
+  background: linear-gradient(-45deg, #f8fafc, #ede9fe, #fce7f3, #ecfdf5, #f8fafc);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+}
+
+.hero-bg-dark {
+  background: linear-gradient(-45deg, #0f172a, #1e1b4b, #2d1b4e, #0f172a, #1a0a2e);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+}
+
+/* ── HERO TEXT ANIMATIONS ─────────────────────────────── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-48px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-title {
+  animation: slideDown 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  opacity: 0;
+}
+
+.hero-subtitle {
+  animation: fadeUp 0.8s ease 0.5s forwards;
+  opacity: 0;
+}
+
+.hero-stats {
+  animation: fadeUp 0.8s ease 0.8s forwards;
+  opacity: 0;
+}
+
+/* ── CARD STAGGER ANIMATION ───────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-animate {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ── SKELETON SHIMMER ─────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton-light {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 12px;
+}
+
+.skeleton-dark {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 12px;
+}
+
+/* ── FAQ TRANSITION ───────────────────────────────────── */
+.faq-body {
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  overflow: hidden;
+}
+
+/* ── CHAT BUBBLE APPEAR ───────────────────────────────── */
+@keyframes bubbleIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.chat-bubble {
+  animation: bubbleIn 0.25s ease;
+}
+
+/* ── HEART BEAT ───────────────────────────────────────── */
+@keyframes heartPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.heart-pop {
+  animation: heartPop 0.3s ease;
+}
+
+/* ── STAT NUMBER ──────────────────────────────────────── */
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
