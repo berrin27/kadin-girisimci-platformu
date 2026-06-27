@@ -1,3 +1,12 @@
+// Medeni durum tag'leri:
+// 'hepsi'    → seçilirse tüm programlar görünür (filtrede özel işlem)
+// 'bekar'    → bekar kadınlar
+// 'evli'     → evli kadınlar
+// 'dul'      → eşi vefat etmiş kadınlar
+// 'bosanmis' → boşanmış / ayrı yaşayan kadınlar
+// Genel programlar: bekar, evli, dul, bosanmis (hepsini ekle)
+// Özel programlar: sadece ilgili tag(lar)
+
 export const supportData = [
     {
         id: "tisva-mikrokredi",
@@ -6,8 +15,10 @@ export const supportData = [
         amount: "10.000 TL - 30.000 TL",
         type: "Hibe / Başlangıç Sermayesi",
         link: "http://www.tgmp.net",
-        tags: ["ev_emegi", "fikir", "yeni_kurulmus", "genc_girisimci", "standart"],
-        description: "Evde üretim yapan ve şirket kurulumu olmayan kadınlara yönelik teminatsız, kefilsiz ve güven esasına dayalı finansal destek. Haftalık küçük taksitlerle geri ödeme imkanı sunar.",
+        tags: ["ev_emegi", "fikir", "yeni_kurulmus", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Evde üretim yapan ve şirket kurulumu olmayan kadınlara yönelik teminatsız, kefilsiz ve güven esasına dayalı finansal destek. Her medeni durumdan kadına açık, haftalık küçük taksitlerle geri ödeme imkanı sunar.",
         highlight: "Teminatsız & Kefilsiz Başlangıç"
     },
     {
@@ -17,8 +28,10 @@ export const supportData = [
         amount: "300.000 TL",
         type: "Geri Ödemesiz Hibe",
         link: "https://www.kosgeb.gov.tr",
-        tags: ["yerel_isletme", "fikir", "yeni_kurulmus", "genc_girisimci", "standart"],
-        description: "Kafe, butik, salon veya yerel hizmet dükkanı açmak isteyen girişimciler için kuruluş ve personel giderlerini karşılayan iş kurma desteği.",
+        tags: ["yerel_isletme", "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kafe, butik, salon veya yerel hizmet dükkanı açmak isteyen her yaştan ve her medeni durumdan girişimciler için kuruluş ve personel giderlerini karşılayan iş kurma desteği. KOSGEB eğitimini tamamlamak zorunludur.",
         highlight: "300.000 TL Geri Ödemesiz"
     },
     {
@@ -28,8 +41,10 @@ export const supportData = [
         amount: "900.000 TL",
         type: "%100 Hibe / Sermaye Desteği",
         link: "https://bigg.tubitak.gov.tr",
-        tags: ["teknoloji", "fikir", "genc_girisimci", "standart"],
-        description: "Mobil uygulama, yapay zeka ve Ar-Ge projesi olan genç kadın girişimciler için bireysel genel girişimci şirket kurulum aşaması sermaye desteği.",
+        tags: ["teknoloji", "fikir", "yeni_kurulmus", "buyume",
+               "genc_uni", "genc_girisimci", "standart",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Mobil uygulama, yapay zeka ve Ar-Ge projesi olan kadın girişimciler için %100 hibe. Medeni durum fark etmez, teknoloji odaklı her başvurucu için açık.",
         highlight: "%100 Üst Limitli Hibe"
     },
     {
@@ -39,8 +54,10 @@ export const supportData = [
         amount: "1.000.000 TL'den Başlayan",
         type: "Çekirdek Sermaye / Ortaklık",
         link: "https://www.aryawomen.com",
-        tags: ["teknoloji", "e_ticaret", "yeni_kurulmus", "genc_girisimci"],
-        description: "Global hedefi olan start-up'lar ve şirketleşmiş kadın liderler için girişimin potansiyeline göre hisse bazlı ortaklık ve küresel pazara açılma fırsatı.",
+        tags: ["teknoloji", "e_ticaret", "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Global hedefi olan start-up'lar ve şirketleşmiş kadın liderler için hisse bazlı ortaklık ve küresel pazara açılma fırsatı. Medeni durum fark etmez.",
         highlight: "1.000.000 TL+ Melek Yatırım"
     },
     {
@@ -50,8 +67,10 @@ export const supportData = [
         amount: "400.000 TL",
         type: "Üst Limitli Hibe Desteği",
         link: "https://ticaret.gov.tr",
-        tags: ["kooperatif", "fikir", "yeni_kurulmus", "standart", "genc_girisimci"],
-        description: "Çok ortaklı kadın yapıları ve kadın kooperatiflerinin makine, ekipman ve demirbaş alımlarında %75 devlet katkısı sağlayan özel hibe paketi.",
+        tags: ["kooperatif", "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kadın kooperatiflerinin makine, ekipman ve demirbaş alımlarında %75 devlet katkısı. Medeni durum ve yaş fark etmez.",
         highlight: "%75 Devlet Katkısı"
     },
     {
@@ -61,8 +80,10 @@ export const supportData = [
         amount: "2.500.000 TL'ye Varan",
         type: "Pazara Giriş & Pazaryeri Desteği",
         link: "https://ticaret.gov.tr",
-        tags: ["e_ticaret", "yeni_kurulmus", "genc_girisimci", "standart"],
-        description: "Amazon, Etsy gibi platformlarda global pazaryeri hedefleyen, reklam, komisyon ve lojistik giderlerini karşılamak isteyen e-ticaret odaklı yapılara devasa hibe.",
+        tags: ["e_ticaret", "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Amazon, Etsy gibi platformlarda global pazaryeri hedefleyen işletmelere reklam, komisyon ve lojistik desteği. Her medeni durumdan e-ticaret girişimcisi başvurabilir.",
         highlight: "2.500.000 TL Üst Limit"
     },
     {
@@ -72,8 +93,10 @@ export const supportData = [
         amount: "150.000 TL - 50.000 TL",
         type: "Dönemsel Fonlama & Mentorluk",
         link: "https://www.ashoka.org",
-        tags: ["sosyal_girisim", "fikir", "yeni_kurulmus", "genc_girisimci"],
-        description: "Çevre, eğitim ve toplumsal fayda odaklı sosyal problemi çözen modeller için dönemsel hibe çağrıları ve küresel mentorluk ağı desteği.",
+        tags: ["sosyal_girisim", "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Çevre, eğitim ve toplumsal fayda odaklı modeller için hibe çağrıları ve küresel mentorluk ağı. Medeni durum fark etmez.",
         highlight: "Küresel Mentorluk Ağı"
     },
     {
@@ -83,8 +106,10 @@ export const supportData = [
         amount: "500.000 TL'den Başlayan",
         type: "Kırsal Kalkınma Hibeleri",
         link: "https://www.tkdk.gov.tr",
-        tags: ["kırsal", "fikir", "yeni_kurulmus", "standart"],
-        description: "Şehir dışı yerel projeler, arıcılık, hayvancılık ve eko-turizm odaklı girişimlerde proje bütçesinin %60 ile %80'ini karşılama ve kadınlara ek puan avantajı.",
+        tags: ["kırsal", "fikir", "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kırsal alanda arıcılık, hayvancılık, eko-turizm projelerinde %60-80 hibe. Her medeni durumdan kırsal girişimci başvurabilir, kadınlara ek puan avantajı var.",
         highlight: "%80'e Varan Dev Hibeler"
     },
     {
@@ -92,21 +117,225 @@ export const supportData = [
         title: "Halkbank Genç Girişimci Kredisi",
         institution: "Halkbank",
         amount: "350.000 TL",
-        type: "Düşük Faizli Finansman",
+        type: "Ek Can Suyu Finansmanı",
         link: "https://www.halkbankkobi.com.tr",
-        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "yeni_kurulmus", "genc_girisimci"],
-        description: "18-35 yaş arası dükkan açanlar ve üniversite mezunu kadınlar için 6 ay tamamen ödemesiz dönemli, piyasa koşullarının çok altında özel faiz oranlı can suyu kredisi.",
-        highlight: "6 Ay Ödemesiz Can Suyu"
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif",
+               "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "genc_uni", "genc_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "18-35 yaş arası dükkan açanlar ve üniversite mezunu kadınlar için Ek Can Suyu Finansmanı. 350.000 TL üst limitli, 6 ay ödemesiz. Medeni durum fark etmez.",
+        highlight: "350.000 TL — 6 Ay Ödemesiz"
     },
     {
         id: "halkbank-kadin",
         title: "Halkbank Kadın Girişimci Kredisi",
         institution: "Halkbank",
         amount: "200.000 TL",
-        type: "Esnek Ödemeli İşletme Kredisi",
+        type: "Ek Can Suyu Finansmanı",
         link: "https://www.halkbankkobi.com.tr",
-        tags: ["yerel_isletme", "ev_emegi", "yeni_kurulmus", "standart"],
-        description: "35 yaş üstü dükkan açan veya esnaf olmak isteyen kadınlar için düşük faizli ve esnek ödeme planlı üst limitli işletme kredisi.",
-        highlight: "Düşük Faizli Esnek Plan"
+        tags: ["yerel_isletme", "ev_emegi", "kooperatif",
+               "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "36 yaş üstü dükkan açan, esnaf olmak isteyen ya da işletmesi zor dönemden geçen kadınlar için. 200.000 TL üst limitli, düşük faizli ve esnek ödeme planlı.",
+        highlight: "200.000 TL — Esnek Ödeme"
+    },
+    {
+        id: "halkbank-tekno",
+        title: "Halkbank Tekno Girişimci Kredisi",
+        institution: "Halkbank",
+        amount: "1.000.000 TL",
+        type: "Teknoloji Girişim Finansmanı",
+        link: "https://www.halkbankkobi.com.tr",
+        tags: ["teknoloji", "fikir", "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "TÜBİTAK/KOSGEB onaylı teknoloji projesi olan veya Teknopark'ta yer alan kadın girişimcilere 1.000.000 TL. Medeni durum fark etmez.",
+        highlight: "1.000.000 TL Tekno Limit"
+    },
+    {
+        id: "halkbank-kooperatif",
+        title: "Halkbank Kadın Kooperatifleri Destek Paketi",
+        institution: "Halkbank",
+        amount: "2.500.000 TL'ye Varan",
+        type: "Kooperatif Büyüme Paketi",
+        link: "https://www.halkbankkobi.com.tr",
+        tags: ["kooperatif", "fikir", "yeni_kurulmus", "buyume", "kriz_donemi", "kokenlesik",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "kırsal", "bekar", "evli", "dul", "bosanmis"],
+        description: "Kadın ortaklı kooperatiflerin büyümesi için 500.000 TL makine-ekipman, 1.500.000 TL ticari araç ve 500.000 TL işletme sermayesi. Medeni durum fark etmez.",
+        highlight: "3 Bileşenli Büyüme Paketi"
+    },
+    {
+        id: "kosgeb-isletme",
+        title: "KOSGEB İşletme Geliştirme Desteği",
+        institution: "KOSGEB",
+        amount: "500.000 TL",
+        type: "İşletme Büyütme Hibesi",
+        link: "https://www.kosgeb.gov.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret",
+               "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "1 yılı aşmış ve büyümek isteyen KOBİ'ler için yazılım, makine, danışmanlık ve fuar giderlerini karşılayan destek paketi. Medeni durum fark etmez.",
+        highlight: "500.000 TL Büyüme Desteği"
+    },
+    {
+        id: "kosgeb-kriz",
+        title: "KOSGEB Nitelikli Eleman & Yeniden Yapılanma",
+        institution: "KOSGEB",
+        amount: "250.000 TL",
+        type: "Yeniden Yapılanma Desteği",
+        link: "https://www.kosgeb.gov.tr",
+        tags: ["yerel_isletme", "teknoloji",
+               "kriz_donemi", "buyume",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Tutunmakta zorlanan KOBİ'ler için personel giderleri ve yeniden yapılanma desteği. Medeni durum fark etmez.",
+        highlight: "Yeniden Yapılanma Desteği"
+    },
+    {
+        id: "sabanci-vakfi",
+        title: "Sabancı Vakfı Hibe Programı",
+        institution: "Sabancı Vakfı",
+        amount: "150.000 TL'ye Varan",
+        type: "Kadın Girişimci Hibesi",
+        link: "https://www.sabancivakfi.org",
+        tags: ["sosyal_girisim", "yerel_isletme", "kooperatif", "ev_emegi",
+               "fikir", "yeni_kurulmus", "buyume", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kadın girişimcilere ve toplumsal fayda odaklı projelere yönelik hibe. 18-65 yaş arası her medeni durumdan kadın başvurabilir.",
+        highlight: "Kadınlara Özel Vakıf Desteği"
+    },
+
+    // ── AİLE VE SOSYAL HİZMETLER BAKANLIĞI PROGRAMLARI ─────────────────────
+    {
+        id: "sydv-mikrogisim",
+        title: "SYDV Gelir Getirici Proje Destekleri",
+        institution: "Aile ve Sosyal Hizmetler Bakanlığı",
+        amount: "150.000 TL'ye Kadar",
+        type: "Faizsiz & Teminatsız Mikro-Girişim Kredisi",
+        link: "https://www.ailesosyal.gov.tr",
+        tags: ["ev_emegi", "yerel_isletme", "kooperatif",
+               "fikir", "yeni_kurulmus",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "dul", "bosanmis", "evli"],
+        description: "Banka kredisine erişimi olmayan, sosyal güvencesi bulunmayan kadınlar için faizsiz ve teminatsız mikro-iş kurma kredisi. İlk 2 yıl tamamen ödemesiz, sonrasında 4 eşit taksitte 6 yılda geri ödeme. Hane geliri asgari ücretin 1/3'ünden az olma koşulu aranır.",
+        highlight: "Faizsiz — İlk 2 Yıl Ödemesiz"
+    },
+    {
+        id: "sydv-evhanim",
+        title: "Ev Hanımlarına Yönelik Nakit Destek Programı",
+        institution: "Aile ve Sosyal Hizmetler Bakanlığı",
+        amount: "10.000 TL",
+        type: "Tek Seferlik Doğrudan Nakit Hibe",
+        link: "https://www.turkiye.gov.tr/sosyal-yardim-basvuru",
+        tags: ["ev_emegi",
+               "fikir",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "evli", "dul", "bosanmis"],
+        description: "SGK kapsamında aktif çalışmayan (sigortasız/ev hanımı), aktif sosyal güvencesi olmayan ve hane geliri asgari ücretin 1/3'ünden düşük kadınlara PTT şubelerinden T.C. Kimlik Kartı ile çekilebilir 10.000 TL tek seferlik nakit yardım.",
+        highlight: "10.000 TL — PTT'den Nakit"
+    },
+    {
+        id: "adem-hobin",
+        title: '"Hobin İşin Olsun" Mikro-Girişim Teşviki',
+        institution: "Aile ve Sosyal Hizmetler Bakanlığı (ADEM/SODAM)",
+        amount: "Ekipman + Mikro Sermaye",
+        type: "Başlangıç Ekipmanı & Üretim Materyali Hibesi",
+        link: "https://www.ailesosyal.gov.tr",
+        tags: ["ev_emegi", "yerel_isletme",
+               "fikir",
+               "genc_uni", "genc_girisimci", "standart",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "ADEM/SODAM bünyesinde dikiş, el sanatları, kuaförlük, yerel gıda üretimi gibi alanlarda sertifika alan 18-50 yaş kadınların kendi işini kurabilmesi için fiziki kurulum malzemeleri ve can suyu fonlaması. Kursu tamamlayıp ADEM/SODAM koordinatörlükleri üzerinden başvurulur.",
+        highlight: "Kurs Bitir, İş Kur!"
+    },
+    {
+        id: "sed-program",
+        title: "Sosyal ve Ekonomik Destek (SED) Programı",
+        institution: "Aile ve Sosyal Hizmetler Bakanlığı",
+        amount: "Düzenli Aylık Ödeme",
+        type: "Geri Ödemesiz Düzenli Nakdi Yardım",
+        link: "https://www.ailesosyal.gov.tr",
+        tags: ["ev_emegi", "sosyal_girisim",
+               "fikir", "kriz_donemi",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "dul", "bosanmis"],
+        description: "Çocuğunu tek başına büyüten anneler için çocuğun eğitim kademesine göre düzenli aylık nakdi ödeme. Sosyal ve ekonomik yoksunluk içinde olup çocuklarının temel ihtiyaçlarını karşılayamayacak durumda olan annelere tamamen geri ödemesiz hibe.",
+        highlight: "Aylık Düzenli — Geri Ödemesiz"
+    },
+    {
+        id: "es-vefat-yardim",
+        title: "Eşi Vefat Etmiş Kadınlara Düzenli Nakdi Yardım",
+        institution: "Aile ve Sosyal Hizmetler Bakanlığı",
+        amount: "İki Ayda Bir PTT Ödemesi",
+        type: "Düzenli Nakdi Maaş Desteği",
+        link: "https://www.ailesosyal.gov.tr",
+        tags: ["ev_emegi", "sosyal_girisim",
+               "fikir", "kriz_donemi",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "dul"],
+        description: "Eşi vefat eden, hiçbir sosyal güvencesi (SGK, Bağ-Kur vb.) olmayan ve hane geliri muhtaçlık sınırının altında kalan kadınları koruma altına almak için iki ayda bir PTT hesaplarına yatırılan düzenli maaş desteği. Kadın yeniden evlenirse veya sigortalı bir işe girerse yardım kesilir.",
+        highlight: "💔 Dul Kadınlara Özel Destek"
+    },
+
+    // ── FUAR & SERGİ TEŞVİKLERİ ────────────────────────────────────────────
+    {
+        id: "ticaret-fuar",
+        title: "Ticaret Bakanlığı Yurt Dışı Fuar Desteği",
+        institution: "Ticaret Bakanlığı",
+        amount: "2.860.670 TL'ye Kadar",
+        type: "%50-75 Hibe Desteği",
+        link: "https://ticaret.gov.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif", "kırsal",
+               "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Yurt dışı fuarlara katılımda stand alanı yer kirası, stand tasarımı/kurulumu, ürünlerin nakliye giderleri ve 2 temsilcinin ekonomi sınıfı uçak bileti ile konaklama harcamalarının %50-70'i karşılanır. Hedef ülkeler ve hedef sektörler için bu oran %75'e kadar yükselir. Prestijli fuarlarda azami 2.860.670 TL hibe.",
+        highlight: "%75'e Varan Fuar Hibesi"
+    },
+    {
+        id: "kosgeb-yurtdisi-pazar",
+        title: "KOSGEB Yurt Dışı Pazar Destek Programı",
+        institution: "KOSGEB",
+        amount: "450.000 TL (Kadınlara Özel)",
+        type: "%70 Geri Ödemesiz Hibe",
+        link: "https://www.kosgeb.gov.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif",
+               "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Yurt dışı fuar katılımı ve pazar araştırma seyahatleri için %70 geri ödemesiz hibe. Genel bütçe 300.000 TL ancak kadın girişimcilere 150.000 TL ek limit ilave edilir — toplam 450.000 TL'lik destekten faydalanılır. Kadın girişimci avantajı!",
+        highlight: "Kadınlara +150.000 TL Ek Limit"
+    },
+    {
+        id: "halkbank-fuar-kredi",
+        title: "Halkbank Fuar ve Sergilere Katılma Kredisi",
+        institution: "Halkbank",
+        amount: "Azami 24 Ay Vade",
+        type: "Taksitli İşletme Kredisi",
+        link: "https://www.halkbankkobi.com.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif",
+               "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "İmalatçı ve ihracatçı firmaların yurt içi ve yurt dışı fuarlara katılırken stant kiralama, tasarım, nakliye ve seyahat harcamalarını önceden fonlamak için 24 ay vadeli kredi. Kadın girişimcilere 6 aya kadar anapara ve faiz ödemesiz dönem imkanı. Teminatı yetersiz KOBİ'ler için KGF kefaleti mevcut.",
+        highlight: "6 Ay Ödemesiz + KGF Kefaleti"
+    },
+    {
+        id: "halkbank-kadin-ihracatci",
+        title: '"Büyüyen Kadın İhracatçı" Kredisi',
+        institution: "Halkbank",
+        amount: "15.000.000 TL (500.000 EUR)",
+        type: "Fuar Odaklı İhracat Kredisi",
+        link: "https://www.halkbankkobi.com.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif",
+               "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Yurt dışı prestijli fuarlara katılarak ihracat hacmini artırmak isteyen, şirket hissesinin en az %50'si kadınlara ait işletmeler için özel kredi. Azami 15.000.000 TL (veya 500.000 EUR), 12 veya 24 ay vadeli. Fuar stant bedelleri, lojistik, gümrükleme, seyahat ve konaklama harcamalarında kullanılır.",
+        highlight: "15M TL — Kadın İhracatçılara Özel"
     }
 ];

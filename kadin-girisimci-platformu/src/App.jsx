@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import HibeHesaplayici from './components/HibeHesaplayici';
 import BasvuruTakip from './components/BasvuruTakip';
 import TurkiyeHarita from './components/TurkiyeHarita';
+import EgitimPortali from './components/EgitimPortali';
+import FuarDestekleri from './components/FuarDestekleri';
+import ProfilDuzenle from './components/ProfilDuzenle';
+import BasvuruFormu from './components/BasvuruFormu';
+import GuncelDuyurular from './components/GuncelDuyurular';
+import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import { GoogleGenAI } from '@google/genai';
 import { supportData } from './data';
 import {
@@ -213,6 +219,7 @@ export default function App() {
   const [sektor, setSektor] = useState('');
   const [profil, setProfil] = useState('');
   const [asama, setAsama] = useState('');
+  const [medeniDurum, setMedeniDurum] = useState('');
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(false);
@@ -224,6 +231,13 @@ export default function App() {
   const [confettiActive, setConfettiActive] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
   const [kurumFilter, setKurumFilter] = useState('Tümü');
+  const [userProfil, setUserProfil] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fortuno-profil');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [basvuruProgram, setBasvuruProgram] = useState(null);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -271,6 +285,13 @@ export default function App() {
     return () => document.head.removeChild(style);
   }, []);
 
+  // ── Custom navigation event (from ProfilDuzenle) ───────────────────────────
+  useEffect(() => {
+    const handler = (e) => setActiveSection(e.detail);
+    window.addEventListener('fortuno-navigate', handler);
+    return () => window.removeEventListener('fortuno-navigate', handler);
+  }, []);
+
   // ── Handlers ───────────────────────────────────────────────────────────────
   const toggleFav = useCallback((id) => {
     setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
@@ -280,13 +301,15 @@ export default function App() {
 
   const handleFindSupport = (e) => {
     e.preventDefault();
-    if (!sektor || !profil || !asama) return;
+    if (!sektor || !profil || !asama || !medeniDurum) return;
     setIsSkeletonLoading(true);
     setHasSearched(false);
     setTimeout(() => {
-      const results = supportData.filter(item =>
-        item.tags.includes(sektor) && item.tags.includes(profil) && item.tags.includes(asama)
-      );
+      const results = supportData.filter(item => {
+        const base = item.tags.includes(sektor) && item.tags.includes(profil) && item.tags.includes(asama);
+        if (medeniDurum === 'hepsi') return base;
+        return base && item.tags.includes(medeniDurum);
+      });
       setFilteredResults(results);
       setHasSearched(true);
       setIsSkeletonLoading(false);
@@ -382,6 +405,11 @@ export default function App() {
   const showHesaplayici = activeSection === 'hesaplayici';
   const showTakip       = activeSection === 'takip';
   const showHarita      = activeSection === 'harita';
+  const showEgitim      = activeSection === 'egitim';
+  const showFuar        = activeSection === 'fuar';
+  const showProfil      = activeSection === 'profil';
+  const showGuncel      = activeSection === 'guncel';
+  const showGuvenlik    = activeSection === 'guvenlik';
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
@@ -403,10 +431,15 @@ export default function App() {
 
           <div className="flex items-center gap-1 text-xs font-semibold text-slate-300 overflow-x-auto">
             {[
+              { id: 'profil',      label: '👤 Profil' },
               { id: 'sihirbaz',    label: '🧭 Sihirbaz' },
               { id: 'hesaplayici', label: '🧮 Hesaplayıcı' },
               { id: 'harita',      label: '🗺️ Harita' },
               { id: 'takip',       label: '📋 Takip' },
+              { id: 'egitim',      label: '🎓 Eğitim' },
+              { id: 'fuar',        label: '✈️ Fuarlar' },
+              { id: 'guncel',      label: '📡 Güncel' },
+              { id: 'guvenlik',    label: '🔒 Güvenlik' },
               { id: 'kaynakca',    label: '📚 Kaynakça' },
             ].map(({ id, label }) => (
               <button
@@ -509,12 +542,14 @@ export default function App() {
                   ],
                 },
                 {
-                  label: '2. Yaşınız ve Eğitim Durumunuz Nedir?',
+                  label: '2. Yaşınız ve Profiliniz Nedir?',
                   value: profil, setter: setProfil, id: 'profil-select',
                   options: [
                     ['', 'Profil Seçiniz...'],
-                    ['genc_girisimci', 'Genç Girişimci (18-35 yaş arası veya Üni Mezunu/Öğrencisi)'],
-                    ['standart', 'Standart Profil (35 yaş üstü girişimci kadınlar)'],
+                    ['genc_uni',       '🎓 18-25 Yaş — Üniversite öğrencisi veya yeni mezun'],
+                    ['genc_girisimci', '💼 26-35 Yaş — Genç profesyonel girişimci'],
+                    ['standart',       '🌟 36-50 Yaş — Deneyimli kadın girişimci'],
+                    ['olgun_girisimci','👑 50+ Yaş — Olgun ve köklü deneyim sahibi'],
                   ],
                 },
                 {
@@ -522,8 +557,23 @@ export default function App() {
                   value: asama, setter: setAsama, id: 'asama-select',
                   options: [
                     ['', 'Aşama Seçiniz...'],
-                    ['fikir', 'Fikir Aşaması (Şirket henüz kurulmadı)'],
-                    ['yeni_kurulmus', 'Yeni Kurulmuş (Son 1 yıl içinde resmi açılış yapıldı)'],
+                    ['fikir', '💡 Fikir Aşaması — Şirket henüz kurulmadı'],
+                    ['yeni_kurulmus', '🌱 Yeni Kurulmuş — Son 1 yıl içinde açıldı'],
+                    ['buyume', '📈 Büyüme Döneminde — 1-3 yıllık, istikrar arıyorum'],
+                    ['kriz_donemi', '🔄 Yeniden Yapılanma — Tutunmakta zorlanıyorum, destek lazım'],
+                    ['kokenlesik', '🏆 Köklü İşletme — 3 yıldan fazla, ölçeklenmek istiyorum'],
+                  ],
+                },
+                {
+                  label: '4. Medeni Durumunuz Nedir?',
+                  value: medeniDurum, setter: setMedeniDurum, id: 'medeni-select',
+                  options: [
+                    ['', 'Medeni Durum Seçiniz...'],
+                    ['hepsi',   '💜 Hepsi için — Medeni durum fark etmez'],
+                    ['bekar',   '🌸 Bekar — Hiç evlenmemiş'],
+                    ['evli',    '💍 Evli — Eş ile birlikte yaşayan'],
+                    ['dul',     '🖤 Dul — Eşini kaybetmiş'],
+                    ['bosanmis','🔓 Boşanmış / Ayrı yaşayan'],
                   ],
                 },
               ].map(({ label, value, setter, id, options }) => (
@@ -681,6 +731,12 @@ export default function App() {
                         >
                           Resmi Başvuru Linki <ExternalLink className="w-3.5 h-3.5" />
                         </a>
+                        <button
+                          onClick={() => setBasvuruProgram(item)}
+                          className="w-full mt-2 text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-md"
+                        >
+                          🚀 Hadi Başvur!
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -834,6 +890,30 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 mt-12 pb-24">
           <TurkiyeHarita dark={dark} />
         </main>
+      )}
+
+      {/* ── EĞİTİM PORTALI ────────────────────────────────────────────────── */}
+      {showEgitim && <EgitimPortali dark={dark} />}
+
+      {/* ── FUAR DESTEKLERİ ──────────────────────────────────────────────────── */}
+      {showFuar && <FuarDestekleri dark={dark} />}
+
+      {/* ── PROFİL DÜZENLE ───────────────────────────────────────────────────── */}
+      {showProfil && <ProfilDuzenle dark={dark} onProfilChange={setUserProfil} />}
+
+      {/* ── GÜNCEL DUYURULAR ─────────────────────────────────────────────── */}
+      {showGuncel && <GuncelDuyurular dark={dark} />}
+
+      {/* ── GİZLİLİK & GÜVENLİK ──────────────────────────────────────────── */}
+      {showGuvenlik && <GizlilikGuvenlik dark={dark} />}
+
+      {/* ── BAŞVURU FORMU MODAL ──────────────────────────────────────────── */}
+      {basvuruProgram && (
+        <BasvuruFormu
+          dark={dark}
+          program={basvuruProgram}
+          onClose={() => setBasvuruProgram(null)}
+        />
       )}
 
       {/* ── CHATBOT ──────────────────────────────────────────────────────────── */}
