@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import HibeHesaplayici from './components/HibeHesaplayici';
 import BasvuruTakip from './components/BasvuruTakip';
-import TurkiyeHarita from './components/TurkiyeHarita';
+import ProUpgrade from './components/ProUpgrade';
+import PaywallModal from './components/PaywallModal';
 import EgitimPortali from './components/EgitimPortali';
 import FuarDestekleri from './components/FuarDestekleri';
 import ProfilDuzenle from './components/ProfilDuzenle';
@@ -223,7 +224,7 @@ export default function App() {
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState('sihirbaz'); // sihirbaz | kaynakca | hesaplayici | takip | harita | favoriler
+  const [activeSection, setActiveSection] = useState('sihirbaz'); // sihirbaz | kaynakca | hesaplayici | takip | favoriler
   const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem('fortuno-favs') || '[]'); } catch { return []; }
   });
@@ -238,6 +239,21 @@ export default function App() {
     } catch { return null; }
   });
   const [basvuruProgram, setBasvuruProgram] = useState(null);
+
+  // ── Pro / Monetization state ───────────────────────────────────────────────
+  const [isPro, setIsPro] = useState(() => {
+    try { return localStorage.getItem('fortuno-pro') === 'true'; } catch { return false; }
+  });
+  const [searchCount, setSearchCount] = useState(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem('fortuno-search-quota') || 'null');
+      const today = new Date().toDateString();
+      if (d && d.month === new Date().getMonth()) return d.count;
+      return 0;
+    } catch { return 0; }
+  });
+  const FREE_SEARCH_LIMIT = 3;
+  const [paywallType, setPaywallType] = useState(null); // null | 'arama' | 'takip' | 'rapor'
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -302,8 +318,19 @@ export default function App() {
   const handleFindSupport = (e) => {
     e.preventDefault();
     if (!sektor || !profil || !asama || !medeniDurum) return;
+    // Paywall kontrolü
+    if (!isPro && searchCount >= FREE_SEARCH_LIMIT) {
+      setPaywallType('arama');
+      return;
+    }
     setIsSkeletonLoading(true);
     setHasSearched(false);
+    // Arama sayacını artır
+    const newCount = searchCount + 1;
+    setSearchCount(newCount);
+    try {
+      localStorage.setItem('fortuno-search-quota', JSON.stringify({ count: newCount, month: new Date().getMonth() }));
+    } catch { }
     setTimeout(() => {
       const results = supportData.filter(item => {
         const base = item.tags.includes(sektor) && item.tags.includes(profil) && item.tags.includes(asama);
@@ -404,7 +431,7 @@ export default function App() {
   const showKaynakca    = activeSection === 'kaynakca';
   const showHesaplayici = activeSection === 'hesaplayici';
   const showTakip       = activeSection === 'takip';
-  const showHarita      = activeSection === 'harita';
+  const showPro         = activeSection === 'pro';
   const showEgitim      = activeSection === 'egitim';
   const showFuar        = activeSection === 'fuar';
   const showProfil      = activeSection === 'profil';
@@ -434,7 +461,6 @@ export default function App() {
               { id: 'profil',      label: '👤 Profil' },
               { id: 'sihirbaz',    label: '🧭 Sihirbaz' },
               { id: 'hesaplayici', label: '🧮 Hesaplayıcı' },
-              { id: 'harita',      label: '🗺️ Harita' },
               { id: 'takip',       label: '📋 Takip' },
               { id: 'egitim',      label: '🎓 Eğitim' },
               { id: 'fuar',        label: '✈️ Fuarlar' },
@@ -468,6 +494,29 @@ export default function App() {
               </button>
             )}
             <div className="w-px h-5 bg-slate-600 mx-1 shrink-0" />
+            {/* Pro Badge veya Upgrade Butonu */}
+            {isPro ? (
+              <button
+                onClick={() => setActiveSection('pro')}
+                className="shrink-0 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-[#0f172a] px-3 py-1.5 rounded-lg text-[10px] font-black shadow-lg shadow-amber-500/30 hover:opacity-90 transition"
+              >
+                <span>👑</span> PRO
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveSection('pro')}
+                className={`shrink-0 flex items-center gap-1.5 border border-purple-500/50 text-purple-300 hover:bg-purple-500/10 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
+                  activeSection === 'pro' ? 'bg-purple-500/20' : ''
+                }`}
+              >
+                <span>⚡</span> Pro'ya Geç
+                {!isPro && searchCount > 0 && (
+                  <span className="bg-amber-400 text-[#0f172a] rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">
+                    {FREE_SEARCH_LIMIT - searchCount}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               id="dark-mode-toggle"
               onClick={() => setDark(d => !d)}
@@ -476,9 +525,6 @@ export default function App() {
             >
               {dark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
             </button>
-            <span className="shrink-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">
-              v2026
-            </span>
           </div>
         </div>
       </nav>
@@ -881,16 +927,26 @@ export default function App() {
       {/* ── BAŞVURU TAKİP ─────────────────────────────────────────────────── */}
       {showTakip && (
         <main className="max-w-7xl mx-auto px-4 mt-12 pb-24">
-          <BasvuruTakip dark={dark} />
+          <BasvuruTakip dark={dark} isPro={isPro} onPaywall={() => setPaywallType('takip')} />
         </main>
       )}
 
-      {/* ── TÜRKİYE HARİTASI ──────────────────────────────────────────────── */}
-      {showHarita && (
-        <main className="max-w-7xl mx-auto px-4 mt-12 pb-24">
-          <TurkiyeHarita dark={dark} />
+      {/* ── PRO UPGRADE ───────────────────────────────────────────────────────── */}
+      {showPro && (
+        <main className="max-w-5xl mx-auto px-4 mt-12 pb-24">
+          <ProUpgrade
+            dark={dark}
+            isPro={isPro}
+            onUpgrade={() => {
+              setIsPro(true);
+              try { localStorage.setItem('fortuno-pro', 'true'); } catch { }
+            }}
+            onNavigate={setActiveSection}
+          />
         </main>
       )}
+
+
 
       {/* ── EĞİTİM PORTALI ────────────────────────────────────────────────── */}
       {showEgitim && <EgitimPortali dark={dark} />}
@@ -906,6 +962,16 @@ export default function App() {
 
       {/* ── GİZLİLİK & GÜVENLİK ──────────────────────────────────────────── */}
       {showGuvenlik && <GizlilikGuvenlik dark={dark} />}
+
+      {/* ── PAYWALL MODAL ─────────────────────────────────────────────────────── */}
+      {paywallType && (
+        <PaywallModal
+          dark={dark}
+          type={paywallType}
+          onClose={() => setPaywallType(null)}
+          onUpgrade={() => { setPaywallType(null); setActiveSection('pro'); }}
+        />
+      )}
 
       {/* ── BAŞVURU FORMU MODAL ──────────────────────────────────────────── */}
       {basvuruProgram && (
