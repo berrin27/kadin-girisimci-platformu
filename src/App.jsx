@@ -10,83 +10,63 @@ import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import { supportData } from './data';
 import { api } from './api';
 import {
-  Sparkles, DollarSign, ArrowRight, CheckCircle2, MessageSquare, X,
+  Sparkles, TurkishLira, ArrowRight, CheckCircle2, MessageSquare, X,
   Building2, ExternalLink, Send, Loader2, BookOpen, Globe, Award,
-  Heart, Sun, Moon, ChevronDown, Calendar, Zap, Users, TrendingUp, LogOut
+  Heart, Sun, Moon, ChevronDown, Calendar, Zap, Users, TrendingUp, LogOut, Menu
 } from 'lucide-react';
+
+const NAV_ITEMS = [
+  { id: 'profil',      label: 'Profil' },
+  { id: 'sihirbaz',    label: 'Sihirbaz' },
+  { id: 'is-plani',    label: 'İş Planı' },
+  { id: 'hesaplayici', label: 'Hesaplayıcı' },
+  { id: 'takip',       label: 'Takip' },
+  { id: 'egitim',      label: 'Eğitim' },
+  { id: 'fuar',        label: 'Fuarlar' },
+  { id: 'guncel',      label: 'Güncel' },
+  { id: 'guvenlik',    label: 'Güvenlik' },
+  { id: 'kaynakca',    label: 'Kaynakça' },
+];
 
 const CHAT_WELCOME = { id: 'welcome', sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Türkiye\'deki kadın girişimcilere hibe, teşvik ve finansal konularda rehberlik ediyorum. Sana nasıl yardımcı olabilirim?' };
 
-// ─── DİNAMİK FİNANSAL SAĞLIK SKORU & EŞLEŞME MOTORU ───────────────────────
-const HEALTH_SCORE_MAP = {
-  companyAge: { fikir: 34, yeni_kurulmus: 56, buyume: 74, kriz_donemi: 52, kokenlesik: 82 },
-  turnover: { genc_uni: 42, genc_girisimci: 58, standart: 70, olgun_girisimci: 86 },
-  equity: { fikir: 38, yeni_kurulmus: 55, buyume: 73, kriz_donemi: 50, kokenlesik: 82 },
-  leverage: { fikir: 47, yeni_kurulmus: 64, buyume: 75, kriz_donemi: 52, kokenlesik: 80 },
-  teamSize: { genc_uni: 38, genc_girisimci: 58, standart: 72, olgun_girisimci: 82 },
-  ownership: { fikir: 35, yeni_kurulmus: 58, buyume: 76, kriz_donemi: 58, kokenlesik: 88 },
+// ─── EŞLEŞME MOTORU ───────────────────────────────────────────────────────────
+// Sektör, yaş profili, aşama ve medeni durum ZORUNLU kriterlerdir: program
+// etiketlerinde bulunmayan bir kritere sahip kullanıcıya o program gösterilmez.
+// Tam eşleşme yoksa sırasıyla aşama, sonra yaş gevşetilerek "yakın" seçenekler sunulur.
+const SEKTOR_TAGS = ['yerel_isletme', 'ev_emegi', 'teknoloji', 'e_ticaret', 'kooperatif', 'sosyal_girisim', 'kırsal'];
+const MEDENI_TAGS = ['bekar', 'evli', 'dul', 'bosanmis'];
+
+const medeniUygun = (item, medeniDurum) => medeniDurum === 'hepsi' || item.tags.includes(medeniDurum);
+
+// Uyum puanı: eşleşen programlar arasında sıralama içindir.
+// Sektöre/medeni duruma özel programlar genel olanlardan, hibe krediden önce gelir.
+const calculateProgramMatchScore = ({ item, medeniDurum, yakin }) => {
+  const sektorSayisi = item.tags.filter(t => SEKTOR_TAGS.includes(t)).length || SEKTOR_TAGS.length;
+  const medeniSayisi = item.tags.filter(t => MEDENI_TAGS.includes(t)).length || MEDENI_TAGS.length;
+  let score = 70;
+  score += Math.round(15 * (SEKTOR_TAGS.length - sektorSayisi) / (SEKTOR_TAGS.length - 1)); // sektöre özellik
+  if (medeniDurum !== 'hepsi' && medeniSayisi < MEDENI_TAGS.length) score += 5;            // duruma özel program
+  if (item.type.toLowerCase().includes('hibe')) score += 10;                               // geri ödemesiz
+  if (yakin) score -= 20;
+  return Math.max(0, Math.min(100, score));
 };
 
-const calculateFinancialHealthScore = ({ companyAge, turnover, equity, leverage, teamSize, ownership }) => {
-  const companyAgeScore = HEALTH_SCORE_MAP.companyAge[companyAge] ?? 60;
-  const turnoverScore = HEALTH_SCORE_MAP.turnover[turnover] ?? 62;
-  const equityScore = HEALTH_SCORE_MAP.equity[equity] ?? 64;
-  const leverageScore = HEALTH_SCORE_MAP.leverage[leverage] ?? 62;
-  const teamSizeScore = HEALTH_SCORE_MAP.teamSize[teamSize] ?? 64;
-  const ownershipScore = HEALTH_SCORE_MAP.ownership[ownership] ?? 66;
+const buildMatchCandidates = ({ sektor, profil, asama, medeniDurum }) => {
+  const asamalar = [
+    { yakin: false, uygun: item => item.tags.includes(profil) && item.tags.includes(asama) },
+    { yakin: 'asama', uygun: item => item.tags.includes(profil) },
+    { yakin: 'profil', uygun: () => true },
+  ];
 
-  return Math.min(100, Math.max(0, Math.round(
-    (companyAgeScore * 0.18) +
-    (turnoverScore * 0.17) +
-    (equityScore * 0.17) +
-    (leverageScore * 0.16) +
-    (teamSizeScore * 0.16) +
-    (ownershipScore * 0.16)
-  )));
-};
-
-const calculateProgramMatchScore = ({ item, sektor, profil, asama, medeniDurum }) => {
-  let score = 20;
-  if (item.tags.includes(sektor)) score += 28;
-  if (item.tags.includes(profil)) score += 20;
-  if (item.tags.includes(asama)) score += 20;
-  if (medeniDurum === 'hepsi' || item.tags.includes(medeniDurum)) score += 12;
-
-  const programTypeBoost = item.type.toLowerCase().includes('hibe') ? 8 : 4;
-  const growthBoost = item.tags.includes('buyume') && asama === 'buyume' ? 8 : 0;
-  const founderBoost = item.tags.includes('genc_girisimci') && profil === 'genc_girisimci' ? 6 : 0;
-  const total = Math.min(100, score + programTypeBoost + growthBoost + founderBoost);
-  return total;
-};
-
-const buildMatchCandidates = ({ sektor, profil, asama, medeniDurum, userProfile = {} }) => {
-  const financialHealth = calculateFinancialHealthScore({
-    companyAge: asama || userProfile.asama || 'yeni_kurulmus',
-    turnover: profil || userProfile.profilTipi || 'standart',
-    equity: asama || userProfile.asama || 'buyume',
-    leverage: asama || userProfile.asama || 'buyume',
-    teamSize: profil || userProfile.profilTipi || 'standart',
-    ownership: asama || userProfile.asama || 'buyume',
-  });
-
-  const ranked = supportData.map(item => {
-    const matchScore = calculateProgramMatchScore({ item, sektor, profil, asama, medeniDurum });
-    const combinedScore = Math.min(100, Math.round((matchScore * 0.7) + (financialHealth * 0.3)));
-    const eligible = combinedScore >= 65;
-
-    return {
-      ...item,
-      matchScore,
-      financialHealth,
-      combinedScore,
-      eligible,
-      relevantReason: eligible
-        ? 'Dinamik eşleşme motoru: Öncelikli finansal uyumlu paket'
-        : 'Yüksek reddedilme riski olduğu için ön eleme dışı bırakıldı',
-    };
-  });
-
-  return ranked.sort((a, b) => b.combinedScore - a.combinedScore);
+  for (const { yakin, uygun } of asamalar) {
+    const results = supportData
+      .filter(item => item.tags.includes(sektor) && medeniUygun(item, medeniDurum) && uygun(item))
+      .map(item => ({ ...item, yakin, combinedScore: calculateProgramMatchScore({ item, medeniDurum, yakin }) }))
+      .sort((a, b) => b.combinedScore - a.combinedScore);
+    if (results.length) return results;
+  }
+  return [];
 };
 
 // ─── KAYNAKÇA ────────────────────────────────────────────────────────────────
@@ -601,7 +581,7 @@ export default function App({ user, onLogout }) {
   const [confettiActive, setConfettiActive] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
   const [kurumFilter, setKurumFilter] = useState('Tümü');
-  const [userProfil, setUserProfil] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [basvuruProgram, setBasvuruProgram] = useState(null);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -623,7 +603,6 @@ export default function App({ user, onLogout }) {
   // Kullanıcı verilerini sunucudan yükle
   useEffect(() => {
     api.favorites.list('program').then(({ ids }) => setFavorites(ids)).catch(() => {});
-    api.profile.get().then(({ profile }) => setUserProfil(profile)).catch(() => {});
     api.chat.history()
       .then(({ messages }) => { if (messages.length) setChatMessages([CHAT_WELCOME, ...messages]); })
       .catch(() => {});
@@ -649,7 +628,21 @@ export default function App({ user, onLogout }) {
     return () => window.removeEventListener('fortuno-navigate', handler);
   }, []);
 
+  // Mobil menü: ESC ile kapat
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') setIsMenuOpen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMenuOpen]);
+
   // ── Handlers ───────────────────────────────────────────────────────────────
+  const goToSection = (id) => {
+    setActiveSection(id);
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
   const toggleFav = useCallback((id) => {
     // İyimser güncelleme: arayüz hemen değişir, sunucu yanıtıyla senkronlanır
     const isFav = favorites.includes(id);
@@ -667,14 +660,8 @@ export default function App({ user, onLogout }) {
     setIsSkeletonLoading(true);
     setHasSearched(false);
     setTimeout(() => {
-      const results = buildMatchCandidates({
-        sektor,
-        profil,
-        asama,
-        medeniDurum,
-        userProfile: userProfil || {}
-      })
-      .filter(item => item.eligible);
+      const results = buildMatchCandidates({ sektor, profil, asama, medeniDurum });
+      setKurumFilter('Tümü'); // önceki aramanın kurum filtresi yeni sonuçları gizlemesin
 
       setFilteredResults(results);
       setHasSearched(true);
@@ -730,10 +717,8 @@ export default function App({ user, onLogout }) {
     () => (displayedResults.length ? Math.max(...displayedResults.map(r => r.combinedScore)) : 0),
     [displayedResults]
   );
-  const matchSummary = useMemo(() => {
-    if (!displayedResults.length) return 'Henüz uygun eşleşme yok';
-    return `${bestMatchScore}/100 finansal sağlık skoru ile en uygun paketler listeleniyor.`;
-  }, [bestMatchScore, displayedResults]);
+  // Tam eşleşme yoksa hangi kriterin gevşetildiği (tüm sonuçlar aynı seviyededir)
+  const yakinEslesme = filteredResults[0]?.yakin || false;
 
   // Renk sınıfları (dark mode)
   const bg = 'bg-[#F5F5DC]';
@@ -776,18 +761,7 @@ export default function App({ user, onLogout }) {
           </div>
 
           <div className="hidden items-center gap-1.5 overflow-x-auto lg:flex">
-            {[
-              { id: 'profil',      label: 'Profil' },
-              { id: 'sihirbaz',    label: 'Sihirbaz' },
-              { id: 'is-plani',    label: 'İş Planı' },
-              { id: 'hesaplayici', label: 'Hesaplayıcı' },
-              { id: 'takip',       label: 'Takip' },
-              { id: 'egitim',      label: 'Eğitim' },
-              { id: 'fuar',        label: 'Fuarlar' },
-              { id: 'guncel',      label: 'Güncel' },
-              { id: 'guvenlik',    label: 'Güvenlik' },
-              { id: 'kaynakca',    label: 'Kaynakça' },
-            ].map(({ id, label }) => (
+            {NAV_ITEMS.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
@@ -832,8 +806,43 @@ export default function App({ user, onLogout }) {
             >
               <LogOut className="h-4 w-4" />
             </button>
+
+            <button
+              id="mobile-menu-btn"
+              onClick={() => setIsMenuOpen(o => !o)}
+              className={`rounded-full p-2.5 transition lg:hidden ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#1E293B] text-white'}`}
+              aria-label={isMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
+            >
+              {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
         </div>
+
+        {/* ── Mobil Menü ── */}
+        {isMenuOpen && (
+          <div id="mobile-menu" className={`lg:hidden border-t px-4 pb-4 pt-3 ${dark ? 'border-slate-700/80' : 'border-slate-200/80'}`}>
+            <div className="grid grid-cols-2 gap-2">
+              {[...NAV_ITEMS, { id: 'favoriler', label: `Favorilerim${favorites.length ? ` (${favorites.length})` : ''}` }].map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => goToSection(id)}
+                  className={`rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
+                    activeSection === id
+                      ? 'bg-[#F3D5D8] text-[#4A1525]'
+                      : dark ? 'bg-[#1E293B] text-slate-200 hover:bg-[#2A3544]' : 'bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F7F0F1]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className={`mt-3 truncate text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Giriş yapıldı: <span className="font-semibold">{user.email}</span>
+            </p>
+          </div>
+        )}
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
@@ -873,7 +882,7 @@ export default function App({ user, onLogout }) {
 
             <div className="hero-stats mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { icon: <DollarSign className="w-5 h-5" />, label: 'Toplam Hibe Havuzu', value: 5200000, suffix: ' TL+' },
+                { icon: <TurkishLira className="w-5 h-5" />, label: 'Toplam Hibe Havuzu', value: 5200000, suffix: ' TL+' },
                 { icon: <Users className="w-5 h-5" />, label: 'Desteklenen Program', value: 10, suffix: '+' },
                 { icon: <TrendingUp className="w-5 h-5" />, label: 'Kadın Girişimci', value: 47000, suffix: '+' },
                 { icon: <Zap className="w-5 h-5" />, label: 'Eşleşme Süresi', value: 3, suffix: ' Adım' },
@@ -1023,19 +1032,26 @@ export default function App({ user, onLogout }) {
                 )}
               </h3>
 
+              {hasSearched && yakinEslesme && (
+                <div className={`mb-5 flex items-start gap-2 rounded-xl border px-4 py-3 text-sm ${dark ? 'border-amber-700/50 bg-amber-900/20 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+                  <span>💡</span>
+                  <span>
+                    {yakinEslesme === 'asama'
+                      ? 'Girişiminizin şu anki aşamasına tam uyan bir program bulamadık. Aşağıda sektörünüze ve profilinize uygun, farklı aşamalar için açılan programlar var — başvuru şartlarını mutlaka kontrol edin.'
+                      : 'Yaş profilinize ve aşamanıza tam uyan bir program bulamadık. Aşağıda sektörünüze uygun yakın seçenekler var — başvuru şartlarını mutlaka kontrol edin.'}
+                  </span>
+                </div>
+              )}
+
               {hasSearched && filteredResults.length > 0 && (
-                <div className="mb-5 grid md:grid-cols-3 gap-3">
+                <div className="mb-5 grid md:grid-cols-2 gap-3">
                   <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Finansal Sağlık Skoru</div>
+                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>En Yüksek Uyum</div>
                     <div className="mt-2 text-xl font-black text-emerald-500">{bestMatchScore}/100</div>
                   </div>
                   <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
                     <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Öncelikli Eşleşme</div>
-                    <div className="mt-2 text-base font-bold text-[#1E293B]">{displayedResults[0]?.title || 'Bekleniyor'}</div>
-                  </div>
-                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Motor Durumu</div>
-                    <div className="mt-2 text-sm font-semibold text-slate-300">{matchSummary}</div>
+                    <div className={`mt-2 text-base font-bold ${dark ? 'text-white' : 'text-[#1E293B]'}`}>{displayedResults[0]?.title || 'Bekleniyor'}</div>
                   </div>
                 </div>
               )}
@@ -1118,12 +1134,9 @@ export default function App({ user, onLogout }) {
                       <div>
                         <div className={`${dark ? 'bg-emerald-900/30 border-emerald-700/40' : 'bg-emerald-50 border-emerald-200/60'} border p-2.5 rounded-lg mb-3 flex items-center justify-between`}>
                           <span className={`text-[11px] font-bold uppercase tracking-wider ${dark ? 'text-emerald-400' : 'text-emerald-800'}`}>Destek Limiti:</span>
-                          <span className="text-base font-black text-[#22c55e] flex items-center gap-0.5">
-                            <DollarSign className="w-4 h-4 -mt-0.5" /> {item.amount}
+                          <span className="text-base font-black text-[#22c55e] text-right">
+                            {item.amount}
                           </span>
-                        </div>
-                        <div className={`${dark ? 'bg-slate-700/50 text-slate-200' : 'bg-white text-slate-600'} text-[10px] rounded-lg p-2 border ${dark ? 'border-slate-600' : 'border-slate-200'} mb-3`}>
-                          {item.relevantReason}
                         </div>
                         <a
                           href={item.link}
@@ -1175,8 +1188,8 @@ export default function App({ user, onLogout }) {
                   </div>
                   <div className="bg-emerald-50 border border-emerald-200/60 p-2.5 rounded-lg flex items-center justify-between">
                     <span className="text-[11px] font-bold text-emerald-800 uppercase">Destek Limiti:</span>
-                    <span className="text-base font-black text-[#22c55e] flex items-center gap-0.5">
-                      <DollarSign className="w-4 h-4" /> {item.amount}
+                    <span className="text-base font-black text-[#22c55e] text-right">
+                      {item.amount}
                     </span>
                   </div>
                 </div>
@@ -1299,7 +1312,7 @@ export default function App({ user, onLogout }) {
       {showFuar && <FuarDestekleri dark={dark} />}
 
       {/* ── PROFİL DÜZENLE ───────────────────────────────────────────────────── */}
-      {showProfil && <ProfilDuzenle dark={dark} onProfilChange={setUserProfil} />}
+      {showProfil && <ProfilDuzenle dark={dark} />}
 
       {/* ── GÜNCEL DUYURULAR ─────────────────────────────────────────────── */}
       {showGuncel && <GuncelDuyurular dark={dark} />}

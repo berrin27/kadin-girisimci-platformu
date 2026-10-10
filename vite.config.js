@@ -8,7 +8,7 @@ export default defineConfig({
     open: true,
     // /api isteklerini Express sunucusuna yönlendir (server/index.js)
     proxy: {
-      '/api': 'http://localhost:3001',
+      '/api': `http://localhost:${process.env.API_PORT || 3001}`,
     },
   },
 })
