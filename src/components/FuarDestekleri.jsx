@@ -166,10 +166,10 @@ export default function FuarDestekleri({ dark }) {
           <div>
             <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-[#EAF4FB] text-[#2B5472]'}`}>
               <Sparkles className="w-4 h-4" />
-              Fuarlar ve Etkinlikler
+              Fırsatlar
             </div>
             <h1 className={`mt-5 text-3xl font-black tracking-tight sm:text-4xl ${text}`}>
-              Fuarlar ve Etkinlikler
+              Başvurusu Açık Fırsatlar
             </h1>
             <p className={`mt-3 max-w-2xl text-base ${subText}`}>
               Kadın girişimcilere yönelik güncel yarışma, ödül, hibe ve programlar — hepsi resmi kaynaklarıyla.

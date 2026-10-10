@@ -9,27 +9,16 @@ import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
 import BilgiSayfasi from './components/BilgiSayfasi';
+import Navbar from './components/Navbar';
+import FortunoLogo from './components/FortunoLogo';
 import { supportData, basvuruTakvimi, etkinlikler, ulusalIstatistikler, SON_KONTROL } from './data';
 import { api } from './api';
 import {
   Sparkles, ArrowRight, CheckCircle2, MessageSquare, X,
   Building2, ExternalLink, Send, Loader2, BookOpen, Globe, Award,
-  Heart, Sun, Moon, ChevronDown, Calendar, LogOut, Menu,
+  Heart, ChevronDown, Calendar,
   BadgeCheck, Gift, HandCoins, Hourglass, Banknote, Landmark, Ship, Handshake
 } from 'lucide-react';
-
-const NAV_ITEMS = [
-  { id: 'profil',      label: 'Profil' },
-  { id: 'sihirbaz',    label: 'Sihirbaz' },
-  { id: 'is-plani',    label: 'İş Planı' },
-  { id: 'hesaplayici', label: 'Hesaplayıcı' },
-  { id: 'takip',       label: 'Takip' },
-  { id: 'egitim',      label: 'Eğitim' },
-  { id: 'fuar',        label: 'Fuarlar' },
-  { id: 'guncel',      label: 'Güncel' },
-  { id: 'guvenlik',    label: 'Güvenlik' },
-  { id: 'kaynakca',    label: 'Kaynakça' },
-];
 
 // Ana sayfa istatistikleri — uydurma rakam yerine sitedeki doğrulanmış veriden hesaplanır
 const HERO_ISTATISTIK = (() => {
@@ -55,19 +44,20 @@ const ISTATISTIK_IKONLARI = { Banknote, Landmark, Ship, Handshake };
 const FOOTER_LINKLERI = [
   ['Ürün', [
     { label: 'Destek Bul', section: 'sihirbaz' },
+    { label: 'Fırsatlar', section: 'fuar' },
     { label: 'İş Planı', section: 'is-plani' },
-    { label: 'Hesaplayıcı', section: 'hesaplayici' },
-    { label: 'Eğitim', section: 'egitim' },
+    { label: 'Eğitimler', section: 'egitim' },
   ]],
   ['Şirket', [
     { label: 'Hakkımızda', section: 'hakkimizda' },
     { label: 'İletişim', section: 'iletisim' },
+    { label: 'Gizlilik & Güvenlik', section: 'guvenlik' },
   ]],
   ['Kaynaklar', [
+    { label: 'Hibe Rehberi & Kaynakça', section: 'kaynakca' },
+    { label: 'Sık Sorulanlar', section: 'sihirbaz', anchor: 'sss' },
     { label: 'KOSGEB', href: 'https://www.kosgeb.gov.tr' },
     { label: 'TÜBİTAK', href: 'https://tubitak.gov.tr' },
-    { label: 'Hibe Rehberi', section: 'kaynakca' },
-    { label: 'Sık Sorulanlar', section: 'sihirbaz', anchor: 'sss' },
   ]],
 ];
 
@@ -236,23 +226,6 @@ const hizliSorular = [
 ];
 
 // ─── LOGO SVG ─────────────────────────────────────────────────────────────────
-function FortunoLogo() {
-  return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Fortuno Logo">
-      <rect width="36" height="36" rx="10" fill="url(#logoGrad)" />
-      <path d="M10 12h16M10 18h10M10 24h13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="27" cy="22" r="5" fill="white" fillOpacity="0.25" />
-      <path d="M24.5 22l2 2 3-3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <defs>
-        <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#A8D5F2" />
-          <stop offset="1" stopColor="#F7DDE7" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
 // ═════════════════════════════════════════════════════════════════════════════
 // ANA COMPONENT
 // ═════════════════════════════════════════════════════════════════════════════
@@ -274,7 +247,6 @@ export default function App({ user, onLogout }) {
   const [confettiActive, setConfettiActive] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
   const [kurumFilter, setKurumFilter] = useState('Tümü');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profildenDolu, setProfildenDolu] = useState(false);
   const [basvuruProgram, setBasvuruProgram] = useState(null);
 
@@ -332,19 +304,11 @@ export default function App({ user, onLogout }) {
     return () => window.removeEventListener('fortuno-navigate', handler);
   }, []);
 
-  // Mobil menü: ESC ile kapat
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const handler = (e) => { if (e.key === 'Escape') setIsMenuOpen(false); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isMenuOpen]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   // anchor verilirse sayfa çizildikten sonra o bölüme kaydırılır (ör. footer → SSS)
   const goToSection = (id, anchor) => {
     setActiveSection(id);
-    setIsMenuOpen(false);
     if (!anchor) { window.scrollTo({ top: 0 }); return; }
     setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
@@ -454,102 +418,15 @@ export default function App({ user, onLogout }) {
       <Confetti active={confettiActive} />
 
       {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
-      <nav className={`sticky top-0 z-40 border-b border-slate-200/80 ${dark ? 'bg-slate-900/90 text-white border-slate-700/80 backdrop-blur-md' : 'bg-white/90 text-slate-900 backdrop-blur-md'}`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 py-3 lg:px-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-gradient-to-br from-[#A8D5F2] to-[#F7DDE7] p-2 shadow-soft">
-              <FortunoLogo />
-            </div>
-            <div>
-              <div className="text-lg font-black tracking-[0.18em] text-[#2B5472] dark:text-[#B9D9EF]">FORTUNO</div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Women Tech AI</div>
-            </div>
-          </div>
-
-          <div className="hidden items-center gap-1.5 overflow-x-auto lg:flex">
-            {NAV_ITEMS.map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setActiveSection(id)}
-                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition ${
-                  activeSection === id
-                    ? 'bg-[#F3D5D8] text-[#4A1525] border border-[#F3D5D8]'
-                    : dark ? 'text-slate-200 hover:bg-[#2A3544] hover:text-white' : 'text-[#1E293B] hover:bg-[#F7F0F1] hover:text-[#1E293B]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {favorites.length > 0 && (
-              <button
-                id="nav-favs"
-                onClick={() => setActiveSection('favoriler')}
-                className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold sm:flex ${activeSection === 'favoriler' ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}
-              >
-                <Heart className="h-3.5 w-3.5 fill-current" />
-                {favorites.length}
-              </button>
-            )}
-
-            <button
-              id="dark-mode-toggle"
-              onClick={() => setDark(d => !d)}
-              className={`rounded-full p-2.5 transition ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#F3D5D8] text-[#4A1525] hover:bg-[#eed0d5]'}`}
-              aria-label="Karanlık mod"
-            >
-              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-
-            <button
-              id="logout-btn"
-              onClick={onLogout}
-              title={`Çıkış yap (${user.email})`}
-              className={`rounded-full p-2.5 transition ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#F3D5D8] text-[#4A1525] hover:bg-[#eed0d5]'}`}
-              aria-label="Çıkış yap"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-
-            <button
-              id="mobile-menu-btn"
-              onClick={() => setIsMenuOpen(o => !o)}
-              className={`rounded-full p-2.5 transition lg:hidden ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#1E293B] text-white'}`}
-              aria-label={isMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
-              aria-expanded={isMenuOpen}
-              aria-controls="mobile-menu"
-            >
-              {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Mobil Menü ── */}
-        {isMenuOpen && (
-          <div id="mobile-menu" className={`lg:hidden border-t px-4 pb-4 pt-3 ${dark ? 'border-slate-700/80' : 'border-slate-200/80'}`}>
-            <div className="grid grid-cols-2 gap-2">
-              {[...NAV_ITEMS, { id: 'favoriler', label: `Favorilerim${favorites.length ? ` (${favorites.length})` : ''}` }].map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => goToSection(id)}
-                  className={`rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
-                    activeSection === id
-                      ? 'bg-[#F3D5D8] text-[#4A1525]'
-                      : dark ? 'bg-[#1E293B] text-slate-200 hover:bg-[#2A3544]' : 'bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F7F0F1]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className={`mt-3 truncate text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Giriş yapıldı: <span className="font-semibold">{user.email}</span>
-            </p>
-          </div>
-        )}
-      </nav>
+      <Navbar
+        activeSection={activeSection}
+        onNavigate={goToSection}
+        favoriSayisi={favorites.length}
+        dark={dark}
+        setDark={setDark}
+        user={user}
+        onLogout={onLogout}
+      />
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       {showSihirbaz && (
@@ -1058,6 +935,18 @@ export default function App({ user, onLogout }) {
       {showEgitim && <EgitimPortali dark={dark} />}
 
       {/* ── FUAR DESTEKLERİ ──────────────────────────────────────────────────── */}
+      {(showFuar || showGuncel) && (
+        <div className="max-w-6xl mx-auto px-4 mt-8 -mb-4">
+          <div className={`inline-flex rounded-2xl border p-1 ${dark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`} role="tablist" aria-label="Fırsatlar">
+            {[['fuar', 'Başvurusu Açık'], ['guncel', 'Haberler']].map(([id, label]) => (
+              <button key={id} type="button" role="tab" aria-selected={activeSection === id} onClick={() => goToSection(id)}
+                className={`rounded-xl px-5 py-2 text-sm font-bold transition ${activeSection === id ? 'bg-[#1E293B] text-white' : dark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {showFuar && <FuarDestekleri dark={dark} />}
 
       {/* ── PROFİL DÜZENLE ───────────────────────────────────────────────────── */}
