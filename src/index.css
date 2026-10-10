@@ -1,15 +1,45 @@
 @import "tailwindcss";
 
 @theme {
-  --color-fortuno-purple: #6d28d9;
-  --color-fortuno-navy: #0f172a;
-  --color-fortuno-green: #22c55e;
-  --color-fortuno-bg: #f8fafc;
+  --color-fortuno-purple: #1e293b;
+  --color-fortuno-navy: #1e293b;
+  --color-fortuno-green: #f3d5d8;
+  --color-fortuno-bg: #faf7f2;
+}
+
+:root {
+  --soft-bg: #faf7f2;
+  --soft-panel: #ffffff;
+  --soft-border: #eae3d9;
+  --soft-text: #1e293b;
+  --soft-muted: #5b6473;
+  --primary-navy: #1e293b;
+  --primary-rose: #f3d5d8;
+  --primary-rose-strong: #4a1525;
+  --dark-nav: #1e293b;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  background: var(--soft-bg);
+  color: var(--soft-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  background: var(--soft-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
 }
 
 /* ── HERO GRADIENT WAVE ───────────────────────────────── */
@@ -20,13 +50,13 @@ body {
 }
 
 .hero-bg-light {
-  background: linear-gradient(-45deg, #f8fafc, #ede9fe, #fce7f3, #ecfdf5, #f8fafc);
+  background: linear-gradient(-45deg, #faf7f2, #edf5fb, #f7eaf1, #edf5ec, #faf7f2);
   background-size: 400% 400%;
   animation: gradientShift 10s ease infinite;
 }
 
 .hero-bg-dark {
-  background: linear-gradient(-45deg, #0f172a, #1e1b4b, #2d1b4e, #0f172a, #1a0a2e);
+  background: linear-gradient(-45deg, #142230, #1e2d3f, #2a3d4f, #142230, #1b2d3c);
   background-size: 400% 400%;
   animation: gradientShift 10s ease infinite;
 }

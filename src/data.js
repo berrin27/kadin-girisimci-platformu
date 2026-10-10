@@ -337,5 +337,47 @@ export const supportData = [
                "bekar", "evli", "dul", "bosanmis"],
         description: "Yurt dışı prestijli fuarlara katılarak ihracat hacmini artırmak isteyen, şirket hissesinin en az %50'si kadınlara ait işletmeler için özel kredi. Azami 15.000.000 TL (veya 500.000 EUR), 12 veya 24 ay vadeli. Fuar stant bedelleri, lojistik, gümrükleme, seyahat ve konaklama harcamalarında kullanılır.",
         highlight: "15M TL — Kadın İhracatçılara Özel"
+    },
+    {
+        id: "is-bankasi-kadin-girisimci",
+        title: "Kadın Girişimci Kredisi",
+        institution: "İş Bankası",
+        amount: "500.000 TL'ye Kadar",
+        type: "Taksitli İşletme Kredisi",
+        link: "https://www.isbank.com.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret", "kooperatif", "kırsal",
+               "yeni_kurulmus", "buyume", "kokenlesik", "kriz_donemi",
+               "genc_uni", "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "İşini büyütmek veya yeni yatırımlar yapmak isteyen kadın girişimcilere yönelik 36 aya varan vadelerle sunulan özel işletme kredisi. Esnek ödeme planı ve ilk taksiti erteleme seçenekleri mevcuttur.",
+        highlight: "36 Ay Vade & Esnek Ödeme"
+    },
+    {
+        id: "vakifbank-kadin-girisimci",
+        title: "Kadın Girişimci Kredi Paketi",
+        institution: "VakıfBank",
+        amount: "5.000.000 TL",
+        type: "Taksitli İşletme Kredisi",
+        link: "https://www.vakifbank.com.tr",
+        tags: ["yerel_isletme", "teknoloji", "e_ticaret",
+               "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kadınların yönettiği veya %50'den fazla hissesine sahip olduğu işletmelere yönelik işletme sermayesi desteği. Vade farkı ödemesiz, uzun vadeli destek fırsatları içerir.",
+        highlight: "5 Milyon TL'ye Varan İşletme Desteği"
+    },
+    {
+        id: "yapi-kredi-kadin-girisimci",
+        title: "Kadın Girişimci Destek Kredisi",
+        institution: "Yapı Kredi",
+        amount: "İşletme İhtiyacına Göre",
+        type: "Ticari Kredi",
+        link: "https://www.yapikredi.com.tr",
+        tags: ["yerel_isletme", "e_ticaret", "teknoloji",
+               "yeni_kurulmus", "buyume", "kokenlesik",
+               "genc_girisimci", "standart", "olgun_girisimci",
+               "bekar", "evli", "dul", "bosanmis"],
+        description: "Kadın girişimcilere sunulan, KGF (Kredi Garanti Fonu) destekli kefalet imkanına sahip özel faiz oranlı ticari destek paketidir. İş yeri alımı, ekipman modernizasyonu ve finansal genişleme için uygundur.",
+        highlight: "KGF Destekli Özel Faiz Oranları"
     }
 ];

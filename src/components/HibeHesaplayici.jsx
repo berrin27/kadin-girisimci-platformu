@@ -36,10 +36,10 @@ function SelectBtn({ selected, onClick, children, dark }) {
       onClick={onClick}
       className={`p-3 rounded-xl text-sm font-bold text-left border transition-all ${
         selected
-          ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-200'
+          ? 'bg-[#F3D5D8] text-[#4A1525] border-[#F3D5D8] shadow-md'
           : dark
-            ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-purple-500'
-            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300'
+            ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-[#F3D5D8]'
+            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-[#F8F3F4] hover:border-[#F3D5D8]'
       }`}
     >
       {children}
@@ -82,22 +82,22 @@ export default function HibeHesaplayici({ dark }) {
   return (
     <div className={`${card} border rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 p-6">
+      <div className="bg-[#F5EFEA] p-6 border-b border-[#EAE3D9]">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Calculator className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 bg-white/30 rounded-xl flex items-center justify-center border border-white/40">
+            <Calculator className="w-6 h-6 text-[#1F2D3D]" />
           </div>
           <div>
-            <h2 className="text-white font-black text-xl">Hibe Hesaplayıcı</h2>
-            <p className="text-purple-200 text-sm">Tahmini toplam hibe potansiyelinizi hesaplayın</p>
+            <h2 className="text-[#1F2D3D] font-black text-xl">Hibe Hesaplayıcı</h2>
+            <p className="text-[#3E5369] text-sm">Tahmini toplam hibe potansiyelinizi hesaplayın</p>
           </div>
         </div>
         {/* Progress bar */}
         <div className="flex gap-2">
           {[1, 2, 3].map(s => (
             <div key={s} className="flex-1">
-              <div className={`h-1.5 rounded-full transition-all duration-700 ${step >= s ? 'bg-white' : 'bg-white/25'}`} />
-              <p className={`text-[10px] font-bold mt-1 transition-colors ${step >= s ? 'text-white' : 'text-purple-300'}`}>
+              <div className={`h-1.5 rounded-full transition-all duration-700 ${step >= s ? 'bg-[#1F2D3D]' : 'bg-white/40'}`} />
+              <p className={`text-[10px] font-bold mt-1 transition-colors ${step >= s ? 'text-[#1F2D3D]' : 'text-[#5F7285]'}`}>
                 {s === 1 ? 'Profil' : s === 2 ? 'Finans' : 'Sonuç'}
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function HibeHesaplayici({ dark }) {
             <button
               disabled={!sektor || !profil || !asama}
               onClick={() => setStep(2)}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#1E293B] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Devam Et <ArrowRight className="w-5 h-5" />
             </button>
@@ -162,7 +162,7 @@ export default function HibeHesaplayici({ dark }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className={`text-sm font-bold ${dark ? 'text-slate-300' : 'text-slate-700'}`}>Ekip Büyüklüğü</p>
-                <span className="text-purple-500 font-black text-sm">{ekip} kişi{ekip >= 3 ? ' 🎯 +Bonus' : ''}</span>
+                <span className="text-[#5A7F9B] font-black text-sm">{ekip} kişi{ekip >= 3 ? ' 🎯 +Bonus' : ''}</span>
               </div>
               <input type="range" min="1" max="10" value={ekip}
                 onChange={e => setEkip(Number(e.target.value))}
@@ -175,7 +175,7 @@ export default function HibeHesaplayici({ dark }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className={`text-sm font-bold ${dark ? 'text-slate-300' : 'text-slate-700'}`}>Aylık Tahmini Gelir</p>
-                <span className="text-purple-500 font-black text-sm">{aylikGelir.toLocaleString('tr-TR')} TL</span>
+                <span className="text-[#5A7F9B] font-black text-sm">{aylikGelir.toLocaleString('tr-TR')} TL</span>
               </div>
               <input type="range" min="0" max="500000" step="5000" value={aylikGelir}
                 onChange={e => setAylikGelir(Number(e.target.value))}
@@ -195,7 +195,7 @@ export default function HibeHesaplayici({ dark }) {
                 <ArrowLeft className="w-4 h-4" /> Geri
               </button>
               <button onClick={calculate}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition">
+                className="flex-1 bg-[#1E293B] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition">
                 <Sparkles className="w-5 h-5" /> Hesapla
               </button>
             </div>
@@ -206,15 +206,15 @@ export default function HibeHesaplayici({ dark }) {
         {step === 3 && result && (
           <div className="space-y-5 animate-[fadeUp_0.4s_ease]">
             {/* Büyük rakam */}
-            <div className="bg-gradient-to-br from-violet-600 to-pink-600 rounded-2xl p-6 text-center text-white">
-              <p className="text-purple-200 text-xs font-semibold uppercase tracking-wider mb-2">Tahmini Hibe Potansiyeliniz</p>
+            <div className="bg-gradient-to-br from-[#A8D5F2] to-[#F6D7E2] rounded-2xl p-6 text-center text-[#1F2D3D]">
+              <p className="text-[#3E5369] text-xs font-semibold uppercase tracking-wider mb-2">Tahmini Hibe Potansiyeliniz</p>
               <p className="text-5xl font-black tracking-tight">
                 <AnimatedNumber value={result.total} />
                 <span className="text-3xl ml-1">₺</span>
               </p>
               {result.coveragePct !== null && (
-                <p className="text-purple-200 text-xs mt-3">
-                  ≈ Yıllık gelirinizin <strong className="text-white">%{Math.round(result.coveragePct)}'ini</strong> karşılar
+                <p className="text-[#3E5369] text-xs mt-3">
+                  ≈ Yıllık gelirinizin <strong className="text-[#1F2D3D]">%{Math.round(result.coveragePct)}'ini</strong> karşılar
                 </p>
               )}
             </div>
@@ -229,8 +229,8 @@ export default function HibeHesaplayici({ dark }) {
                   <a key={p.id} href={p.link} target="_blank" rel="noreferrer"
                     className={`flex items-center justify-between p-3 rounded-xl border transition hover:shadow-md group ${dark ? 'border-slate-700 bg-slate-800/50 hover:bg-slate-700' : 'border-slate-100 bg-slate-50 hover:bg-white'}`}>
                     <div>
-                      <p className="text-xs font-bold text-purple-500">{p.institution}</p>
-                      <p className={`text-sm font-bold group-hover:text-purple-500 transition ${text}`}>{p.title}</p>
+                      <p className="text-xs font-bold text-[#1E293B]">{p.institution}</p>
+                      <p className={`text-sm font-bold group-hover:text-[#1E293B] transition ${text}`}>{p.title}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-black text-emerald-500">{p.amount}</span>
