@@ -1,16 +1,51 @@
-# React + Vite
+# Fortuno — Kadın Girişimci Destek Platformu
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Kadın girişimcileri KOSGEB, TÜBİTAK, Ticaret Bakanlığı, vakıf ve banka destekleriyle eşleştiren; başvuru takibi, iş planı, hibe hesaplayıcı ve yapay zekâ destekli finans mentörü (FortunoAI) sunan platform.
 
-Currently, two official plugins are available:
+**Teknolojiler:** React 19 · Vite · Tailwind CSS · Express 5 · SQLite (`node:sqlite`) · Google Gemini
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Kurulum
 
-## React Compiler
+Gereksinim: **Node.js 22.13+**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+cp .env.example .env   # ardından .env içindeki değerleri doldur
+npm run dev            # frontend (5173) + API (3001) birlikte başlar
+```
 
-## Expanding the Oxlint configuration
+### Ortam değişkenleri (`.env`)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+| Değişken | Açıklama |
+|---|---|
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey)'dan alınan key. Boşsa sohbet hazır yanıtlarla çalışır. |
+| `GEMINI_MODEL` | Opsiyonel, varsayılan `gemini-2.5-flash` |
+| `JWT_SECRET` | Oturum çerezlerini imzalar. Production'da zorunlu. |
+
+> ⚠️ `.env` dosyası git'e eklenmez — gerçek key'leri asla commit etme ve gizli değerlere `VITE_` öneki koyma (Vite bunları tarayıcıya gömer).
+
+## Komutlar
+
+| Komut | Ne yapar |
+|---|---|
+| `npm run dev` | Geliştirme: Vite + API (otomatik yeniden başlatma) |
+| `npm run build` | Frontend'i `dist/` klasörüne derler |
+| `npm start` | Production: API + derlenmiş frontend tek sunucuda |
+| `npm run lint` | oxlint ile kod kontrolü |
+
+## Proje yapısı
+
+```
+server/            Express API
+  db.js            SQLite şeması ve migration'lar
+  auth.js          şifre hash'i (scrypt) ve JWT oturum çerezi
+  chatbot.js       FortunoAI sistem prompt'u + hazır yanıt motoru
+  routes/          auth, profile, applications, kanban, favorites, chat, account
+  data/            veritabanı dosyası (git'e eklenmez)
+src/
+  api.js           backend istemcisi
+  AuthGate.jsx     giriş kontrolü
+  App.jsx          ana uygulama ve eşleştirme motoru
+  data.js          destek programları verisi
+  components/      sayfa bileşenleri
+```

@@ -17,6 +17,10 @@ const GEMINI_TIMEOUT_MS = 20_000;
 const HISTORY_FOR_AI = 20;   // modele gönderilen son mesaj sayısı
 const HISTORY_FOR_UI = 40;   // arayüze dönen son mesaj sayısı
 
+if (process.env.VITE_GEMINI_API_KEY) {
+  console.warn('[chat] VITE_GEMINI_API_KEY bulundu — VITE_ önekli değişkenler tarayıcıya sızabilir. Adını GEMINI_API_KEY yap.');
+}
+
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 if (!ai) console.warn('[chat] GEMINI_API_KEY tanımlı değil — yalnızca hazır yanıtlar kullanılacak.');
 
