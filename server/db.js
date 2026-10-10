@@ -96,6 +96,22 @@ const MIGRATIONS = [
   );
   CREATE INDEX idx_chat_user ON chat_messages(user_id, id);
   `,
+
+  // 2 — sunucu tarafında çekilen haberler (server/news.js)
+  `
+  CREATE TABLE news_items (
+    id            TEXT PRIMARY KEY,           -- haber bağlantısının özeti (tekilleştirme)
+    kategori      TEXT NOT NULL,
+    baslik        TEXT NOT NULL,
+    link          TEXT NOT NULL,
+    kaynak_ad     TEXT NOT NULL DEFAULT '',
+    kaynak_url    TEXT NOT NULL DEFAULT '',
+    resmi         INTEGER NOT NULL DEFAULT 0, -- kaynak .gov.tr ise 1
+    yayin_tarihi  TEXT NOT NULL,              -- ISO 8601
+    son_gorulme   TEXT NOT NULL               -- akışta en son görüldüğü an (ISO 8601)
+  );
+  CREATE INDEX idx_news_tarih ON news_items(yayin_tarihi DESC);
+  `,
 ];
 
 function migrate() {

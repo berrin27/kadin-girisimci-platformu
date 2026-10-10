@@ -17,6 +17,8 @@ import kanbanRoutes from './routes/kanban.js';
 import favoriteRoutes from './routes/favorites.js';
 import chatRoutes from './routes/chat.js';
 import accountRoutes from './routes/account.js';
+import newsRoutes from './routes/news.js';
+import { startNewsRefresher } from './news.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
@@ -44,6 +46,7 @@ app.use('/api/kanban', requireAuth, kanbanRoutes);
 app.use('/api/favorites', requireAuth, favoriteRoutes);
 app.use('/api/chat', requireAuth, chatRoutes);
 app.use('/api/account', requireAuth, accountRoutes);
+app.use('/api/news', newsRoutes); // herkese açık: kişisel veri içermez
 app.use('/api', (req, res) => res.status(404).json({ error: 'Bulunamadı.' }));
 
 // Production: derlenmiş frontend'i servis et
@@ -62,4 +65,5 @@ app.use((err, req, res, _next) => {
 
 app.listen(PORT, () => {
   console.log(`[api] Fortuno API http://localhost:${PORT} adresinde çalışıyor`);
+  startNewsRefresher();
 });

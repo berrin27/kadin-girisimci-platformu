@@ -73,6 +73,9 @@ export const api = {
     send: (message, { useHistory = true } = {}) => post('/chat', { message, useHistory }),
     clear: () => del('/chat'),
   },
+  news: {
+    list: (kategori) => get(`/news${kategori ? `?kategori=${encodeURIComponent(kategori)}` : ''}`),
+  },
   account: {
     exportData: () => get('/account/export'),
     remove: (password) => del('/account', { password }),

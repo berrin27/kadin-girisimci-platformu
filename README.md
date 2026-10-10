@@ -22,6 +22,7 @@ npm run dev            # frontend (5173) + API (3001) birlikte başlar
 | `GEMINI_MODEL` | Opsiyonel, varsayılan `gemini-3.6-flash` |
 | `GEMINI_FALLBACK_MODEL` | Ana model yoğun/yanıtsızsa kullanılır, varsayılan `gemini-3.5-flash-lite` |
 | `JWT_SECRET` | Oturum çerezlerini imzalar. Production'da zorunlu. |
+| `NEWS_REFRESH_MINUTES` | Opsiyonel, haber akışlarının yenilenme aralığı (varsayılan 30 dk) |
 
 > ⚠️ `.env` dosyası git'e eklenmez — gerçek key'leri asla commit etme ve gizli değerlere `VITE_` öneki koyma (Vite bunları tarayıcıya gömer).
 
@@ -41,12 +42,13 @@ server/            Express API
   db.js            SQLite şeması ve migration'lar
   auth.js          şifre hash'i (scrypt) ve JWT oturum çerezi
   chatbot.js       FortunoAI sistem prompt'u + hazır yanıt motoru
-  routes/          auth, profile, applications, kanban, favorites, chat, account
+  news.js          Google Haberler akışlarını çeken, filtreleyen ve kaydeden servis
+  routes/          auth, profile, applications, kanban, favorites, chat, account, news
   data/            veritabanı dosyası (git'e eklenmez)
 src/
   api.js           backend istemcisi
   AuthGate.jsx     giriş kontrolü
   App.jsx          ana uygulama ve eşleştirme motoru
-  data.js          destek programları verisi
+  data.js          destek programları verisi (güncelleme: docs/PROGRAM_GUNCELLEME.md)
   components/      sayfa bileşenleri
 ```

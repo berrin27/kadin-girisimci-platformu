@@ -1,185 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Clock, ExternalLink, AlertCircle, Rss } from 'lucide-react';
+import { RefreshCw, Clock, ExternalLink, AlertCircle, Rss, BadgeCheck } from 'lucide-react';
+import { api } from '../api';
 
-// ── RSS Kaynakları ──────────────────────────────────────────────────────────
-const RSS_KAYNAKLARI = [
-  {
-    id: 'google-kadin',
-    ad: 'Google Haberler',
-    url: 'https://news.google.com/rss/search?q=Kadin+Girisimci+Destek+Hibe&hl=tr&gl=TR&ceid=TR:tr',
-    renk: '#4285f4',
-    ikon: '🔍',
-  },
-  {
-    id: 'google-kosgeb',
-    ad: 'KOSGEB Haberleri',
-    url: 'https://news.google.com/rss/search?q=KOSGEB+Destek+Programi&hl=tr&gl=TR&ceid=TR:tr',
-    renk: '#0ea5e9',
-    ikon: '🏛️',
-  },
-  {
-    id: 'google-hibe',
-    ad: 'Hibe & Teşvik',
-    url: 'https://news.google.com/rss/search?q=Hibe+Tesvik+Girisimci&hl=tr&gl=TR&ceid=TR:tr',
-    renk: '#10b981',
-    ikon: '💰',
-  },
-  {
-    id: 'google-tubitak',
-    ad: 'TÜBİTAK & Ar-Ge',
-    url: 'https://news.google.com/rss/search?q=TUBITAK+Girisimci&hl=tr&gl=TR&ceid=TR:tr',
-    renk: '#8b5cf6',
-    ikon: '🔬',
-  },
+// ── Kategoriler (sunucudaki server/news.js KATEGORILER ile aynı id'ler) ──────
+const KATEGORILER = [
+  { id: 'kadin-girisimci', ad: 'Kadın Girişimci', renk: '#db2777', ikon: '👩‍💼' },
+  { id: 'kosgeb', ad: 'KOSGEB', renk: '#0ea5e9', ikon: '🏛️' },
+  { id: 'hibe-tesvik', ad: 'Hibe & Teşvik', renk: '#10b981', ikon: '💰' },
+  { id: 'tubitak', ad: 'TÜBİTAK & Ar-Ge', renk: '#8b5cf6', ikon: '🔬' },
+  { id: 'kooperatif', ad: 'Kooperatifler', renk: '#f59e0b', ikon: '🤝' },
 ];
 
-// ── Yedek Güncel Duyuru Akışı (Ağ/Proxy Erişilemezse Kesintisiz Gösterim) ─────
-const FALLBACK_HABERLER = [
-  {
-    id: 'fb-kadin-1',
-    kaynakId: 'google-kadin',
-    baslik: '2026 Kadın Girişimci Hibe ve Destek Paketleri Açıklandı',
-    link: 'https://www.kosgeb.gov.tr',
-    tarih: new Date(Date.now() - 2 * 3600 * 1000),
-    ozet: 'Kadın girişimcilere yönelik geri ödemesiz hibe tutarı 300.000 TL\'ye, uygun faizli kredi imkanı ise 1.5 Milyon TL\'ye yükseltildi. Başvurular e-Devlet üzerinden alınıyor.',
-  },
-  {
-    id: 'fb-kadin-2',
-    kaynakId: 'google-kadin',
-    baslik: 'Ticaret Bakanlığı Kadın Kooperatifleri İhracat Desteğini Başlattı',
-    link: 'https://ticaret.gov.tr',
-    tarih: new Date(Date.now() - 5 * 3600 * 1000),
-    ozet: 'Kadın kooperatiflerinin yurt dışı fuar katılımı, dijital pazarlama ve navlun harcamalarının %75\'i bakanlık tarafından hibelendirilecek.',
-  },
-  {
-    id: 'fb-kosgeb-1',
-    kaynakId: 'google-kosgeb',
-    baslik: 'KOSGEB Girişimci Destek Programı 2026 Yılı 2. Dönem Başvuruları Başladı',
-    link: 'https://www.kosgeb.gov.tr',
-    tarih: new Date(Date.now() - 12 * 3600 * 1000),
-    ozet: 'İş kurma ve iş geliştirme desteği kapsamında genç ve kadın girişimcilere ilave %10 hibe avantajı sunuluyor.',
-  },
-  {
-    id: 'fb-kosgeb-2',
-    kaynakId: 'google-kosgeb',
-    baslik: 'KOSGEB KOBİGEL Dijitalleşme Hibe Çağrısı Açıldı',
-    link: 'https://www.kosgeb.gov.tr',
-    tarih: new Date(Date.now() - 24 * 3600 * 1000),
-    ozet: 'İmalatçı KOBİ ve girişimcilerin yazılım, donanım ve nitelikli eleman istihdam giderlerine 2.000.000 TL\'ye kadar finansman desteği.',
-  },
-  {
-    id: 'fb-hibe-1',
-    kaynakId: 'google-hibe',
-    baslik: 'IPARD III Kırsal Kalkınma Hibe Programı Kadın Projelerine Öncelik Veriyor',
-    link: 'https://www.tkdk.gov.tr',
-    tarih: new Date(Date.now() - 36 * 3600 * 1000),
-    ozet: 'Tarım ve gıda işleme alanında yatırım yapacak kadın girişimcilerin hibe oranı %70\'e çıkarıldı.',
-  },
-  {
-    id: 'fb-hibe-2',
-    kaynakId: 'google-hibe',
-    baslik: 'Kadın Girişimciler İçin Sıfır Faizli Kredi Paketi Detayları Belirlendi',
-    link: 'https://www.halkbank.com.tr',
-    tarih: new Date(Date.now() - 48 * 3600 * 1000),
-    ozet: 'En az 1 yıllık işletme sahibi kadın girişimcilere 500.000 TL\'ye kadar 36 ay vadeli faizsiz kredi imkanı sunuluyor.',
-  },
-  {
-    id: 'fb-tubitak-1',
-    kaynakId: 'google-tubitak',
-    baslik: 'TÜBİTAK 1512 BİGG 2026 Tohum Yatırım Çağrısı Açıldı',
-    link: 'https://www.tubitak.gov.tr',
-    tarih: new Date(Date.now() - 8 * 3600 * 1000),
-    ozet: 'Teknoloji odaklı iş fikri olan girişimcilere 900.000 TL\'ye varan MÜKEMMELİYET mührü desteği ve yatırım desteği sağlanıyor.',
-  },
-  {
-    id: 'fb-tubitak-2',
-    kaynakId: 'google-tubitak',
-    baslik: 'TÜBİTAK 1507 KOBİ Ar-Ge Başlangıç Destek Programı',
-    link: 'https://www.tubitak.gov.tr',
-    tarih: new Date(Date.now() - 30 * 3600 * 1000),
-    ozet: 'İlk kez Ar-Ge projesi yapacak KOBİ\'lerin 1.200.000 TL bütçeli projelerine %75 hibe desteği.',
-  },
-];
-
-// ── RSS XML Parser ──────────────────────────────────────────────────────────
-function parseRssXml(xml, kaynakId) {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    const items = doc.querySelectorAll('item');
-    const haberler = [];
-
-    items.forEach((item, idx) => {
-      if (idx >= 8) return;
-      const title = item.querySelector('title')?.textContent || '';
-      const link = item.querySelector('link')?.textContent || '';
-      const pubDate = item.querySelector('pubDate')?.textContent || '';
-      const description = item.querySelector('description')?.textContent || '';
-      const cleanDesc = description.replace(/<[^>]*>/g, '').trim().slice(0, 200);
-
-      if (title) {
-        haberler.push({
-          id: `${kaynakId}-${idx}-${Date.now()}`,
-          kaynakId,
-          baslik: title,
-          link,
-          tarih: pubDate ? new Date(pubDate) : new Date(),
-          ozet: cleanDesc,
-        });
-      }
-    });
-    return haberler;
-  } catch (e) {
-    return [];
-  }
-}
-
-// ── Tekil Kaynak Çekici (Çok Katmanlı API Pipeline) ─────────────────────────
-async function fetchKaynakHaberleri(kaynak) {
-  // Helper to fetch with a timeout using AbortController
-  const fetchWithTimeout = (url, options = {}, timeout = 6000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    return fetch(url, { ...options, signal: controller.signal })
-      .finally(() => clearTimeout(id));
-  };
-
-  // Katman 1: AllOrigins raw JSON Proxy
-  try {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(kaynak.url)}`;
-    const res = await fetchWithTimeout(proxyUrl);
-    if (res.ok) {
-      const { contents } = await res.json();
-      if (contents) {
-        const parsed = parseRssXml(contents, kaynak.id);
-        if (parsed.length) return parsed;
-      }
-    }
-  } catch (e) {
-    // Continue to next layer
-  }
-
-  // Katman 2: CorsProxy.io (fallback if AllOrigins fails)
-  try {
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(kaynak.url)}`;
-    const res = await fetchWithTimeout(proxyUrl);
-    if (res.ok) {
-      const xml = await res.text();
-      const parsed = parseRssXml(xml, kaynak.id);
-      if (parsed.length) return parsed;
-    }
-  } catch (e) {
-    // Continue to fallback
-  }
-
-  // Katman 3: Yedek Duyuru Akışı
-  return FALLBACK_HABERLER.filter(h => h.kaynakId === kaynak.id);
-}
+const YENILEME_MS = 10 * 60 * 1000; // sayfa açıkken sunucudan yeniden okuma aralığı
 
 // ── Zaman farkı hesapla ──────────────────────────────────────────────────────
 function zamanOnce(tarih) {
-  const simdi = new Date();
-  const fark = simdi - tarih;
+  const fark = Date.now() - tarih.getTime();
   const dakika = Math.floor(fark / 60000);
   const saat = Math.floor(fark / 3600000);
   const gun = Math.floor(fark / 86400000);
@@ -191,101 +27,42 @@ function zamanOnce(tarih) {
   return tarih.toLocaleDateString('tr-TR');
 }
 
-// ── Cache yönetimi ───────────────────────────────────────────────────────────
-const CACHE_KEY = 'fortuno-haberler-cache';
-const CACHE_TTL = 30 * 60 * 1000; // 30 dakika
-
-function getCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (Date.now() - data.timestamp > CACHE_TTL) return null;
-    return data;
-  } catch { return null; }
-}
-
-function setCache(haberler) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      haberler,
-    }));
-  } catch {}
-}
-
 export default function GuncelDuyurular({ dark }) {
   const [haberler, setHaberler] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
-  const [hata, setHata] = useState(false);
+  const [hata, setHata] = useState('');
   const [sonGuncelleme, setSonGuncelleme] = useState(null);
+  const [canli, setCanli] = useState(false);
   const [aktifFiltre, setAktifFiltre] = useState('hepsi');
   const [yenileniyor, setYenileniyor] = useState(false);
 
-  // ── Haberleri Çek ──────────────────────────────────────────────────────────
-  const haberleriCek = useCallback(async (forceRefresh = false) => {
-    if (!forceRefresh) {
-      const cache = getCache();
-      if (cache && cache.haberler && cache.haberler.length > 0) {
-        setHaberler(cache.haberler.map(h => ({ ...h, tarih: new Date(h.tarih) })));
-        setSonGuncelleme(new Date(cache.timestamp));
-        setYukleniyor(false);
-        return;
-      }
-    }
-
-    setYukleniyor(true);
-    setHata(false);
-    const tumHaberler = [];
-
+  // ── Haberleri sunucudan oku (sunucu kaynakları kendisi günceller) ─────────
+  const haberleriCek = useCallback(async (kategori) => {
     try {
-      for (const kaynak of RSS_KAYNAKLARI) {
-        const kaynakHaberleri = await fetchKaynakHaberleri(kaynak);
-        tumHaberler.push(...kaynakHaberleri);
-        // İstemci tarafı rate-limit engeline takılmamak için 200ms gecikme
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-
-      // Tarihe göre sırala (en yeni önce)
-      tumHaberler.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-
-      if (tumHaberler.length > 0) {
-        setHaberler(tumHaberler);
-        setCache(tumHaberler);
-        setSonGuncelleme(new Date());
-      } else {
-        // En son çare olarak tüm yedek listeyi yükle
-        setHaberler(FALLBACK_HABERLER);
-        setSonGuncelleme(new Date());
-      }
-    } catch {
-      setHaberler(FALLBACK_HABERLER);
-      setSonGuncelleme(new Date());
+      const { items, guncellendi, canli } = await api.news.list(kategori === 'hepsi' ? undefined : kategori);
+      setHaberler(items);
+      setSonGuncelleme(guncellendi ? new Date(guncellendi) : null);
+      setCanli(canli);
+      setHata('');
+    } catch (err) {
+      setHata(err.message);
+    } finally {
+      setYukleniyor(false);
+      setYenileniyor(false);
     }
-
-    setYukleniyor(false);
-    setYenileniyor(false);
   }, []);
 
   useEffect(() => {
-    haberleriCek();
-  }, [haberleriCek]);
-
-  // ── Otomatik yenileme (30 dk) ──────────────────────────────────────────────
-  useEffect(() => {
-    const interval = setInterval(() => haberleriCek(true), CACHE_TTL);
+    setYukleniyor(true);
+    haberleriCek(aktifFiltre);
+    const interval = setInterval(() => haberleriCek(aktifFiltre), YENILEME_MS);
     return () => clearInterval(interval);
-  }, [haberleriCek]);
+  }, [aktifFiltre, haberleriCek]);
 
   const handleYenile = () => {
     setYenileniyor(true);
-    haberleriCek(true);
+    haberleriCek(aktifFiltre);
   };
-
-  // ── Filtre ─────────────────────────────────────────────────────────────────
-  const filtreliHaberler = aktifFiltre === 'hepsi'
-    ? haberler
-    : haberler.filter(h => h.kaynakId === aktifFiltre);
 
   // ── Stiller ────────────────────────────────────────────────────────────────
   const card = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
@@ -312,9 +89,9 @@ export default function GuncelDuyurular({ dark }) {
       {/* ── Durum Çubuğu ──────────────────────────────────────────── */}
       <div className={`${card} border rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3`}>
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 text-xs font-semibold ${hata ? 'text-red-500' : 'text-emerald-500'}`}>
-            <span className={`w-2 h-2 rounded-full ${hata ? 'bg-red-500' : 'bg-emerald-500'} animate-pulse`} />
-            {hata ? 'Bağlantı sorunu' : 'Canlı'}
+          <div className={`flex items-center gap-2 text-xs font-semibold ${hata ? 'text-red-500' : canli ? 'text-emerald-500' : 'text-amber-500'}`}>
+            <span className={`w-2 h-2 rounded-full ${hata ? 'bg-red-500' : canli ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            {hata ? 'Bağlantı sorunu' : canli ? 'Canlı' : 'Kaynaklara şu an ulaşılamıyor — son haberler gösteriliyor'}
           </div>
           {sonGuncelleme && (
             <span className={`text-xs flex items-center gap-1 ${sub}`}>
@@ -344,7 +121,7 @@ export default function GuncelDuyurular({ dark }) {
         >
           📰 Tümü
         </button>
-        {RSS_KAYNAKLARI.map(k => (
+        {KATEGORILER.map(k => (
           <button
             key={k.id}
             onClick={() => setAktifFiltre(k.id)}
@@ -367,11 +144,11 @@ export default function GuncelDuyurular({ dark }) {
             </div>
           ))}
         </div>
-      ) : hata && haberler.length === 0 ? (
+      ) : haberler.length === 0 ? (
         <div className={`${card} border rounded-2xl p-8 text-center`}>
           <AlertCircle className={`w-12 h-12 mx-auto mb-3 ${dark ? 'text-slate-600' : 'text-slate-300'}`} />
-          <h3 className={`font-bold mb-2 ${text}`}>Haberler yüklenemedi</h3>
-          <p className={`text-sm ${sub}`}>İnternet bağlantınızı kontrol edin veya birkaç dakika sonra tekrar deneyin.</p>
+          <h3 className={`font-bold mb-2 ${text}`}>{hata ? 'Haberler yüklenemedi' : 'Henüz haber yok'}</h3>
+          <p className={`text-sm ${sub}`}>{hata || 'Haber kaynakları birkaç dakika içinde taranacak, lütfen biraz sonra tekrar deneyin.'}</p>
           <button
             onClick={handleYenile}
             className="mt-4 bg-[#1E293B] text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition text-sm"
@@ -381,8 +158,8 @@ export default function GuncelDuyurular({ dark }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtreliHaberler.slice(0, 24).map(haber => {
-            const kaynak = RSS_KAYNAKLARI.find(k => k.id === haber.kaynakId);
+          {haberler.map(haber => {
+            const kaynak = KATEGORILER.find(k => k.id === haber.kategori);
             return (
               <a
                 key={haber.id}
@@ -404,12 +181,17 @@ export default function GuncelDuyurular({ dark }) {
                       <span className={`text-[10px] font-semibold flex items-center gap-1 ${sub}`}>
                         <Clock className="w-2.5 h-2.5" /> {zamanOnce(new Date(haber.tarih))}
                       </span>
+                      {haber.resmi && (
+                        <span className="text-[10px] font-bold flex items-center gap-0.5 text-emerald-600">
+                          <BadgeCheck className="w-3 h-3" /> Resmi kaynak
+                        </span>
+                      )}
                     </div>
                     <h3 className={`font-bold text-sm leading-snug mb-1 group-hover:text-[#1E293B] transition ${text}`}>
                       {haber.baslik}
                     </h3>
-                    {haber.ozet && (
-                      <p className={`text-xs line-clamp-2 leading-relaxed ${sub}`}>{haber.ozet}</p>
+                    {haber.kaynakAd && (
+                      <p className={`text-xs ${sub}`}>{haber.kaynakAd}</p>
                     )}
                   </div>
                   <ExternalLink className={`w-4 h-4 shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition ${sub}`} />
@@ -427,9 +209,9 @@ export default function GuncelDuyurular({ dark }) {
           <div>
             <h4 className={`font-bold text-sm mb-1 ${text}`}>Veri Kaynakları Hakkında</h4>
             <p className={`text-xs leading-relaxed ${sub}`}>
-              Haberler Google News RSS, KOSGEB, TÜBİTAK ve Ticaret Bakanlığı kaynaklarından otomatik olarak çekilmektedir.
-              Veriler <strong>her 30 dakikada bir</strong> otomatik güncellenir. Manuel yenilemek için "Yenile" butonuna tıklayabilirsiniz.
-              Program tutarları ve koşulları değişkenlik gösterebilir — resmi kaynakları her zaman kontrol edin.
+              Haberler Google Haberler üzerinden sunucumuz tarafından <strong>her 30 dakikada bir</strong> otomatik olarak toplanır;
+              son 60 günün haberleri listelenir. "Ödeme hesabınıza yatacak" gibi dolandırıcılık kalıbındaki başlıklar otomatik olarak elenir.
+              Haberler üçüncü taraf sitelere aittir — tutar ve koşullar için her zaman programın resmi sayfasını kontrol edin.
             </p>
           </div>
         </div>
