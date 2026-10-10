@@ -10,6 +10,7 @@ import IsPlani from './components/IsPlani';
 import NakitAkisi from './components/NakitAkisi';
 import BilgiSayfasi from './components/BilgiSayfasi';
 import Navbar from './components/Navbar';
+import HatirlatmaBandi from './components/HatirlatmaBandi';
 import DestekSorulari, { SecimOzeti } from './components/DestekSorulari';
 import FortunoLogo from './components/FortunoLogo';
 import { supportData, basvuruTakvimi, etkinlikler, ulusalIstatistikler, SON_KONTROL } from './data';
@@ -456,6 +457,7 @@ export default function App({ user, onLogout }) {
         user={user}
         onLogout={onLogout}
       />
+      <HatirlatmaBandi dark={dark} onPanoyaGit={() => goToSection('takip')} />
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       {showSihirbaz && (
@@ -686,6 +688,10 @@ export default function App({ user, onLogout }) {
                           href={item.link}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={() => {
+                            // takipteyse sonra "başvurunu tamamladın mı?" diye sorulsun
+                            if (takiptekiler.includes(`p-${item.id}`)) api.kanban.resmiSayfaAcildi(`p-${item.id}`).catch(() => {});
+                          }}
                           className="w-full text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-[#1E293B] text-white hover:opacity-90 shadow-md"
                         >
                           Resmi sayfada başvur <ExternalLink className="w-3.5 h-3.5" />

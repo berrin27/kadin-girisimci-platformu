@@ -9,6 +9,9 @@ export class ApiError extends Error {
   }
 }
 
+// Pano başka bir yerden (ör. "başvurdun mu?" hatırlatması) değişince Başvurularım yenilensin
+export const KANBAN_GUNCELLENDI = 'fortuno-kanban-guncellendi';
+
 // Oturum düştüğünde (401) AuthGate'e haber vermek için
 const UNAUTHORIZED_EVENT = 'fortuno-unauthorized';
 export const onUnauthorized = (handler) => {
@@ -59,6 +62,9 @@ export const api = {
     get: () => get('/kanban'),
     save: (cards) => put('/kanban', { cards }),
     add: (kart) => post('/kanban/kart', kart),
+    resmiSayfaAcildi: (id) => post(`/kanban/kart/${encodeURIComponent(id)}/resmi-sayfa`),
+    hatirlatmalar: () => get('/kanban/hatirlatmalar'),
+    hatirlatmaCevap: (id, basvurdum, tarih) => post(`/kanban/kart/${encodeURIComponent(id)}/hatirlatma-cevap`, { basvurdum, tarih }),
   },
   favorites: {
     list: (kind) => get(`/favorites/${kind}`),

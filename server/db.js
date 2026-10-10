@@ -150,6 +150,14 @@ const MIGRATIONS = [
   ALTER TABLE kanban_cards ADD COLUMN basvuru_tarihi TEXT NOT NULL DEFAULT '';
   DELETE FROM kanban_cards WHERE id IN ('k1', 'k2', 'k3', 'k4', 'k5');
   `,
+
+  // 6 — pano 3 sütuna indi (Planlıyorum · Başvurdum · Sonuç); "resmi sayfayı
+  // açtı" zamanı, "başvurunu tamamladın mı?" hatırlatması için saklanır.
+  `
+  UPDATE kanban_cards SET column_id = 'arastirma' WHERE column_id = 'hazirlik';
+  UPDATE kanban_cards SET column_id = 'basvuruldu' WHERE column_id = 'beklemede';
+  ALTER TABLE kanban_cards ADD COLUMN resmi_sayfa_acildi TEXT NOT NULL DEFAULT '';
+  `,
 ];
 
 function migrate() {

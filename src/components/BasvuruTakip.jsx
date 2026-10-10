@@ -5,18 +5,16 @@ import {
   TrendingUp, Award, Clock, Filter, Search, Star, StarOff,
   Kanban, List, BarChart3, Flame, Zap, Target, Loader2, ExternalLink, ArrowLeft, ArrowRight
 } from 'lucide-react';
-import { api } from '../api';
+import { api, KANBAN_GUNCELLENDI } from '../api';
 
 // Başvurular kurumların resmi sayfalarından yapılır; bu pano kullanıcının
 // kendi ilerlemesini takip etmesi içindir. Kartları kullanıcı kendisi taşır.
 const COLUMNS = [
-  { id: 'arastirma',  label: 'İlgileniyorum',     emoji: '🔖', color: '#3b82f6', bg: '#eff6ff' },
-  { id: 'hazirlik',   label: 'Hazırlanıyorum',    emoji: '📝', color: '#f59e0b', bg: '#fffbeb' },
-  { id: 'basvuruldu', label: 'Başvurdum',         emoji: '📤', color: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'beklemede',  label: 'Sonuç bekliyorum',  emoji: '⏳', color: '#f97316', bg: '#fff7ed' },
-  { id: 'sonuc',      label: 'Sonuçlandı',        emoji: '✅', color: '#22c55e', bg: '#f0fdf4' },
+  { id: 'arastirma',  label: 'Planlıyorum', emoji: '📝', color: '#3b82f6', bg: '#eff6ff', aciklama: 'İlgilendiğin, hazırlandığın programlar' },
+  { id: 'basvuruldu', label: 'Başvurdum',   emoji: '📤', color: '#8b5cf6', bg: '#f5f3ff', aciklama: 'Başvurusu yapıldı, sonuç bekleniyor' },
+  { id: 'sonuc',      label: 'Sonuç',       emoji: '✅', color: '#22c55e', bg: '#f0fdf4', aciklama: 'Kabul ya da ret cevabı geldi' },
 ];
-const BASVURU_SONRASI = ['basvuruldu', 'beklemede', 'sonuc'];
+const BASVURU_SONRASI = ['basvuruldu', 'sonuc'];
 const bugunISO = bugunYerel;
 const kisaTarih = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
 const BOS_FORM = { title: '', institution: '', amount: '', column: 'arastirma', deadline: '', priority: 'orta', note: '', starred: false, sonuc: null, link: '', basvuruTarihi: '' };
@@ -43,9 +41,12 @@ export default function BasvuruTakip({ dark }) {
 
   // Pano sunucudan yüklenir; yeni kullanıcıda boştur (örnek/sahte kart gösterilmez).
   useEffect(() => {
-    api.kanban.get()
+    const yukle = () => api.kanban.get()
       .then(({ cards }) => { setCards(cards); setYuklendi(true); })
       .catch(err => setHata(`Pano yüklenemedi: ${err.message}`));
+    yukle();
+    window.addEventListener(KANBAN_GUNCELLENDI, yukle);
+    return () => window.removeEventListener(KANBAN_GUNCELLENDI, yukle);
   }, []);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
@@ -77,9 +78,21 @@ export default function BasvuruTakip({ dark }) {
 
   // Kartı başka sütuna taşı; ilk kez "Başvurdum" ve sonrasına geçerken başvuru tarihini kaydet
   const tasi = (id, colId) => save(cards.map(c => (c.id === id
-    ? { ...c, column: colId, basvuruTarihi: c.basvuruTarihi || (BASVURU_SONRASI.includes(colId) ? bugunISO() : '') }
+    ? {
+      ...c,
+      column: colId,
+      basvuruTarihi: c.basvuruTarihi || (BASVURU_SONRASI.includes(colId) ? bugunISO() : ''),
+      sonuc: colId === 'sonuc' ? c.sonuc : null,
+      resmiSayfaAcildi: colId === 'arastirma' ? c.resmiSayfaAcildi : '',
+    }
     : c)));
   const komsuSutun = (colId, yon) => COLUMNS[COLUMNS.findIndex(k => k.id === colId) + yon];
+  const sonucIsaretle = (id, sonuc) => save(cards.map(c => (c.id === id ? { ...c, sonuc } : c)));
+  // Planlıyorum'daki bir kartın resmi sayfası açılınca zamanı kaydet → sonra "başvurdun mu?" diye sorulur
+  const resmiSayfaAcildi = (kart) => {
+    if (kart.column !== 'arastirma') return;
+    save(cards.map(c => (c.id === kart.id ? { ...c, resmiSayfaAcildi: new Date().toISOString() } : c)));
+  };
   const onDragEnd = () => { setDraggingId(null); setDragOverCol(null); };
 
   const deleteCard  = (id) => save(cards.filter(c => c.id !== id));
@@ -119,7 +132,7 @@ export default function BasvuruTakip({ dark }) {
     const total = cards.length;
     const applied = cards.filter(c => BASVURU_SONRASI.includes(c.column)).length;
     const accepted = cards.filter(c => c.sonuc === 'kabul').length;
-    const pending = cards.filter(c => ['basvuruldu', 'beklemede'].includes(c.column)).length;
+    const pending = cards.filter(c => c.column === 'basvuruldu').length;
     // son günü yaklaşan: henüz başvurulmamış kartlar
     const urgent = cards.filter(c => { const d = daysLeft(c.deadline); return !BASVURU_SONRASI.includes(c.column) && d !== null && d >= 0 && d <= 14; }).length;
     return { total, applied, accepted, pending, urgent };
@@ -284,7 +297,7 @@ export default function BasvuruTakip({ dark }) {
                 key={col.id}
                 onDragOver={e => onDragOver(e, col.id)}
                 onDrop={e => onDrop(e, col.id)}
-                className={`flex-shrink-0 w-64 rounded-2xl border transition-all duration-200 ${colBg}
+                className={`flex-shrink-0 w-72 md:w-auto md:flex-1 rounded-2xl border transition-all duration-200 ${colBg}
                   ${isDragTarget ? 'ring-2 ring-[#1E293B] ring-offset-2 scale-[1.01] shadow-xl' : ''}`}
               >
                 {/* Column header */}
@@ -298,6 +311,7 @@ export default function BasvuruTakip({ dark }) {
                       {colCards.length}
                     </span>
                   </div>
+                  <p className={`text-[10px] ${sub}`}>{col.aciklama}</p>
                 </div>
 
                 {/* Cards */}
@@ -372,6 +386,13 @@ export default function BasvuruTakip({ dark }) {
                         {c.basvuruTarihi && BASVURU_SONRASI.includes(c.column) && (
                           <p className={`mt-2 text-[10px] font-semibold ${sub}`}>📤 Başvuru: {kisaTarih(c.basvuruTarihi)}</p>
                         )}
+                        {c.column === 'sonuc' && !c.sonuc && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <span className={`text-[10px] font-bold ${sub}`}>Sonuç:</span>
+                            <button type="button" onClick={() => sonucIsaretle(c.id, 'kabul')} className="rounded-md bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-200">✅ Kabul</button>
+                            <button type="button" onClick={() => sonucIsaretle(c.id, 'ret')} className="rounded-md bg-red-100 px-2 py-1 text-[10px] font-bold text-red-700 hover:bg-red-200">❌ Ret</button>
+                          </div>
+                        )}
                         {c.sonuc === 'kabul' && (
                           <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-emerald-500">
                             <Award className="w-3 h-3" /> Kabul Edildi!
@@ -383,7 +404,7 @@ export default function BasvuruTakip({ dark }) {
 
                         <div className={`mt-2.5 flex items-center justify-between gap-1 border-t pt-2 ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
                           {c.link ? (
-                            <a href={c.link} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-bold text-sky-600 hover:underline">
+                            <a href={c.link} target="_blank" rel="noreferrer" onClick={() => resmiSayfaAcildi(c)} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-bold text-sky-600 hover:underline">
                               Resmi sayfa <ExternalLink className="w-3 h-3" />
                             </a>
                           ) : <span />}

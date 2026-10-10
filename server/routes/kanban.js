@@ -8,7 +8,10 @@ import { str, oneOf, ValidationError } from '../validate.js';
 
 const router = Router();
 
-const COLUMNS = ['arastirma', 'hazirlik', 'basvuruldu', 'beklemede', 'sonuc'];
+// Planlıyorum · Başvurdum · Sonuç
+const COLUMNS = ['arastirma', 'basvuruldu', 'sonuc'];
+// resmi sayfa açıldıktan sonra sormadan önce beklenen süre (dakika)
+const HATIRLATMA_GECIKME_DK = Number(process.env.HATIRLATMA_GECIKME_DK ?? 2);
 const PRIORITIES = ['yuksek', 'orta', 'dusuk'];
 const SONUCLAR = ['kabul', 'ret'];
 const MAX_CARDS = 200;
@@ -28,6 +31,7 @@ export function toCard(r) {
     color: r.color,
     link: r.link,
     basvuruTarihi: r.basvuru_tarihi,
+    resmiSayfaAcildi: r.resmi_sayfa_acildi,
   };
 }
 
@@ -72,6 +76,7 @@ router.put('/', (req, res) => {
     color: str(c?.color, { max: 20, field: 'Renk' }),
     link: temizLink(c?.link),
     basvuruTarihi: temizTarih(c?.basvuruTarihi, 'Başvuru tarihi'),
+    resmiSayfaAcildi: c?.column === 'arastirma' ? str(c?.resmiSayfaAcildi, { max: 30, field: 'Hatırlatma' }) : '',
   }));
 
   const ids = new Set(cards.map(c => c.id));
@@ -79,15 +84,15 @@ router.put('/', (req, res) => {
 
   const insert = db.prepare(`
     INSERT INTO kanban_cards (user_id, id, title, institution, amount, column_id, deadline,
-                              priority, note, starred, sonuc, color, position, link, basvuru_tarihi)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              priority, note, starred, sonuc, color, position, link, basvuru_tarihi, resmi_sayfa_acildi)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   transaction(() => {
     db.prepare('DELETE FROM kanban_cards WHERE user_id = ?').run(req.userId);
     cards.forEach((c, i) => insert.run(
       req.userId, c.id, c.title, c.institution, c.amount, c.column, c.deadline,
-      c.priority, c.note, c.starred, c.sonuc, c.color, i, c.link, c.basvuruTarihi,
+      c.priority, c.note, c.starred, c.sonuc, c.color, i, c.link, c.basvuruTarihi, c.resmiSayfaAcildi,
     ));
     db.prepare('UPDATE users SET kanban_initialized = 1 WHERE id = ?').run(req.userId);
   });
@@ -123,6 +128,45 @@ router.post('/kart', (req, res) => {
     db.prepare('UPDATE users SET kanban_initialized = 1 WHERE id = ?').run(req.userId);
   });
   res.status(201).json({ card: toCard(db.prepare('SELECT * FROM kanban_cards WHERE user_id = ? AND id = ?').get(req.userId, id)) });
+});
+
+// ── "Başvurunu tamamladın mı?" hatırlatması ──────────────────────────────────
+// Kullanıcı Planlıyorum'daki bir programın resmi sayfasını açınca zaman kaydedilir;
+// birkaç dakika sonra siteye döndüğünde sorulur.
+const kartiGetir = (userId, id) => db.prepare('SELECT * FROM kanban_cards WHERE user_id = ? AND id = ?').get(userId, id);
+
+router.post('/kart/:id/resmi-sayfa', (req, res) => {
+  const kart = kartiGetir(req.userId, req.params.id);
+  if (!kart) return res.status(404).json({ error: 'Kart bulunamadı.' });
+  if (kart.column_id === 'arastirma') {
+    db.prepare('UPDATE kanban_cards SET resmi_sayfa_acildi = ? WHERE user_id = ? AND id = ?')
+      .run(new Date().toISOString(), req.userId, kart.id);
+  }
+  res.json({ card: toCard(kartiGetir(req.userId, kart.id)) });
+});
+
+router.get('/hatirlatmalar', (req, res) => {
+  const sinir = new Date(Date.now() - HATIRLATMA_GECIKME_DK * 60_000).toISOString();
+  const rows = db.prepare(`
+    SELECT * FROM kanban_cards
+    WHERE user_id = ? AND column_id = 'arastirma' AND resmi_sayfa_acildi != '' AND resmi_sayfa_acildi <= ?
+    ORDER BY resmi_sayfa_acildi
+  `).all(req.userId, sinir);
+  res.json({ cards: rows.map(toCard) });
+});
+
+// basvurdum: true → kart Başvurdum'a taşınır (tarih istemciden: kullanıcının yerel günü)
+router.post('/kart/:id/hatirlatma-cevap', (req, res) => {
+  const kart = kartiGetir(req.userId, req.params.id);
+  if (!kart) return res.status(404).json({ error: 'Kart bulunamadı.' });
+  if (req.body?.basvurdum === true) {
+    const tarih = temizTarih(req.body?.tarih, 'Başvuru tarihi') || new Date().toISOString().slice(0, 10);
+    db.prepare(`UPDATE kanban_cards SET column_id = 'basvuruldu', basvuru_tarihi = ?, resmi_sayfa_acildi = '' WHERE user_id = ? AND id = ?`)
+      .run(kart.basvuru_tarihi || tarih, req.userId, kart.id);
+  } else {
+    db.prepare(`UPDATE kanban_cards SET resmi_sayfa_acildi = '' WHERE user_id = ? AND id = ?`).run(req.userId, kart.id);
+  }
+  res.json({ card: toCard(kartiGetir(req.userId, kart.id)) });
 });
 
 export default router;
