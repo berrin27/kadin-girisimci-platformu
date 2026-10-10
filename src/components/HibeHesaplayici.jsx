@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supportData } from '../data';
+import { api } from '../api';
 import { Calculator, ArrowRight, ArrowLeft, Sparkles, RotateCcw, ExternalLink } from 'lucide-react';
 
 // ── Seçenekler (Destek Sihirbazı ile aynı) ───────────────────────────────────
+const SEKTOR_OPTS = [
+  ['ev_emegi', '🏠 Ev Emeği & Mikro Üretim'],
+  ['yerel_isletme', '🏪 Yerel İşletme'],
+  ['teknoloji', '💻 Teknoloji & Yazılım'],
+  ['e_ticaret', '🛒 E-Ticaret & İhracat'],
+  ['kooperatif', '🤝 Kadın Kooperatifi'],
+  ['sosyal_girisim', '💚 Sosyal Girişim'],
+  ['kırsal', '🌾 Kırsal / Tarım'],
+];
+
 const PROFIL_OPTS = [
   ['genc_uni', '🎓 18-25 Yaş'],
   ['genc_girisimci', '💼 26-35 Yaş'],
@@ -73,6 +84,21 @@ export default function HibeHesaplayici({ dark }) {
   const [asama, setAsama] = useState('');
   const [aylikGelir, setAylikGelir] = useState(0);
   const [result, setResult] = useState(null);
+  const [profildenDolu, setProfildenDolu] = useState(false);
+
+  // Profil doluysa seçimleri önceden işaretle (yalnızca boş olanları; değiştirilebilir)
+  useEffect(() => {
+    api.profile.get().then(({ profile }) => {
+      const gecerli = (deger, liste) => (liste.some(([v]) => v === deger) ? deger : '');
+      const s = gecerli(profile.sektor, SEKTOR_OPTS);
+      const p = gecerli(profile.profilTipi, PROFIL_OPTS);
+      const a = gecerli(profile.asama, ASAMA_OPTS);
+      if (s) setSektor(mevcut => mevcut || s);
+      if (p) setProfil(mevcut => mevcut || p);
+      if (a) setAsama(mevcut => mevcut || a);
+      if (s || p || a) setProfildenDolu(true);
+    }).catch(() => {});
+  }, []);
 
   const card   = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-100';
   const text   = dark ? 'text-slate-100' : 'text-[#0f172a]';
@@ -126,19 +152,14 @@ export default function HibeHesaplayici({ dark }) {
         {step === 1 && (
           <div className="space-y-5 animate-[fadeUp_0.4s_ease]">
             <h3 className={`font-bold text-base ${text}`}>Girişiminizi tanımlayın</h3>
+            {profildenDolu && (
+              <p className={`-mt-3 text-xs ${sub}`}>✨ Seçimler profilinden dolduruldu — istersen değiştirebilirsin.</p>
+            )}
 
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${sub}`}>Sektör</p>
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  ['ev_emegi', '🏠 Ev Emeği & Mikro Üretim'],
-                  ['yerel_isletme', '🏪 Yerel İşletme'],
-                  ['teknoloji', '💻 Teknoloji & Yazılım'],
-                  ['e_ticaret', '🛒 E-Ticaret & İhracat'],
-                  ['kooperatif', '🤝 Kadın Kooperatifi'],
-                  ['sosyal_girisim', '💚 Sosyal Girişim'],
-                  ['kırsal', '🌾 Kırsal / Tarım'],
-                ].map(([val, label]) => (
+                {SEKTOR_OPTS.map(([val, label]) => (
                   <SelectBtn key={val} selected={sektor === val} onClick={() => setSektor(val)} dark={dark}>
                     {label}
                   </SelectBtn>

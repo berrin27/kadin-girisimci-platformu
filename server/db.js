@@ -112,6 +112,19 @@ const MIGRATIONS = [
   );
   CREATE INDEX idx_news_tarih ON news_items(yayin_tarihi DESC);
   `,
+
+  // 3 — kullanıcıların iş planı taslakları (her kullanıcı birden fazla plan tutabilir)
+  `
+  CREATE TABLE business_plans (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sablon     TEXT NOT NULL DEFAULT 'onePage',
+    veri       TEXT NOT NULL DEFAULT '{}',   -- form alanları (JSON)
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_plans_user ON business_plans(user_id, updated_at DESC);
+  `,
 ];
 
 function migrate() {

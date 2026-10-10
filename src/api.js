@@ -73,6 +73,12 @@ export const api = {
     send: (message, { useHistory = true } = {}) => post('/chat', { message, useHistory }),
     clear: () => del('/chat'),
   },
+  plans: {
+    list: () => get('/plans'),
+    create: (plan = {}) => post('/plans', plan),
+    save: (id, plan) => put(`/plans/${id}`, plan),
+    remove: (id) => del(`/plans/${id}`),
+  },
   news: {
     list: (kategori) => get(`/news${kategori ? `?kategori=${encodeURIComponent(kategori)}` : ''}`),
   },
