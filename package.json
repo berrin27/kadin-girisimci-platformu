@@ -10,7 +10,8 @@
     "build": "vite build",
     "start": "NODE_ENV=production node --env-file-if-exists=.env server/index.js",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:programs": "node scripts/check-programs.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
