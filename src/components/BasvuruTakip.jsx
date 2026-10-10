@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Plus, X, Check, ChevronRight, Calendar, AlertTriangle,
   TrendingUp, Award, Clock, Filter, Search, Star, StarOff,
-  Kanban, List, BarChart3, Flame, Zap, Target
+  Kanban, List, BarChart3, Flame, Zap, Target, Loader2
 } from 'lucide-react';
+import { api } from '../api';
 
 const COLUMNS = [
   { id: 'arastirma',  label: 'Araştırılıyor', emoji: '🔍', color: '#3b82f6', bg: '#eff6ff' },
@@ -80,10 +81,17 @@ const formatAmount = (n) => {
 };
 
 export default function BasvuruTakip({ dark }) {
-  const [cards, setCards] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('fortuno-kanban-v2') || 'null') || INITIAL_CARDS; }
-    catch { return INITIAL_CARDS; }
-  });
+  const [cards, setCards] = useState([]);
+  const [yuklendi, setYuklendi] = useState(false);
+  const [hata, setHata] = useState('');
+  const kayitSirasi = useRef(Promise.resolve());
+
+  // Pano sunucudan yüklenir; hiç kaydedilmemişse örnek kartlar gösterilir.
+  useEffect(() => {
+    api.kanban.get()
+      .then(({ initialized, cards }) => { setCards(initialized ? cards : INITIAL_CARDS); setYuklendi(true); })
+      .catch(err => setHata(`Pano yüklenemedi: ${err.message}`));
+  }, []);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -96,9 +104,14 @@ export default function BasvuruTakip({ dark }) {
     deadline: '', priority: 'orta', note: '', starred: false, sonuc: null,
   });
 
+  // Kayıtlar sırayla gönderilir — hızlı sürükle-bırakta eski durum yenisini ezmesin.
   const save = (updated) => {
+    if (!yuklendi) return;
     setCards(updated);
-    try { localStorage.setItem('fortuno-kanban-v2', JSON.stringify(updated)); } catch { }
+    kayitSirasi.current = kayitSirasi.current
+      .then(() => api.kanban.save(updated))
+      .then(() => setHata(''))
+      .catch(err => setHata(`Değişiklik kaydedilemedi: ${err.message}`));
   };
 
   // ── Drag & Drop
@@ -157,16 +170,32 @@ export default function BasvuruTakip({ dark }) {
   const colBg    = dark ? 'bg-slate-900/50 border-slate-700/60' : 'bg-slate-50/80 border-slate-200';
   const text     = dark ? 'text-slate-100' : 'text-[#0f172a]';
   const sub      = dark ? 'text-slate-400' : 'text-slate-500';
-  const inputCls = `w-full p-3 border rounded-xl text-sm font-medium focus:outline-none focus:ring-2 transition ${dark ? 'bg-slate-800 border-slate-600 text-white focus:ring-purple-400 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-purple-500'}`;
+  const inputCls = `w-full p-3 border rounded-xl text-sm font-medium focus:outline-none focus:ring-2 transition ${dark ? 'bg-slate-800 border-slate-600 text-white focus:ring-[#F3D5D8] placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-[#F3D5D8]'}`;
+
+  if (!yuklendi) {
+    return (
+      <div className={`flex flex-col items-center justify-center gap-3 py-24 text-sm ${sub}`}>
+        {hata
+          ? <><AlertTriangle className="w-6 h-6 text-red-500" /> {hata}</>
+          : <Loader2 className="w-6 h-6 animate-spin" />}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+
+      {hata && (
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          <AlertTriangle className="w-4 h-4 shrink-0" /> {hata}
+        </div>
+      )}
 
       {/* ── HEADER ─────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <div className="w-10 h-10 rounded-2xl bg-[#1E293B] flex items-center justify-center shadow-lg shadow-slate-500/20">
               <Kanban className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -188,7 +217,7 @@ export default function BasvuruTakip({ dark }) {
                 onClick={() => setView(v.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all ${
                   view === v.id
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm'
+                    ? 'bg-[#1E293B] text-white shadow-sm'
                     : dark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -198,7 +227,7 @@ export default function BasvuruTakip({ dark }) {
           </div>
           <button
             onClick={openAdd}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm shadow-lg shadow-purple-500/30 hover:opacity-90 transition hover:scale-105 active:scale-95"
+            className="bg-[#1E293B] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm shadow-lg shadow-slate-500/20 hover:opacity-90 transition hover:scale-105 active:scale-95"
           >
             <Plus className="w-4 h-4" /> Yeni Başvuru
           </button>
@@ -208,10 +237,10 @@ export default function BasvuruTakip({ dark }) {
       {/* ── İSTATİSTİK KARTLARI ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Toplam Başvuru', value: stats.total, sub: 'program takipte', icon: <Target className="w-5 h-5" />, grad: 'from-purple-500 to-purple-700', glow: 'shadow-purple-500/25' },
+          { label: 'Toplam Başvuru', value: stats.total, sub: 'program takipte', icon: <Target className="w-5 h-5" />, grad: 'from-slate-600 to-slate-800', glow: 'shadow-slate-500/20' },
           { label: 'Toplam Potansiyel', value: formatAmount(stats.totalAmount), sub: 'hibe tutarı', icon: <TrendingUp className="w-5 h-5" />, grad: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/25' },
           { label: 'Değerlendirmede', value: stats.pending, sub: 'başvuru bekliyor', icon: <Clock className="w-5 h-5" />, grad: 'from-orange-500 to-amber-600', glow: 'shadow-orange-500/25' },
-          { label: 'Acil Deadline', value: stats.urgent, sub: '14 gün içinde', icon: <Flame className="w-5 h-5" />, grad: 'from-red-500 to-pink-600', glow: 'shadow-red-500/25' },
+          { label: 'Acil Deadline', value: stats.urgent, sub: '14 gün içinde', icon: <Flame className="w-5 h-5" />, grad: 'from-red-500 to-rose-600', glow: 'shadow-red-500/25' },
         ].map((s, i) => (
           <div key={i} className={`${cardBase} border rounded-2xl p-4 shadow-lg ${s.glow} relative overflow-hidden`}>
             <div className={`absolute top-0 right-0 w-20 h-20 rounded-full bg-gradient-to-br ${s.grad} opacity-10 -translate-y-6 translate-x-6`} />
@@ -244,7 +273,7 @@ export default function BasvuruTakip({ dark }) {
               onClick={() => setFilterPriority(p)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 filterPriority === p
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm'
+                  ? 'bg-[#1E293B] text-white shadow-sm'
                   : dark ? 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -269,7 +298,7 @@ export default function BasvuruTakip({ dark }) {
                 onDragOver={e => onDragOver(e, col.id)}
                 onDrop={e => onDrop(e, col.id)}
                 className={`flex-shrink-0 w-64 rounded-2xl border transition-all duration-200 ${colBg}
-                  ${isDragTarget ? 'ring-2 ring-purple-500 ring-offset-2 scale-[1.01] shadow-xl' : ''}`}
+                  ${isDragTarget ? 'ring-2 ring-[#1E293B] ring-offset-2 scale-[1.01] shadow-xl' : ''}`}
               >
                 {/* Column header */}
                 <div className={`px-3 pt-3 pb-2 border-b ${dark ? 'border-slate-700/60' : 'border-slate-200'}`}>
@@ -374,7 +403,7 @@ export default function BasvuruTakip({ dark }) {
                     <div
                       className={`flex flex-col items-center justify-center h-24 text-xs font-medium rounded-xl border-2 border-dashed transition gap-1
                         ${isDragTarget
-                          ? 'border-purple-400 text-purple-400 bg-purple-50/50'
+                          ? 'border-[#1E293B] text-[#1E293B] bg-[#F3D5D8]/40'
                           : dark ? 'border-slate-700 text-slate-600' : 'border-slate-200 text-slate-300'}`}
                     >
                       <span className="text-lg">{col.emoji}</span>
@@ -413,7 +442,7 @@ export default function BasvuruTakip({ dark }) {
               return (
                 <div
                   key={c.id}
-                  className={`grid grid-cols-12 px-4 py-3 items-center hover:${dark ? 'bg-slate-800/40' : 'bg-purple-50/40'} transition group cursor-pointer`}
+                  className={`grid grid-cols-12 px-4 py-3 items-center hover:${dark ? 'bg-slate-800/40' : 'bg-[#F8F3F4]'} transition group cursor-pointer`}
                   onClick={() => openEdit(c)}
                 >
                   <div className="col-span-5 flex items-center gap-2.5">
@@ -461,7 +490,7 @@ export default function BasvuruTakip({ dark }) {
           {/* Durum dağılımı */}
           <div className={`${cardBase} border rounded-2xl p-5 shadow-lg`}>
             <h3 className={`font-black text-sm mb-4 flex items-center gap-2 ${text}`}>
-              <BarChart3 className="w-4 h-4 text-purple-500" /> Durum Dağılımı
+              <BarChart3 className="w-4 h-4 text-[#1E293B]" /> Durum Dağılımı
             </h3>
             <div className="space-y-3">
               {COLUMNS.map(col => {
@@ -571,7 +600,7 @@ export default function BasvuruTakip({ dark }) {
             style={{ animation: 'fadeUp 0.25s ease' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-[#1E293B] flex items-center justify-center">
                   {editCard ? <ChevronRight className="w-4 h-4 text-white" /> : <Plus className="w-4 h-4 text-white" />}
                 </div>
                 <h3 className={`font-black text-lg ${text}`}>{editCard ? 'Başvuruyu Düzenle' : 'Yeni Başvuru Ekle'}</h3>
@@ -652,7 +681,7 @@ export default function BasvuruTakip({ dark }) {
                 <button
                   onClick={submitForm}
                   disabled={!form.title.trim()}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-xl font-bold text-sm disabled:opacity-40 hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30"
+                  className="flex-1 bg-[#1E293B] text-white p-3 rounded-xl font-bold text-sm disabled:opacity-40 hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-slate-500/20"
                 >
                   <Check className="w-4 h-4" /> {editCard ? 'Güncelle' : 'Ekle'}
                 </button>

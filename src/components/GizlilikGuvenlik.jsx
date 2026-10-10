@@ -1,27 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, Download, Trash2, Eye, EyeOff, CheckCircle2, AlertTriangle, FileText, Key, Database, RefreshCw } from 'lucide-react';
-import { tumVerileriSil, verileriDisaAktar, guvenliOku } from '../crypto';
+import { Shield, Lock, Download, Trash2, Eye, EyeOff, CheckCircle2, AlertTriangle, FileText, Key, Database, Cookie, Loader2 } from 'lucide-react';
+import { api } from '../api';
 
-export default function GizlilikGuvenlik({ dark }) {
+export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
   const [veriler, setVeriler] = useState(null);
   const [goster, setGoster] = useState(false);
   const [silOnay, setSilOnay] = useState(false);
-  const [silindi, setSilindi] = useState(false);
+  const [silSifre, setSilSifre] = useState('');
+  const [siliniyor, setSiliniyor] = useState(false);
+  const [hata, setHata] = useState('');
   const [indirildi, setIndirildi] = useState(false);
   const [profilVar, setProfilVar] = useState(false);
   const [basvuruSayisi, setBasvuruSayisi] = useState(0);
 
   // ── Veri durumunu kontrol et ───────────────────────────────────────────────
   useEffect(() => {
-    async function kontrol() {
-      const profil = await guvenliOku('fortuno-profil');
-      setProfilVar(!!(profil && profil.ad));
-      try {
-        const basvurular = JSON.parse(localStorage.getItem('fortuno-basvurular') || '[]');
-        setBasvuruSayisi(basvurular.length);
-      } catch { setBasvuruSayisi(0); }
-    }
-    kontrol();
+    api.profile.get().then(({ profile }) => setProfilVar(!!profile.ad)).catch(() => {});
+    api.applications.list().then(({ applications }) => setBasvuruSayisi(applications.length)).catch(() => {});
   }, []);
 
   // ── Verileri Görüntüle ─────────────────────────────────────────────────────
@@ -29,16 +24,27 @@ export default function GizlilikGuvenlik({ dark }) {
     if (goster) {
       setGoster(false);
       setVeriler(null);
-    } else {
-      const data = await verileriDisaAktar();
-      setVeriler(data);
+      return;
+    }
+    try {
+      setVeriler(await api.account.exportData());
       setGoster(true);
+      setHata('');
+    } catch (err) {
+      setHata(err.message);
     }
   };
 
   // ── Verileri İndir (JSON) ──────────────────────────────────────────────────
   const handleIndir = async () => {
-    const data = await verileriDisaAktar();
+    let data;
+    try {
+      data = await api.account.exportData();
+      setHata('');
+    } catch (err) {
+      setHata(err.message);
+      return;
+    }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -52,15 +58,18 @@ export default function GizlilikGuvenlik({ dark }) {
     setTimeout(() => setIndirildi(false), 3000);
   };
 
-  // ── Tüm Verileri Sil ──────────────────────────────────────────────────────
-  const handleSil = () => {
-    tumVerileriSil();
-    setSilindi(true);
-    setSilOnay(false);
-    setProfilVar(false);
-    setBasvuruSayisi(0);
-    setVeriler(null);
-    setGoster(false);
+  // ── Hesabı ve Tüm Verileri Sil ────────────────────────────────────────────
+  const handleSil = async () => {
+    if (!silSifre) return;
+    setSiliniyor(true);
+    setHata('');
+    try {
+      await api.account.remove(silSifre);
+      onHesapSilindi?.();
+    } catch (err) {
+      setHata(err.message);
+      setSiliniyor(false);
+    }
   };
 
   // ── Stiller ────────────────────────────────────────────────────────────────
@@ -81,18 +90,18 @@ export default function GizlilikGuvenlik({ dark }) {
           Verileriniz Güvende 🔒
         </h2>
         <p className={`max-w-2xl mx-auto text-base ${sub}`}>
-          Fortuno, verilerinizi <strong className={dark ? 'text-emerald-400' : 'text-emerald-700'}>AES-256-GCM şifreleme</strong> ile korur.
-          Hiçbir veri sunucuya gönderilmez — her şey cihazınızda kalır.
+          Verileriniz <strong className={dark ? 'text-emerald-400' : 'text-emerald-700'}>yalnızca size ait hesabınızda</strong> saklanır.
+          Dilediğiniz an görüntüleyebilir, indirebilir veya kalıcı olarak silebilirsiniz.
         </p>
       </div>
 
       {/* ── Güvenlik Durumu Kartları ───────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { ikon: '🔐', label: 'Şifreleme', deger: 'AES-256', renk: '#10b981' },
-          { ikon: '🏠', label: 'Depolama', deger: 'Yerel Cihaz', renk: '#3b82f6' },
-          { ikon: '🚫', label: 'Sunucu', deger: 'Veri Gönderilmez', renk: '#8b5cf6' },
-          { ikon: '📋', label: 'KVKK', deger: 'Uyumlu', renk: '#f59e0b' },
+          { ikon: '🔐', label: 'Şifreler', deger: 'scrypt Hash', renk: '#10b981' },
+          { ikon: '🍪', label: 'Oturum', deger: 'httpOnly Çerez', renk: '#3b82f6' },
+          { ikon: '👤', label: 'Erişim', deger: 'Sadece Siz', renk: '#8b5cf6' },
+          { ikon: '📋', label: 'KVKK', deger: 'İndir & Sil', renk: '#f59e0b' },
         ].map((s, i) => (
           <div key={i} className={`${card} border rounded-2xl p-4 text-center shadow`}>
             <div className="text-2xl mb-1">{s.ikon}</div>
@@ -110,24 +119,24 @@ export default function GizlilikGuvenlik({ dark }) {
         <div className="space-y-3">
           {[
             {
-              ikon: <Key className="w-5 h-5 text-purple-500" />,
-              baslik: 'AES-256-GCM Şifreleme',
-              aciklama: 'Tüm kişisel verileriniz (ad, soyad, telefon, yaş) tarayıcınızın Web Crypto API\'si ile AES-256-GCM algoritması kullanılarak şifrelenir. Bu, askeri düzeyde şifreleme standardıdır.',
+              ikon: <Key className="w-5 h-5 text-[#1E293B]" />,
+              baslik: 'Şifreleriniz Okunamaz',
+              aciklama: 'Şifreniz hiçbir zaman açık haliyle saklanmaz; rastgele tuz (salt) eklenerek scrypt algoritmasıyla geri döndürülemez şekilde hash\'lenir. Biz dahil kimse şifrenizi göremez.',
             },
             {
-              ikon: <Database className="w-5 h-5 text-blue-500" />,
-              baslik: 'Sadece Yerel Depolama',
-              aciklama: 'Verileriniz yalnızca sizin cihazınızın localStorage\'ında saklanır. Hiçbir sunucuya, bulut hizmetine veya üçüncü tarafa gönderilmez.',
+              ikon: <Cookie className="w-5 h-5 text-blue-500" />,
+              baslik: 'Güvenli Oturum',
+              aciklama: 'Oturumunuz, JavaScript\'in erişemediği httpOnly bir çerezle taşınır ve 7 gün sonra kendiliğinden sona erer. Giriş denemeleri kaba kuvvet saldırılarına karşı sınırlandırılır.',
             },
             {
-              ikon: <Shield className="w-5 h-5 text-emerald-500" />,
-              baslik: 'Otomatik Anahtar Üretimi',
-              aciklama: 'İlk kullanımda benzersiz bir 256-bit şifreleme anahtarı otomatik üretilir ve cihazınızda saklanır. Her cihaz farklı anahtara sahiptir.',
+              ikon: <Database className="w-5 h-5 text-emerald-500" />,
+              baslik: 'Hesaba Bağlı Veri',
+              aciklama: 'Profiliniz, başvurularınız, takip panonuz, favorileriniz ve sohbet geçmişiniz sunucumuzdaki veritabanında yalnızca sizin hesabınızla ilişkilendirilerek saklanır. Başka kullanıcılar erişemez.',
             },
             {
-              ikon: <RefreshCw className="w-5 h-5 text-amber-500" />,
-              baslik: 'Geriye Dönük Uyumluluk',
-              aciklama: 'Eski şifrelenmemiş veriler otomatik algılanır ve yeni kayıtlarda şifreli formata dönüştürülür.',
+              ikon: <Shield className="w-5 h-5 text-amber-500" />,
+              baslik: 'Yapay Zekâ Sohbeti',
+              aciklama: 'FortunoAI\'ye yazdığınız mesajlar, yanıt üretilebilmesi için Google Gemini servisine iletilir. Sohbete kimlik numarası, banka bilgisi gibi hassas veriler yazmamanızı öneririz.',
             },
           ].map((item, i) => (
             <div key={i} className={`${detayBg} border rounded-xl p-4 flex items-start gap-3`}>
@@ -186,9 +195,9 @@ export default function GizlilikGuvenlik({ dark }) {
               <p className={`text-sm font-black ${text}`}>{basvuruSayisi} adet</p>
             </div>
             <div>
-              <p className={`text-xs font-bold ${sub}`}>Şifreleme</p>
+              <p className={`text-xs font-bold ${sub}`}>Oturum</p>
               <p className="text-sm font-black text-emerald-500 flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5" /> Aktif
+                <Lock className="w-3.5 h-3.5" /> Güvenli
               </p>
             </div>
           </div>
@@ -214,38 +223,47 @@ export default function GizlilikGuvenlik({ dark }) {
             {indirildi ? 'İndirildi! ✓' : 'Verilerimi İndir (JSON)'}
           </button>
 
-          {/* Tüm Verileri Sil */}
-          {!silOnay ? (
+          {/* Hesabı Sil */}
+          {!silOnay && (
             <button
               onClick={() => setSilOnay(true)}
               className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition bg-red-600 hover:bg-red-700 text-white"
             >
-              <Trash2 className="w-4 h-4" /> Tüm Verilerimi Sil
+              <Trash2 className="w-4 h-4" /> Hesabımı ve Tüm Verilerimi Sil
             </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-red-500 text-xs font-bold flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4" /> Emin misiniz?
-              </span>
+          )}
+        </div>
+
+        {silOnay && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="text-red-700 text-xs font-bold flex items-center gap-1 mb-3">
+              <AlertTriangle className="w-4 h-4" /> Hesabınız ve tüm verileriniz kalıcı olarak silinecek. Bu işlem geri alınamaz.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="password" autoComplete="current-password" value={silSifre}
+                onChange={e => setSilSifre(e.target.value)} placeholder="Onay için şifreniz"
+                className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-300"
+              />
               <button
-                onClick={handleSil}
-                className="text-xs font-bold px-4 py-2 rounded-lg bg-red-700 text-white hover:bg-red-800 transition"
+                onClick={handleSil} disabled={!silSifre || siliniyor}
+                className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg bg-red-700 text-white hover:bg-red-800 transition disabled:opacity-50"
               >
-                Evet, Hepsini Sil
+                {siliniyor && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Evet, Kalıcı Olarak Sil
               </button>
               <button
-                onClick={() => setSilOnay(false)}
+                onClick={() => { setSilOnay(false); setSilSifre(''); setHata(''); }}
                 className={`text-xs font-bold px-4 py-2 rounded-lg transition ${dark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}
               >
                 Vazgeç
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {silindi && (
-          <div className="mt-4 bg-emerald-100 text-emerald-800 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> Tüm verileriniz başarıyla silindi. Sayfa yenilendikten sonra sıfırdan başlayabilirsiniz.
+        {hata && (
+          <div className="mt-4 bg-red-100 text-red-800 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" /> {hata}
           </div>
         )}
 
@@ -253,7 +271,7 @@ export default function GizlilikGuvenlik({ dark }) {
         {goster && veriler && (
           <div className={`mt-4 border rounded-xl overflow-hidden ${dark ? 'border-slate-700' : 'border-slate-200'}`}>
             <div className={`px-4 py-2 text-xs font-bold ${dark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-              📋 Kayıtlı Verileriniz (şifresi çözülmüş hali)
+              📋 Hesabınızda Kayıtlı Verileriniz
             </div>
             <pre className={`p-4 text-xs overflow-x-auto max-h-72 ${dark ? 'bg-slate-900 text-emerald-400' : 'bg-white text-slate-700'}`}>
               {JSON.stringify(veriler, null, 2)}
@@ -265,16 +283,16 @@ export default function GizlilikGuvenlik({ dark }) {
       {/* ── Gizlilik Politikası ────────────────────────────────────── */}
       <div className={`${card} border rounded-2xl shadow-lg p-6`}>
         <h3 className={`text-lg font-black mb-4 flex items-center gap-2 ${text}`}>
-          <FileText className="w-5 h-5 text-purple-500" /> Gizlilik Politikası
+          <FileText className="w-5 h-5 text-[#1E293B]" /> Gizlilik Politikası
         </h3>
         <div className={`prose prose-sm max-w-none ${dark ? 'prose-invert' : ''}`}>
           <div className={`space-y-3 text-xs leading-relaxed ${sub}`}>
             <p><strong className={text}>1. Toplanan Veriler:</strong> Ad, soyad, yaş, telefon numarası, e-posta, şehir, sektör bilgisi, girişim aşaması ve medeni durum bilgileri.</p>
             <p><strong className={text}>2. Veri İşleme Amacı:</strong> Kullanıcılara uygun destek programlarını eşleştirmek ve başvuru süreçlerini kolaylaştırmak.</p>
-            <p><strong className={text}>3. Veri Saklama:</strong> Tüm veriler yalnızca kullanıcının cihazında (localStorage) AES-256-GCM şifreleme ile saklanır. Hiçbir sunucuya iletilmez.</p>
-            <p><strong className={text}>4. Üçüncü Taraflar:</strong> Verileriniz hiçbir üçüncü taraf ile paylaşılmaz. Canlı haber akışı için yalnızca kamuya açık RSS beslemeleri okunur.</p>
-            <p><strong className={text}>5. Çerezler:</strong> Platform çerez kullanmaz. Yalnızca tarayıcı localStorage API'si kullanılır.</p>
-            <p><strong className={text}>6. Veri Silme:</strong> Kullanıcı istediği zaman "Tüm Verilerimi Sil" butonu ile tüm verileri kalıcı olarak silebilir.</p>
+            <p><strong className={text}>3. Veri Saklama:</strong> Veriler, kullanıcı hesabına bağlı olarak platformun sunucusundaki veritabanında saklanır. Şifreler geri döndürülemez biçimde hash'lenir. Hesap silinene kadar saklanır.</p>
+            <p><strong className={text}>4. Üçüncü Taraflar:</strong> Verileriniz satılmaz veya pazarlama amacıyla paylaşılmaz. FortunoAI sohbetine yazılan mesajlar, yanıt üretimi için Google Gemini servisine iletilir. Canlı haber akışı için yalnızca kamuya açık RSS beslemeleri okunur.</p>
+            <p><strong className={text}>5. Çerezler:</strong> Yalnızca oturumu sürdürmek için zorunlu bir oturum çerezi kullanılır. Reklam veya takip çerezi kullanılmaz. Tema tercihi tarayıcınızda saklanır.</p>
+            <p><strong className={text}>6. Veri Silme:</strong> Kullanıcı istediği zaman "Hesabımı ve Tüm Verilerimi Sil" butonu ile hesabını ve tüm verilerini kalıcı olarak silebilir.</p>
             <p><strong className={text}>7. Veri Taşınabilirliği:</strong> KVKK madde 11 kapsamında verilerinizi JSON formatında indirme hakkınız bulunmaktadır.</p>
             <p><strong className={text}>8. İletişim:</strong> Veri güvenliği ile ilgili sorularınız için platform yönetimiyle iletişime geçebilirsiniz.</p>
           </div>

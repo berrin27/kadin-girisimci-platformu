@@ -1,82 +1,92 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import HibeHesaplayici from './components/HibeHesaplayici';
 import BasvuruTakip from './components/BasvuruTakip';
-import ProUpgrade from './components/ProUpgrade';
-import PaywallModal from './components/PaywallModal';
 import EgitimPortali from './components/EgitimPortali';
 import FuarDestekleri from './components/FuarDestekleri';
 import ProfilDuzenle from './components/ProfilDuzenle';
 import BasvuruFormu from './components/BasvuruFormu';
 import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
-import { GoogleGenAI } from '@google/genai';
 import { supportData } from './data';
+import { api } from './api';
 import {
   Sparkles, DollarSign, ArrowRight, CheckCircle2, MessageSquare, X,
   Building2, ExternalLink, Send, Loader2, BookOpen, Globe, Award,
-  Heart, Sun, Moon, ChevronDown, Calendar, Zap, Users, TrendingUp
+  Heart, Sun, Moon, ChevronDown, Calendar, Zap, Users, TrendingUp, LogOut
 } from 'lucide-react';
 
-// ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `Sen 'FortunoAI' adlı bir finansal danışman yapay zekasısın. Türkiye'deki kadın girişimcilere destek sağlayan Fortuno platformu için çalışıyorsun.
+const CHAT_WELCOME = { id: 'welcome', sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Türkiye\'deki kadın girişimcilere hibe, teşvik ve finansal konularda rehberlik ediyorum. Sana nasıl yardımcı olabilirim?' };
 
-Kimliğin:
-- Adın FortunoAI, sıcak, samimi ve motive edici bir mentör gibi konuşursun
-- Türkçe konuşursun, ağır akademik terimler kullanmazsın
-- Kadın girişimcilerin hayallerini gerçekleştirmesine yardımcı olmak için buradasın
+// ─── DİNAMİK FİNANSAL SAĞLIK SKORU & EŞLEŞME MOTORU ───────────────────────
+const HEALTH_SCORE_MAP = {
+  companyAge: { fikir: 34, yeni_kurulmus: 56, buyume: 74, kriz_donemi: 52, kokenlesik: 82 },
+  turnover: { genc_uni: 42, genc_girisimci: 58, standart: 70, olgun_girisimci: 86 },
+  equity: { fikir: 38, yeni_kurulmus: 55, buyume: 73, kriz_donemi: 50, kokenlesik: 82 },
+  leverage: { fikir: 47, yeni_kurulmus: 64, buyume: 75, kriz_donemi: 52, kokenlesik: 80 },
+  teamSize: { genc_uni: 38, genc_girisimci: 58, standart: 72, olgun_girisimci: 82 },
+  ownership: { fikir: 35, yeni_kurulmus: 58, buyume: 76, kriz_donemi: 58, kokenlesik: 88 },
+};
 
-Uzmanlık alanların:
-- KOSGEB destekleri ve başvuru süreçleri
-- TÜBİTAK hibeleri (özellikle 1512 BİGG programı)
-- Devlet teşvikleri ve vakıf fonları
-- Nakit akışı, maliyet hesabı, amortisman gibi finans konuları (günlük örneklerle açıkla)
-- İş planı oluşturma ve girişim aşamaları
-- Kadın girişimcilere özel programlar (TKOB, Sabancı Vakfı vb.)
+const calculateFinancialHealthScore = ({ companyAge, turnover, equity, leverage, teamSize, ownership }) => {
+  const companyAgeScore = HEALTH_SCORE_MAP.companyAge[companyAge] ?? 60;
+  const turnoverScore = HEALTH_SCORE_MAP.turnover[turnover] ?? 62;
+  const equityScore = HEALTH_SCORE_MAP.equity[equity] ?? 64;
+  const leverageScore = HEALTH_SCORE_MAP.leverage[leverage] ?? 62;
+  const teamSizeScore = HEALTH_SCORE_MAP.teamSize[teamSize] ?? 64;
+  const ownershipScore = HEALTH_SCORE_MAP.ownership[ownership] ?? 66;
 
-Kurallar:
-- Her yanıt özgün ve konuya özel olsun, klişe cümleler kullanma
-- Somut, uygulanabilir tavsiyeler ver
-- Gerektiğinde KOSGEB/TÜBİTAK başvurusuna yönlendir
-- Kısa ve öz yanıtlar ver (maksimum 3-4 paragraf)
-- Emojiler kullanabilirsin ama abartma`;
+  return Math.min(100, Math.max(0, Math.round(
+    (companyAgeScore * 0.18) +
+    (turnoverScore * 0.17) +
+    (equityScore * 0.17) +
+    (leverageScore * 0.16) +
+    (teamSizeScore * 0.16) +
+    (ownershipScore * 0.16)
+  )));
+};
 
-// ─── FALLBACK ────────────────────────────────────────────────────────────────
-const getFallbackResponse = (input) => {
-  const q = input.toLowerCase();
-  if (q.includes('kosgeb')) {
-    const cevaplar = [
-      'KOSGEB, Türkiye\'deki en kapsamlı girişim destek kuruluşu. Yeni girişimciler için İşletme Geliştirme Desteği\'nde 150.000 TL\'ye kadar hibe mevcut 💜 Başvuru için önce KOSGEB\'e kayıtlı girişimci olman gerekiyor: kosgeb.gov.tr adresinden online başvurabilirsin.',
-      'KOSGEB destekleri 3 ana başlıkta toplanıyor: 1) Girişimcilik Destekleri (kuruluş ve kira giderleri), 2) KOBİ Geliştirme Destekleri (yazılım, danışmanlık), 3) Ar-Ge & İnovasyon Destekleri. Hangi aşamadasın, sana en uygununu birlikte bulalım! 🎯',
-    ];
-    return cevaplar[Math.floor(Math.random() * cevaplar.length)];
-  }
-  if (q.includes('tubitak') || q.includes('bigg') || q.includes('ar-ge') || q.includes('teknoloji')) {
-    return 'TÜBİTAK 1512 BİGG programı teknoloji girişimcileri için muhteşem bir fırsat! ✨ %100 hibe ile 150.000 TL\'ye kadar destek alabilirsin. Koşul: teknoloji tabanlı, ölçeklenebilir bir iş fikrin olması. tubitak.gov.tr üzerinden başvurabilirsin — son başvuru tarihlerini takip etmeyi unutma!';
-  }
-  if (q.includes('nakit') || q.includes('akış') || q.includes('para') || q.includes('bütçe') || q.includes('maliyet')) {
-    return 'Nakit akışını şöyle düşün: Aylık bir market defteri gibi 📒 Giren para (satış, hibe, kredi) eksi çıkan para (kira, maaş, hammadde) = net akış. Bu pozitif olduğu sürece işletmen yaşıyor demektir. İlk 6 ay için en az 3 aylık sabit gideri karşılayacak nakit rezervi bulundurmana tavsiye ederim.';
-  }
-  if (q.includes('hibe') || q.includes('destek') || q.includes('fon')) {
-    return 'Türkiye\'deki başlıca hibe kaynakları şunlar 🌟\n\n1. KOSGEB — Devletin en büyük KOBİ destek fonu\n2. TÜBİTAK — Teknoloji ve Ar-Ge projeleri\n3. TKDK — Kırsal kalkınma hibeleri (AB fonu)\n4. Sabancı Vakfı — Kadın girişimcilere özel\n5. Garanti Girişim — Erken aşama startup desteği\n\nHangi sektördesin? Sana en uygun programı bulalım!';
-  }
-  if (q.includes('iş planı') || q.includes('plan') || q.includes('strateji')) {
-    return 'İş planı yazmak göründüğü kadar zor değil! 📝 Şu 5 bölümü kapsarsan yeterli: 1) Ne satıyorsun? 2) Kime satıyorsun? 3) Rakiplerin kim? 4) Nasıl para kazanacaksın? 5) İlk 1 yıl ne kadar harcayacaksın?\n\nKOSGEB başvurusu için hazır şablonları kosgeb.gov.tr\'den indirebilirsin.';
-  }
-  if (q.includes('şirket') || q.includes('kur') || q.includes('kurmak') || q.includes('açmak')) {
-    return 'Şirket kurmak artık çok kolaylaştı! 🏢 Şahıs şirketi için noter ve vergi dairesine gitmen yeterli — maliyeti yaklaşık 2.000-3.000 TL. Limited şirket için ise 10.000 TL sermaye ve 5-7 iş günü yeterli. E-devlet üzerinden de başlayabilirsin. Hangi şirket türünü düşünüyorsun?';
-  }
-  if (q.includes('merhaba') || q.includes('selam') || q.includes('hey')) {
-    return 'Merhaba! 👋 Ben FortunoAI. Türkiye\'deki kadın girişimcilere hibe, teşvik ve finansal konularda rehberlik ediyorum.\n\nBana şunları sorabilirsin:\n• KOSGEB ve TÜBİTAK hibeleri\n• Nakit akışı ve bütçe planlaması\n• Şirket kurma süreci\n• İş planı hazırlama\n\nNe öğrenmek istersin?';
-  }
-  if (q.includes('vak') || q.includes('sabancı') || q.includes('tkob')) {
-    return 'Kadın girişimcilere özel vakıf destekleri gerçekten değerli! 🌸\n\n• Sabancı Vakfı: "Hibe Programı" ile sosyal girişimlere 50.000 TL\'ye kadar\n• TKOB (Türkiye Kadın Girişimciler Derneği): Mentorluk + ağ desteği\n• Turkcell Kadın Kooperatifleri Fonu: Dijital dönüşüm hibeleri\n\nBu programların başvuru dönemleri değişiyor, takipte kal!';
-  }
-  const genel = [
-    'Harika bir soru! 🤔 Sana en doğru bilgiyi verebilmek için biraz daha detay lazım. Hangi sektördesin ve girişiminin şu anki aşaması nedir?',
-    'Bu konuda sana yardımcı olmak isterim! Girişiminin sektörünü ve neye ihtiyaç duyduğunu (hibe mi, finansman mı, mentorluk mu?) belirtirsen daha spesifik yönlendirebilirim. 💪',
-    'Doğru yoldasın! Türkiye\'de kadın girişimciler için harika fırsatlar var. KOSGEB, TÜBİTAK veya özel vakıf desteklerinden hangisi seni daha çok ilgilendiriyor?',
-  ];
-  return genel[Math.floor(Math.random() * genel.length)];
+const calculateProgramMatchScore = ({ item, sektor, profil, asama, medeniDurum }) => {
+  let score = 20;
+  if (item.tags.includes(sektor)) score += 28;
+  if (item.tags.includes(profil)) score += 20;
+  if (item.tags.includes(asama)) score += 20;
+  if (medeniDurum === 'hepsi' || item.tags.includes(medeniDurum)) score += 12;
+
+  const programTypeBoost = item.type.toLowerCase().includes('hibe') ? 8 : 4;
+  const growthBoost = item.tags.includes('buyume') && asama === 'buyume' ? 8 : 0;
+  const founderBoost = item.tags.includes('genc_girisimci') && profil === 'genc_girisimci' ? 6 : 0;
+  const total = Math.min(100, score + programTypeBoost + growthBoost + founderBoost);
+  return total;
+};
+
+const buildMatchCandidates = ({ sektor, profil, asama, medeniDurum, userProfile = {} }) => {
+  const financialHealth = calculateFinancialHealthScore({
+    companyAge: asama || userProfile.asama || 'yeni_kurulmus',
+    turnover: profil || userProfile.profilTipi || 'standart',
+    equity: asama || userProfile.asama || 'buyume',
+    leverage: asama || userProfile.asama || 'buyume',
+    teamSize: profil || userProfile.profilTipi || 'standart',
+    ownership: asama || userProfile.asama || 'buyume',
+  });
+
+  const ranked = supportData.map(item => {
+    const matchScore = calculateProgramMatchScore({ item, sektor, profil, asama, medeniDurum });
+    const combinedScore = Math.min(100, Math.round((matchScore * 0.7) + (financialHealth * 0.3)));
+    const eligible = combinedScore >= 65;
+
+    return {
+      ...item,
+      matchScore,
+      financialHealth,
+      combinedScore,
+      eligible,
+      relevantReason: eligible
+        ? 'Dinamik eşleşme motoru: Öncelikli finansal uyumlu paket'
+        : 'Yüksek reddedilme riski olduğu için ön eleme dışı bırakıldı',
+    };
+  });
+
+  return ranked.sort((a, b) => b.combinedScore - a.combinedScore);
 };
 
 // ─── KAYNAKÇA ────────────────────────────────────────────────────────────────
@@ -201,18 +211,379 @@ function FortunoLogo() {
       <path d="M24.5 22l2 2 3-3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <defs>
         <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7c3aed" />
-          <stop offset="1" stopColor="#ec4899" />
+          <stop stopColor="#A8D5F2" />
+          <stop offset="1" stopColor="#F7DDE7" />
         </linearGradient>
       </defs>
     </svg>
   );
 }
 
+function ModulerIsPlani({ dark }) {
+  const [template, setTemplate] = useState('onePage');
+  const [form, setForm] = useState({
+    projectName: 'Sofra Hane',
+    sector: 'Gıda / Ev Üretimi',
+    monthlyRevenue: 120000,
+    monthlyExpense: 76000,
+    monthlyDebtService: 22000,
+    startupCost: 450000,
+    equity: 180000,
+    loanAmount: 270000,
+    teamSize: 3,
+    market: 'Yerel kadın girişimcileri ve e-ticaret müşterileri',
+    traction: 'İlk 3 ay içinde 40 müşteri, 3 aylık düzenli sipariş akışı',
+  });
+
+  const adjustedRevenue = Number(form.monthlyRevenue || 0);
+  const adjustedExpense = Number(form.monthlyExpense || 0);
+  const adjustedDebt = Number(form.monthlyDebtService || 0);
+  const netCash = adjustedRevenue - adjustedExpense - adjustedDebt;
+  const startupCost = Number(form.startupCost || 0);
+  const equity = Number(form.equity || 0);
+  const loanAmount = Number(form.loanAmount || 0);
+  const breakEven = netCash > 0 ? Math.ceil(startupCost / netCash) : 'Yapılandırma';
+  const dscr = adjustedDebt > 0 ? (Math.max(0, (adjustedRevenue - adjustedExpense) / adjustedDebt)).toFixed(2) : '0.00';
+  const debtRatio = loanAmount + equity > 0 ? Math.round((loanAmount / (loanAmount + equity)) * 100) : 0;
+
+  const planSummary = {
+    onePage: `Tek Sayfalık Hızlı Özet
+- İş: ${form.projectName}
+- Sektör: ${form.sector}
+- Pazar: ${form.market}
+- Model: Gelir artışını ve düşük sermaye yoğunluğu ile büyüme potansiyelini öne çıkaran operasyonel yapı.
+- Odak Noktası: ${form.traction}`,
+    bank: `Banka Kredisi / KGF Odaklı Klasik İş Planı
+- Girişimin temel finansal görünümü: ${form.projectName}, ${form.sector}
+- Başlangıç maliyeti: ${startupCost.toLocaleString('tr-TR')} TL
+- Öz sermaye: ${equity.toLocaleString('tr-TR')} TL
+- Kredi ihtiyacı: ${loanAmount.toLocaleString('tr-TR')} TL
+- DSCR: ${dscr}
+- Aylık net nakit akışı: ${netCash.toLocaleString('tr-TR')} TL
+- Borç oranı: %${debtRatio}
+- Yatırımın geri dönüşü için operasyonel verimlilik ve nakit kontrollü büyüme hedeflenir.`,
+    investor: `Hibe / Yatırımcı Odaklı Büyüme Planı
+- İş fikri: ${form.projectName}
+- Pazar potansiyeli: ${form.market}
+- Ürün ve büyüme hedefi: ${form.traction}
+- Aylık gelir: ${adjustedRevenue.toLocaleString('tr-TR')} TL
+- Aylık gider: ${adjustedExpense.toLocaleString('tr-TR')} TL
+- Aylık net nakit akışı: ${netCash.toLocaleString('tr-TR')} TL
+- Başlangıç yatırımına göre beklenen geri dönüş süresi: ${breakEven} ay
+- Çalışan sayısı: ${form.teamSize} kişi`
+  }[template];
+
+  const handleField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const exportPlan = (format = 'txt') => {
+    const cleanContent = planSummary;
+    const blob = new Blob([cleanContent], { type: format === 'html' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${form.projectName.toLowerCase().replace(/\s+/g, '-')}-${template}.${format === 'html' ? 'html' : 'txt'}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const printExport = () => {
+    const templateLabel = template === 'onePage' ? 'Tek Sayfalık' : template === 'bank' ? 'Banka / KGF' : 'Yatırımcı / Büyüme';
+    const escapeHtml = value =>
+      String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    const printHtml = `<!doctype html>
+      <html lang="tr">
+      <head>
+        <meta charset="utf-8" />
+        <title>${escapeHtml(form.projectName)} İş Planı</title>
+        <style>
+          :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --muted: #475569;
+            --text: #0f172a;
+            --primary: #7c3aed;
+            --accent: #ec4899;
+          }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 24px;
+          }
+          .page {
+            max-width: 980px;
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+          }
+          .header {
+            padding: 28px 30px 18px;
+            background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.12));
+            border-bottom: 1px solid var(--border);
+          }
+          .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(124,58,237,0.14);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+          }
+          h1 {
+            margin: 16px 0 8px;
+            font-size: 32px;
+            line-height: 1.2;
+          }
+          .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+          }
+          .content {
+            padding: 26px 30px 30px;
+          }
+          .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+          }
+          .item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+          }
+          .item strong {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+          }
+          .plan-box {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fff;
+            padding: 18px 16px;
+          }
+          pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 16px;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.7;
+          }
+          .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding: 0 30px 28px;
+          }
+          button {
+            appearance: none;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+          }
+          .primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; }
+          .secondary { background: #e2e8f0; color: var(--text); }
+          @media print {
+            body { background: white; padding: 0; }
+            .page { box-shadow: none; border: none; border-radius: 0; }
+            .actions { display: none !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page">
+          <div class="header">
+            <span class="badge">İş Planı</span>
+            <h1>${escapeHtml(form.projectName)}</h1>
+            <p class="subtitle">${escapeHtml(templateLabel)} görünüm • Hazırlama tarihi: ${new Date().toLocaleDateString('tr-TR')}</p>
+          </div>
+          <div class="content">
+            <div class="summary-grid">
+              <div class="item"><strong>Şablon</strong>${escapeHtml(templateLabel)}</div>
+              <div class="item"><strong>Aylık Nakit</strong>${escapeHtml(netCash.toLocaleString('tr-TR'))} TL</div>
+              <div class="item"><strong>DSCR</strong>${escapeHtml(dscr)}</div>
+              <div class="item"><strong>Break-even</strong>${escapeHtml(String(breakEven))}</div>
+            </div>
+            <div class="plan-box">
+              <pre>${escapeHtml(planSummary)}</pre>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="window.print()">Yazdır</button>
+            <button class="primary" onclick="window.close()">Kapat</button>
+          </div>
+        </div>
+      </body>
+      </html>`;
+
+    const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
+    const printUrl = URL.createObjectURL(blob);
+    const printWindow = window.open(printUrl, '_blank', 'width=1200,height=900');
+
+    if (!printWindow) {
+      URL.revokeObjectURL(printUrl);
+      alert('Yazdırma penceresi engellendi. Lütfen pop-up izinlerini açın.');
+      return;
+    }
+
+    printWindow.document.title = `${form.projectName} İş Planı`;
+    printWindow.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          printWindow.focus();
+        } catch (error) {
+          console.warn('Pencere odaklanamadı:', error);
+        }
+      }, 150);
+    }, { once: true });
+  };
+
+  const fieldClass = dark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400';
+  const cardClass = dark ? 'bg-[#1c2333] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900';
+  const subClass = dark ? 'text-slate-400' : 'text-slate-500';
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 pb-24 pt-12">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
+          📄 İş Planı Mimarisi
+        </div>
+        <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Modüler İş Planı Oluşturucu</h2>
+        <p className={`max-w-2xl mx-auto ${subClass}`}>
+          Tek sayfalık hızlı özet, banka/KGF odaklı klasik plan ve yatırımcı odaklı büyüme planı arasında kolayca geçiş yapın.
+        </p>
+      </div>
+
+      <div className={`${cardClass} border rounded-2xl p-4 shadow-xl mb-6`}>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'onePage', label: 'Tek Sayfa' },
+            { id: 'bank', label: 'Banka / KGF' },
+            { id: 'investor', label: 'Yatırımcı / Büyüme' },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setTemplate(item.id)}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${template === item.id ? 'bg-[#1E293B] text-white' : dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-6">
+        <div className={`${cardClass} border rounded-2xl p-5 shadow-xl`}>
+          <h3 className="text-lg font-black mb-5">İşlem Verileri</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">İş adı
+              <input value={form.projectName} onChange={e => handleField('projectName', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Sektör
+              <input value={form.sector} onChange={e => handleField('sector', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık gelir (TL)
+              <input type="number" value={form.monthlyRevenue} onChange={e => handleField('monthlyRevenue', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık gider (TL)
+              <input type="number" value={form.monthlyExpense} onChange={e => handleField('monthlyExpense', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık borç servisi (TL)
+              <input type="number" value={form.monthlyDebtService} onChange={e => handleField('monthlyDebtService', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Başlangıç maliyeti (TL)
+              <input type="number" value={form.startupCost} onChange={e => handleField('startupCost', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Öz sermaye (TL)
+              <input type="number" value={form.equity} onChange={e => handleField('equity', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Kredi tutarı (TL)
+              <input type="number" value={form.loanAmount} onChange={e => handleField('loanAmount', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Çalışan sayısı
+              <input type="number" value={form.teamSize} onChange={e => handleField('teamSize', Number(e.target.value))} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Pazar hedefi
+              <textarea rows={3} value={form.market} onChange={e => handleField('market', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Büyüme / traksiyon açıklaması
+              <textarea rows={3} value={form.traction} onChange={e => handleField('traction', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            </label>
+          </div>
+        </div>
+
+        <div className={`${cardClass} border rounded-2xl p-5 shadow-xl`}>
+          <h3 className="text-lg font-black mb-5">Otomatik Finansal Özeti</h3>
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Aylık Nakit</div>
+              <div className="mt-2 text-xl font-black text-emerald-500">{netCash.toLocaleString('tr-TR')} TL</div>
+            </div>
+            <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Break-even</div>
+              <div className="mt-2 text-xl font-black text-[#1E293B]">{breakEven}</div>
+            </div>
+            <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>DSCR</div>
+              <div className="mt-2 text-xl font-black text-orange-500">{dscr}</div>
+            </div>
+            <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Borç Oranı</div>
+              <div className="mt-2 text-xl font-black text-cyan-500">%{debtRatio}</div>
+            </div>
+          </div>
+
+          <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4 mb-4`}>
+            <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Şablon önizleme</div>
+            <pre className={`mt-3 whitespace-pre-wrap text-xs leading-relaxed ${dark ? 'text-slate-200' : 'text-slate-700'}`}>{planSummary}</pre>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => exportPlan('txt')} className="bg-[#1E293B] text-white px-4 py-2.5 rounded-xl text-sm font-bold">TXT Dışa Aktar</button>
+            <button onClick={printExport} className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold">PDF / Yazdır</button>
+            <button onClick={() => exportPlan('html')} className="bg-slate-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold">Word Formatı</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // ANA COMPONENT
 // ═════════════════════════════════════════════════════════════════════════════
-export default function App() {
+export default function App({ user, onLogout }) {
   // ── State ──────────────────────────────────────────────────────────────────
   const [dark, setDark] = useState(() => {
     try { return localStorage.getItem('fortuno-dark') === 'true'; } catch { return false; }
@@ -225,49 +596,18 @@ export default function App() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(false);
   const [activeSection, setActiveSection] = useState('sihirbaz'); // sihirbaz | kaynakca | hesaplayici | takip | favoriler
-  const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('fortuno-favs') || '[]'); } catch { return []; }
-  });
+  const [favorites, setFavorites] = useState([]);
   const [heartPoppingId, setHeartPoppingId] = useState(null);
   const [confettiActive, setConfettiActive] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
   const [kurumFilter, setKurumFilter] = useState('Tümü');
-  const [userProfil, setUserProfil] = useState(() => {
-    try {
-      const saved = localStorage.getItem('fortuno-profil');
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const [userProfil, setUserProfil] = useState(null);
   const [basvuruProgram, setBasvuruProgram] = useState(null);
-
-  // ── Pro / Monetization state ───────────────────────────────────────────────
-  const [isPro, setIsPro] = useState(() => {
-    try { return localStorage.getItem('fortuno-pro') === 'true'; } catch { return false; }
-  });
-  const [searchCount, setSearchCount] = useState(() => {
-    try {
-      const d = JSON.parse(localStorage.getItem('fortuno-search-quota') || 'null');
-      const today = new Date().toDateString();
-      if (d && d.month === new Date().getMonth()) return d.count;
-      return 0;
-    } catch { return 0; }
-  });
-  const FREE_SEARCH_LIMIT = 3;
-  const [paywallType, setPaywallType] = useState(null); // null | 'arama' | 'takip' | 'rapor'
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [chatMessages, setChatMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem('fortuno-chat');
-      return saved ? JSON.parse(saved) : [
-        { id: 1, sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Türkiye\'deki kadın girişimcilere hibe, teşvik ve finansal konularda rehberlik ediyorum. Sana nasıl yardımcı olabilirim?' }
-      ];
-    } catch {
-      return [{ id: 1, sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Nasıl yardımcı olabilirim?' }];
-    }
-  });
+  const [chatMessages, setChatMessages] = useState([CHAT_WELCOME]);
   const chatEndRef = useRef(null);
 
   // ── Effects ────────────────────────────────────────────────────────────────
@@ -280,13 +620,14 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isLoading]);
 
+  // Kullanıcı verilerini sunucudan yükle
   useEffect(() => {
-    try { localStorage.setItem('fortuno-chat', JSON.stringify(chatMessages.slice(-40))); } catch { }
-  }, [chatMessages]);
-
-  useEffect(() => {
-    try { localStorage.setItem('fortuno-favs', JSON.stringify(favorites)); } catch { }
-  }, [favorites]);
+    api.favorites.list('program').then(({ ids }) => setFavorites(ids)).catch(() => {});
+    api.profile.get().then(({ profile }) => setUserProfil(profile)).catch(() => {});
+    api.chat.history()
+      .then(({ messages }) => { if (messages.length) setChatMessages([CHAT_WELCOME, ...messages]); })
+      .catch(() => {});
+  }, []);
 
   // Confetti CSS inject (one-time)
   useEffect(() => {
@@ -310,33 +651,31 @@ export default function App() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const toggleFav = useCallback((id) => {
-    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+    // İyimser güncelleme: arayüz hemen değişir, sunucu yanıtıyla senkronlanır
+    const isFav = favorites.includes(id);
+    setFavorites(prev => isFav ? prev.filter(f => f !== id) : [...prev, id]);
+    (isFav ? api.favorites.remove('program', id) : api.favorites.add('program', id))
+      .then(({ ids }) => setFavorites(ids))
+      .catch(() => api.favorites.list('program').then(({ ids }) => setFavorites(ids)).catch(() => {}));
     setHeartPoppingId(id);
     setTimeout(() => setHeartPoppingId(null), 350);
-  }, []);
+  }, [favorites]);
 
   const handleFindSupport = (e) => {
     e.preventDefault();
     if (!sektor || !profil || !asama || !medeniDurum) return;
-    // Paywall kontrolü
-    if (!isPro && searchCount >= FREE_SEARCH_LIMIT) {
-      setPaywallType('arama');
-      return;
-    }
     setIsSkeletonLoading(true);
     setHasSearched(false);
-    // Arama sayacını artır
-    const newCount = searchCount + 1;
-    setSearchCount(newCount);
-    try {
-      localStorage.setItem('fortuno-search-quota', JSON.stringify({ count: newCount, month: new Date().getMonth() }));
-    } catch { }
     setTimeout(() => {
-      const results = supportData.filter(item => {
-        const base = item.tags.includes(sektor) && item.tags.includes(profil) && item.tags.includes(asama);
-        if (medeniDurum === 'hepsi') return base;
-        return base && item.tags.includes(medeniDurum);
-      });
+      const results = buildMatchCandidates({
+        sektor,
+        profil,
+        asama,
+        medeniDurum,
+        userProfile: userProfil || {}
+      })
+      .filter(item => item.eligible);
+
       setFilteredResults(results);
       setHasSearched(true);
       setIsSkeletonLoading(false);
@@ -347,62 +686,34 @@ export default function App() {
     }, 1400);
   };
 
-  const handleSendMessage = async (e) => {
-    e?.preventDefault();
-    if (!chatInput.trim() || isLoading) return;
-    const userMsg = { id: Date.now(), sender: 'user', text: chatInput };
-    const currentInput = chatInput;
-    setChatMessages(prev => [...prev, userMsg]);
-    setChatInput('');
+  // Mesajı sunucuya gönderir; Gemini veya hazır yanıt motoru sunucuda çalışır.
+  const sendChat = useCallback(async (text, { useHistory = true } = {}) => {
+    const tempId = `tmp-${Date.now()}`;
+    setChatMessages(prev => [...prev, { id: tempId, sender: 'user', text }]);
     setIsLoading(true);
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     try {
-      if (!apiKey || apiKey === 'buraya_api_keyini_yaz') throw new Error('no_key');
-      const ai = new GoogleGenAI({ apiKey });
-      const history = chatMessages
-        .filter(msg => msg.id !== 1)
-        .map(msg => ({ role: msg.sender === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
-      const chat = ai.chats.create({ model: 'gemini-2.0-flash', system: SYSTEM_PROMPT, history });
-      const response = await chat.sendMessage({ message: currentInput });
-      setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: response.text }]);
-    } catch {
-      const fallback = getFallbackResponse(currentInput);
-      setTimeout(() => {
-        setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: fallback }]);
-        setIsLoading(false);
-      }, 700);
-      return;
+      const { userMessage, botMessage } = await api.chat.send(text, { useHistory });
+      setChatMessages(prev => [...prev.map(m => m.id === tempId ? userMessage : m), botMessage]);
+    } catch (err) {
+      setChatMessages(prev => [...prev, { id: `err-${Date.now()}`, sender: 'bot', text: `⚠️ ${err.message}` }]);
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  const handleSendMessage = (e) => {
+    e?.preventDefault();
+    if (!chatInput.trim() || isLoading) return;
+    const text = chatInput;
+    setChatInput('');
+    sendChat(text);
   };
 
   const sendQuickQuestion = useCallback((q) => {
     if (isLoading) return;
-    const userMsg = { id: Date.now(), sender: 'user', text: q };
-    setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
-    setIsLoading(true);
-
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const runQuery = async () => {
-      try {
-        if (!apiKey || apiKey === 'buraya_api_keyini_yaz') throw new Error('no_key');
-        const ai = new GoogleGenAI({ apiKey });
-        const chat = ai.chats.create({ model: 'gemini-2.0-flash', system: SYSTEM_PROMPT, history: [] });
-        const response = await chat.sendMessage({ message: q });
-        setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: response.text }]);
-        setIsLoading(false);
-      } catch {
-        const fallback = getFallbackResponse(q);
-        setTimeout(() => {
-          setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: fallback }]);
-          setIsLoading(false);
-        }, 700);
-      }
-    };
-    runQuery();
-  }, [isLoading]);
+    sendChat(q, { useHistory: false });
+  }, [isLoading, sendChat]);
 
   // Kurum filtreleme — memoized to avoid recalc on every render
   const kurumlar = useMemo(
@@ -415,23 +726,31 @@ export default function App() {
       : filteredResults.filter(r => r.institution === kurumFilter),
     [filteredResults, kurumFilter]
   );
+  const bestMatchScore = useMemo(
+    () => (displayedResults.length ? Math.max(...displayedResults.map(r => r.combinedScore)) : 0),
+    [displayedResults]
+  );
+  const matchSummary = useMemo(() => {
+    if (!displayedResults.length) return 'Henüz uygun eşleşme yok';
+    return `${bestMatchScore}/100 finansal sağlık skoru ile en uygun paketler listeleniyor.`;
+  }, [bestMatchScore, displayedResults]);
 
   // Renk sınıfları (dark mode)
-  const bg = dark ? 'bg-[#0d1117]' : 'bg-[#f8fafc]';
-  const card = dark ? 'bg-[#1c2333] border-slate-700 text-slate-100' : 'bg-white border-slate-100 text-[#0f172a]';
-  const text = dark ? 'text-slate-100' : 'text-[#0f172a]';
-  const subtext = dark ? 'text-slate-400' : 'text-slate-500';
+  const bg = 'bg-[#F5F5DC]';
+  const card = dark ? 'bg-[#1E293B] border border-[#374151] text-white' : 'bg-[#FFFFFF] border border-[#EAE3D9] text-[#1E293B] shadow-[0_10px_30px_rgba(30,41,59,0.06)]';
+  const text = dark ? 'text-white' : 'text-[#1E293B]';
+  const subtext = dark ? 'text-slate-300' : 'text-[#5B6473]';
   const inputCls = dark
-    ? 'bg-slate-800 border-slate-600 text-white focus:ring-purple-400'
-    : 'bg-slate-50 border-slate-200 focus:ring-purple-500';
+    ? 'bg-[#1E293B] border-[#4B5563] text-white focus:ring-[#F3D5D8]'
+    : 'bg-[#FAF7F2] border-[#EAE3D9] text-[#1E293B] focus:ring-[#F3D5D8]';
 
   // ── Sections ─────────────────────────────────────────────────────────────
   const showSihirbaz    = activeSection === 'sihirbaz';
   const showFavoriler   = activeSection === 'favoriler';
   const showKaynakca    = activeSection === 'kaynakca';
+  const showIsPlani     = activeSection === 'is-plani';
   const showHesaplayici = activeSection === 'hesaplayici';
   const showTakip       = activeSection === 'takip';
-  const showPro         = activeSection === 'pro';
   const showEgitim      = activeSection === 'egitim';
   const showFuar        = activeSection === 'fuar';
   const showProfil      = activeSection === 'profil';
@@ -444,122 +763,135 @@ export default function App() {
       <Confetti active={confettiActive} />
 
       {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
-      <nav className="bg-[#0f172a] text-white py-4 px-6 shadow-xl sticky top-0 z-40 border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <nav className={`sticky top-0 z-40 border-b border-slate-200/80 ${dark ? 'bg-slate-900/90 text-white border-slate-700/80 backdrop-blur-md' : 'bg-white/90 text-slate-900 backdrop-blur-md'}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 py-3 lg:px-6">
           <div className="flex items-center gap-3">
-            <FortunoLogo />
+            <div className="rounded-xl bg-gradient-to-br from-[#A8D5F2] to-[#F7DDE7] p-2 shadow-soft">
+              <FortunoLogo />
+            </div>
             <div>
-              <span className="text-2xl font-black tracking-wider bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400 bg-clip-text text-transparent">
-                FORTUNO
-              </span>
-              <span className="text-xs block text-purple-300 font-medium tracking-widest -mt-1">WOMEN TECH AI</span>
+              <div className="text-lg font-black tracking-[0.18em] text-[#2B5472] dark:text-[#B9D9EF]">FORTUNO</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Women Tech AI</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-xs font-semibold text-slate-300 overflow-x-auto">
+          <div className="hidden items-center gap-1.5 overflow-x-auto lg:flex">
             {[
-              { id: 'profil',      label: '👤 Profil' },
-              { id: 'sihirbaz',    label: '🧭 Sihirbaz' },
-              { id: 'hesaplayici', label: '🧮 Hesaplayıcı' },
-              { id: 'takip',       label: '📋 Takip' },
-              { id: 'egitim',      label: '🎓 Eğitim' },
-              { id: 'fuar',        label: '✈️ Fuarlar' },
-              { id: 'guncel',      label: '📡 Güncel' },
-              { id: 'guvenlik',    label: '🔒 Güvenlik' },
-              { id: 'kaynakca',    label: '📚 Kaynakça' },
+              { id: 'profil',      label: 'Profil' },
+              { id: 'sihirbaz',    label: 'Sihirbaz' },
+              { id: 'is-plani',    label: 'İş Planı' },
+              { id: 'hesaplayici', label: 'Hesaplayıcı' },
+              { id: 'takip',       label: 'Takip' },
+              { id: 'egitim',      label: 'Eğitim' },
+              { id: 'fuar',        label: 'Fuarlar' },
+              { id: 'guncel',      label: 'Güncel' },
+              { id: 'guvenlik',    label: 'Güvenlik' },
+              { id: 'kaynakca',    label: 'Kaynakça' },
             ].map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
-                className={`shrink-0 px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition ${
                   activeSection === id
-                    ? 'bg-purple-600 text-white'
-                    : 'hover:text-white hover:bg-slate-700'
+                    ? 'bg-[#F3D5D8] text-[#4A1525] border border-[#F3D5D8]'
+                    : dark ? 'text-slate-200 hover:bg-[#2A3544] hover:text-white' : 'text-[#1E293B] hover:bg-[#F7F0F1] hover:text-[#1E293B]'
                 }`}
               >
                 {label}
               </button>
             ))}
+          </div>
+
+          <div className="flex items-center gap-2">
             {favorites.length > 0 && (
               <button
                 id="nav-favs"
                 onClick={() => setActiveSection('favoriler')}
-                className={`shrink-0 px-3 py-1.5 rounded-lg transition flex items-center gap-1 ${
-                  activeSection === 'favoriler' ? 'bg-pink-600 text-white' : 'hover:text-white hover:bg-slate-700'
-                }`}
+                className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold sm:flex ${activeSection === 'favoriler' ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}
               >
-                <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400" />
-                Favoriler
-                <span className="bg-pink-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{favorites.length}</span>
+                <Heart className="h-3.5 w-3.5 fill-current" />
+                {favorites.length}
               </button>
             )}
-            <div className="w-px h-5 bg-slate-600 mx-1 shrink-0" />
-            {/* Pro Badge veya Upgrade Butonu */}
-            {isPro ? (
-              <button
-                onClick={() => setActiveSection('pro')}
-                className="shrink-0 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-[#0f172a] px-3 py-1.5 rounded-lg text-[10px] font-black shadow-lg shadow-amber-500/30 hover:opacity-90 transition"
-              >
-                <span>👑</span> PRO
-              </button>
-            ) : (
-              <button
-                onClick={() => setActiveSection('pro')}
-                className={`shrink-0 flex items-center gap-1.5 border border-purple-500/50 text-purple-300 hover:bg-purple-500/10 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
-                  activeSection === 'pro' ? 'bg-purple-500/20' : ''
-                }`}
-              >
-                <span>⚡</span> Pro'ya Geç
-                {!isPro && searchCount > 0 && (
-                  <span className="bg-amber-400 text-[#0f172a] rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">
-                    {FREE_SEARCH_LIMIT - searchCount}
-                  </span>
-                )}
-              </button>
-            )}
+
             <button
               id="dark-mode-toggle"
               onClick={() => setDark(d => !d)}
-              className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 transition shrink-0"
+              className={`rounded-full p-2.5 transition ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#F3D5D8] text-[#4A1525] hover:bg-[#eed0d5]'}`}
               aria-label="Karanlık mod"
             >
-              {dark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
+            <button
+              id="logout-btn"
+              onClick={onLogout}
+              title={`Çıkış yap (${user.email})`}
+              className={`rounded-full p-2.5 transition ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#F3D5D8] text-[#4A1525] hover:bg-[#eed0d5]'}`}
+              aria-label="Çıkış yap"
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <header className={`${dark ? 'hero-bg-dark' : 'hero-bg-light'} px-4 pt-16 pb-12`}>
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className={`hero-title text-4xl md:text-5xl font-black tracking-tight mb-4 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>
-            Girişimci Kadınlar İçin Akıllı{' '}
-            <span className="bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Finans ve Hibe</span>{' '}
-            Eşleştirme Platformu
-          </h1>
-          <p className={`hero-subtitle text-lg max-w-2xl mx-auto font-medium mb-10 ${subtext}`}>
-            Karmaşık formlarla, ağır akademik finans terimleriyle uğraşmayın. 3 adımda size en uygun devlet teşviklerini, vakıf fonlarını listeleyin.
-          </p>
-
-          {/* Stats Banner */}
-          <div className="hero-stats flex flex-wrap justify-center gap-6 md:gap-12">
-            {[
-              { icon: <DollarSign className="w-5 h-5" />, label: 'Toplam Hibe Havuzu', value: 5200000, suffix: ' TL+' },
-              { icon: <Users className="w-5 h-5" />, label: 'Desteklenen Program', value: 10, suffix: '+' },
-              { icon: <TrendingUp className="w-5 h-5" />, label: 'Kadın Girişimci', value: 47000, suffix: '+' },
-              { icon: <Zap className="w-5 h-5" />, label: 'Eşleşme Süresi', value: 3, suffix: ' Adım' },
-            ].map((stat, i) => (
-              <div key={i} className={`flex flex-col items-center ${dark ? 'text-slate-200' : 'text-[#0f172a]'}`}>
-                <div className="flex items-center gap-1 text-purple-500 mb-1">{stat.icon}</div>
-                <span className="text-2xl font-black">
-                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                </span>
-                <span className={`text-xs font-semibold ${subtext}`}>{stat.label}</span>
+      {showSihirbaz && (
+        <header className="px-4 pb-10 pt-12">
+          <div className="mx-auto max-w-6xl rounded-[32px] border border-[#EAE3D9] bg-[#1E2E3E] px-6 py-10 shadow-[0_12px_30px_rgba(30,41,59,0.04)] md:px-10 md:py-14 dark:border-[#374151] dark:bg-[#1E293B]">
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#EAF4FB] px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#2B5472]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Girişimci destek platformu
               </div>
-            ))}
+              <h1 className="hero-title text-4xl font-medium tracking-[-0.04em] text-white md:text-5xl lg:text-6xl">
+                Girişimci kadınlar için
+                <span className="mt-2 block bg-[#DCE7F2] bg-clip-text font-semibold text-transparent">
+                  akıllı finans ve hibe eşleştirme
+                </span>
+              </h1>
+              <p className="hero-subtitle mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-200 md:text-lg">
+                Karmaşık formları ve ağır finans jargonunu bir kenara bırakın. 3 adımda size uygun teşvik, hibe ve fon seçeneklerini net şekilde görün.
+              </p>
+
+              <div className="hero-stats mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <button
+                  onClick={() => setActiveSection('sihirbaz')}
+                  className="rounded-full border border-[#EAE3D9] bg-[#F3D5D8] px-6 py-3 text-sm font-bold text-[#4A1525] shadow-[0_12px_24px_rgba(244,196,203,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#eed0d5]"
+                >
+                  Destek Bul
+                </button>
+                <button
+                  onClick={() => setActiveSection('fuar')}
+                  className="rounded-full border border-[#EAE3D9] bg-[#F3D5D8] px-6 py-3 text-sm font-bold text-[#4A1525] shadow-[0_12px_24px_rgba(244,196,203,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#eed0d5]"
+                >
+                  Son fırsatları gör
+                </button>
+              </div>
+            </div>
+
+            <div className="hero-stats mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { icon: <DollarSign className="w-5 h-5" />, label: 'Toplam Hibe Havuzu', value: 5200000, suffix: ' TL+' },
+                { icon: <Users className="w-5 h-5" />, label: 'Desteklenen Program', value: 10, suffix: '+' },
+                { icon: <TrendingUp className="w-5 h-5" />, label: 'Kadın Girişimci', value: 47000, suffix: '+' },
+                { icon: <Zap className="w-5 h-5" />, label: 'Eşleşme Süresi', value: 3, suffix: ' Adım' },
+              ].map((stat, i) => (
+                <div key={i} className="rounded-2xl border border-slate-700 bg-slate-800/80 p-5 text-center">
+                  <div className="mb-3 flex justify-center text-[#1E293B]">{stat.icon}</div>
+                  <div className="text-3xl font-medium tracking-[-0.04em] text-white">
+                    <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                  </div>
+                  <div className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-300">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* ── ANA İÇERİK ─────────────────────────────────────────────────────── */}
       {showSihirbaz ? (
@@ -568,7 +900,7 @@ export default function App() {
           {/* Sol Kolon: Form */}
           <div className={`lg:col-span-1 ${card} p-6 rounded-2xl shadow-xl border h-fit`}>
             <div className={`flex items-center gap-2 mb-6 pb-3 border-b ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
-              <Building2 className="w-5 h-5 text-purple-500" />
+              <Building2 className="w-5 h-5 text-[#1E293B]" />
               <h2 className="text-xl font-bold">Destek Sihirbazı</h2>
             </div>
             <form onSubmit={handleFindSupport} className="space-y-6">
@@ -640,17 +972,17 @@ export default function App() {
                 id="find-support-btn"
                 type="submit"
                 disabled={isSkeletonLoading}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition disabled:opacity-70"
+                className="w-full bg-[#1E293B] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition disabled:opacity-70"
               >
                 {isSkeletonLoading
-                  ? <><Loader2 className="w-5 h-5 animate-spin" /> Aranıyor...</>
-                  : <>Uygun Teşvikleri Bul <ArrowRight className="w-5 h-5" /></>}
+                  ? <span className="flex items-center gap-2 justify-center"><Loader2 className="w-5 h-5 animate-spin" /> Aranıyor...</span>
+                  : <span className="flex items-center gap-2 justify-center">Uygun Teşvikleri Bul <ArrowRight className="w-5 h-5" /></span>}
               </button>
             </form>
 
             {/* FAQ Accordion */}
             <div className={`mt-8 pt-6 border-t ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
-              <h3 className="font-bold text-sm mb-3 text-purple-500 flex items-center gap-1">
+              <h3 className="font-bold text-sm mb-3 text-[#1E293B] flex items-center gap-1">
                 <Sparkles className="w-4 h-4" /> Sık Sorulan Sorular
               </h3>
               <div className="space-y-2">
@@ -681,15 +1013,32 @@ export default function App() {
           {/* Sağ Kolon: Sonuçlar */}
           <div className="lg:col-span-2 space-y-6">
             <div className={`${card} p-6 rounded-2xl shadow-xl border min-h-[460px]`}>
-              <h3 className="text-xl font-bold mb-6 pb-3 border-b border-slate-100/20 flex items-center gap-2">
+              <h3 className="text-xl font-bold mb-4 pb-3 border-b border-slate-100/20 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                Eşleşen Finansal Destekler ve Teşvik Paketleri
+                <span>Eşleşen Finansal Destekler ve Teşvik Paketleri</span>
                 {hasSearched && filteredResults.length > 0 && (
                   <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold">
                     {filteredResults.length} sonuç
                   </span>
                 )}
               </h3>
+
+              {hasSearched && filteredResults.length > 0 && (
+                <div className="mb-5 grid md:grid-cols-3 gap-3">
+                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Finansal Sağlık Skoru</div>
+                    <div className="mt-2 text-xl font-black text-emerald-500">{bestMatchScore}/100</div>
+                  </div>
+                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Öncelikli Eşleşme</div>
+                    <div className="mt-2 text-base font-bold text-[#1E293B]">{displayedResults[0]?.title || 'Bekleniyor'}</div>
+                  </div>
+                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
+                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Motor Durumu</div>
+                    <div className="mt-2 text-sm font-semibold text-slate-300">{matchSummary}</div>
+                  </div>
+                </div>
+              )}
 
               {/* Kurum Filtrele */}
               {hasSearched && filteredResults.length > 1 && (
@@ -700,7 +1049,7 @@ export default function App() {
                       id={`filter-${k.replace(/\s/g, '-')}`}
                       onClick={() => setKurumFilter(k)}
                       className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${kurumFilter === k
-                          ? 'bg-purple-600 text-white border-purple-600'
+                          ? 'bg-[#1E293B] text-white border-[#1E293B]'
                           : dark
                             ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -714,12 +1063,12 @@ export default function App() {
 
               {/* İçerik */}
               {isSkeletonLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div key="loading" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[1, 2, 3, 4].map(n => <SkeletonCard key={n} dark={dark} />)}
                 </div>
               ) : !hasSearched ? (
-                <div className="flex flex-col items-center justify-center text-center pt-16 px-4">
-                  <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                <div key="not-searched" className="flex flex-col items-center justify-center text-center pt-16 px-4">
+                  <div className="w-16 h-16 bg-[#F3D5D8] text-[#4A1525] rounded-full flex items-center justify-center mb-4">
                     <Sparkles className="w-8 h-8" />
                   </div>
                   <p className={`font-medium ${subtext}`}>
@@ -727,14 +1076,14 @@ export default function App() {
                   </p>
                 </div>
               ) : displayedResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center pt-16 px-4">
+                <div key="no-results" className="flex flex-col items-center justify-center text-center pt-16 px-4">
                   <p className="text-red-500 font-bold mb-2">Tam Birebir Eşleşen Paket Bulunamadı.</p>
                   <p className={`text-sm max-w-sm ${subtext}`}>
                     Girdiğiniz kriter kombinasyonuna ait hibe paketi bulunamadı. Lütfen chatbot mentörümüz FortunoAI'a danışarak KOSGEB veya TÜBİTAK detaylarını öğrenin.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div key="results" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedResults.map((item, idx) => (
                     <div
                       key={item.id}
@@ -743,7 +1092,7 @@ export default function App() {
                     >
                       <div>
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">{item.institution}</span>
+                          <span className="text-xs font-bold text-[#1E293B] bg-[#F3D5D8] px-2.5 py-1 rounded-md">{item.institution}</span>
                           <div className="flex items-center gap-1.5">
                             <span className={`text-xs font-semibold ${dark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-white border-slate-200 text-slate-500'} border px-2 py-0.5 rounded-md`}>{item.type}</span>
                             {/* Favori butonu */}
@@ -754,12 +1103,16 @@ export default function App() {
                               className={`p-1 rounded-lg transition ${heartPoppingId === item.id ? 'heart-pop' : ''}`}
                             >
                               <Heart
-                                className={`w-4 h-4 transition ${favorites.includes(item.id) ? 'text-pink-500 fill-pink-500' : 'text-slate-400 hover:text-pink-400'}`}
+                                className={`w-4 h-4 transition ${favorites.includes(item.id) ? 'text-[#4A1525] fill-[#4A1525]' : 'text-slate-400 hover:text-[#4A1525]'}`}
                               />
                             </button>
                           </div>
                         </div>
-                        <h4 className={`font-extrabold text-base mb-2 group-hover:text-purple-500 transition ${dark ? 'text-slate-100' : 'text-[#0f172a]'}`}>{item.title}</h4>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider ${subtext}`}>Eşleşme</span>
+                          <span className="text-xs font-black text-emerald-500">{item.combinedScore}/100</span>
+                        </div>
+                        <h4 className={`font-extrabold text-base mb-2 group-hover:text-[#1E293B] transition ${dark ? 'text-white' : 'text-[#1E293B]'}`}>{item.title}</h4>
                         <p className={`text-xs line-clamp-3 mb-4 leading-relaxed ${subtext}`}>{item.description}</p>
                       </div>
                       <div>
@@ -768,6 +1121,9 @@ export default function App() {
                           <span className="text-base font-black text-[#22c55e] flex items-center gap-0.5">
                             <DollarSign className="w-4 h-4 -mt-0.5" /> {item.amount}
                           </span>
+                        </div>
+                        <div className={`${dark ? 'bg-slate-700/50 text-slate-200' : 'bg-white text-slate-600'} text-[10px] rounded-lg p-2 border ${dark ? 'border-slate-600' : 'border-slate-200'} mb-3`}>
+                          {item.relevantReason}
                         </div>
                         <a
                           href={item.link}
@@ -779,7 +1135,7 @@ export default function App() {
                         </a>
                         <button
                           onClick={() => setBasvuruProgram(item)}
-                          className="w-full mt-2 text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-md"
+                          className="w-full mt-2 text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-[#1E293B] text-white hover:opacity-90 shadow-md"
                         >
                           🚀 Hadi Başvur!
                         </button>
@@ -796,8 +1152,8 @@ export default function App() {
         /* ── FAVORİLER ──────────────────────────────────────────────────────── */
         <main className="max-w-6xl mx-auto px-4 mt-12 pb-24">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-pink-50 text-pink-600 px-4 py-2 rounded-full text-sm font-bold mb-4">
-              <Heart className="w-4 h-4 fill-pink-500" /> Favori Programlarınız
+            <div className="inline-flex items-center gap-2 bg-[#F3D5D8] text-[#4A1525] px-4 py-2 rounded-full text-sm font-bold mb-4">
+              <Heart className="w-4 h-4 fill-[#4A1525]" /> Favori Programlarınız
             </div>
             <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Kaydettiğiniz Destekler</h2>
           </div>
@@ -809,9 +1165,9 @@ export default function App() {
                 <div key={item.id} className={`card-animate ${card} border p-5 rounded-xl shadow-lg flex flex-col justify-between`} style={{ animationDelay: `${idx * 80}ms` }}>
                   <div>
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">{item.institution}</span>
+                      <span className="text-xs font-bold text-[#1E293B] bg-[#F3D5D8] px-2.5 py-1 rounded-md">{item.institution}</span>
                       <button onClick={() => toggleFav(item.id)} className="p-1">
-                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
+                        <Heart className="w-4 h-4 text-[#4A1525] fill-[#4A1525]" />
                       </button>
                     </div>
                     <h4 className="font-extrabold text-base mb-2">{item.title}</h4>
@@ -833,7 +1189,7 @@ export default function App() {
         /* ── KAYNAKÇA ───────────────────────────────────────────────────────────── */
         <main className="max-w-6xl mx-auto px-4 mt-12 pb-24">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
+            <div className="inline-flex items-center gap-2 bg-[#F3D5D8] text-[#4A1525] px-4 py-2 rounded-full text-sm font-bold mb-4">
               <BookOpen className="w-4 h-4" /> Güncel & Doğrulanmış Kaynaklar
             </div>
             <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Resmi Hibe ve Destek Kaynakları</h2>
@@ -865,7 +1221,7 @@ export default function App() {
           {/* ── BAŞVURU TAKVİMİ ───────────────────────────────────────────── */}
           <div className={`${card} rounded-2xl shadow-xl border p-6 mb-10`}>
             <h3 className="font-black text-xl mb-6 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-500" />
+              <Calendar className="w-5 h-5 text-[#1E293B]" />
               Başvuru Takvimi — 2025/2026
             </h3>
             <div className="space-y-3">
@@ -896,17 +1252,22 @@ export default function App() {
           </div>
 
           {/* Alt bilgi */}
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white text-center shadow-xl">
+          <div className="bg-[#1E293B] rounded-2xl p-8 text-white text-center shadow-xl">
             <Award className="w-10 h-10 mx-auto mb-3 opacity-90" />
             <h3 className="text-2xl font-black mb-2">Hangi Destek Size Uygun?</h3>
-            <p className="text-purple-100 mb-5 max-w-lg mx-auto">Kafanız karıştıysa endişelenmeyin! FortunoAI sizi 3 basit soruyla en uygun programa yönlendirir.</p>
+            <p className="text-slate-200 mb-5 max-w-lg mx-auto">Kafanız karıştıysa endişelenmeyin! FortunoAI sizi 3 basit soruyla en uygun programa yönlendirir.</p>
             <button id="goto-sihirbaz-btn" onClick={() => setActiveSection('sihirbaz')}
-              className="bg-white text-purple-700 font-black px-8 py-3 rounded-xl hover:bg-purple-50 transition shadow-lg">
+              className="bg-[#F3D5D8] text-[#4A1525] font-black px-8 py-3 rounded-xl hover:bg-[#eed0d5] transition shadow-lg">
               Destek Sihirbazını Başlat →
             </button>
           </div>
         </main>
       ) : null}
+
+      {/* ── MODÜLER İŞ PLANI ─────────────────────────────────────────────── */}
+      {showIsPlani && (
+        <ModulerIsPlani dark={dark} />
+      )}
 
       {/* ── HİBE HESAPLAYICI ──────────────────────────────────────────────── */}
       {showHesaplayici && (
@@ -927,26 +1288,9 @@ export default function App() {
       {/* ── BAŞVURU TAKİP ─────────────────────────────────────────────────── */}
       {showTakip && (
         <main className="max-w-7xl mx-auto px-4 mt-12 pb-24">
-          <BasvuruTakip dark={dark} isPro={isPro} onPaywall={() => setPaywallType('takip')} />
+          <BasvuruTakip dark={dark} />
         </main>
       )}
-
-      {/* ── PRO UPGRADE ───────────────────────────────────────────────────────── */}
-      {showPro && (
-        <main className="max-w-5xl mx-auto px-4 mt-12 pb-24">
-          <ProUpgrade
-            dark={dark}
-            isPro={isPro}
-            onUpgrade={() => {
-              setIsPro(true);
-              try { localStorage.setItem('fortuno-pro', 'true'); } catch { }
-            }}
-            onNavigate={setActiveSection}
-          />
-        </main>
-      )}
-
-
 
       {/* ── EĞİTİM PORTALI ────────────────────────────────────────────────── */}
       {showEgitim && <EgitimPortali dark={dark} />}
@@ -961,17 +1305,53 @@ export default function App() {
       {showGuncel && <GuncelDuyurular dark={dark} />}
 
       {/* ── GİZLİLİK & GÜVENLİK ──────────────────────────────────────────── */}
-      {showGuvenlik && <GizlilikGuvenlik dark={dark} />}
+      {showGuvenlik && <GizlilikGuvenlik dark={dark} onHesapSilindi={onLogout} />}
 
-      {/* ── PAYWALL MODAL ─────────────────────────────────────────────────────── */}
-      {paywallType && (
-        <PaywallModal
-          dark={dark}
-          type={paywallType}
-          onClose={() => setPaywallType(null)}
-          onUpgrade={() => { setPaywallType(null); setActiveSection('pro'); }}
-        />
-      )}
+      {/* ── FOOTER ─────────────────────────────────────────────────────────────── */}
+      <footer className="mt-16 bg-[#0c1a30] text-slate-200">
+        <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-[#1E293B] p-2 shadow-[0_8px_20px_rgba(30,41,59,0.15)]">
+                  <FortunoLogo />
+                </div>
+                <div>
+                  <div className="text-lg font-black tracking-[0.18em] text-blue-300">FORTUNO</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Women Tech AI</div>
+                </div>
+              </div>
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-300">
+                Kadın girişimciler için daha şeffaf, daha akıllı ve daha insan odaklı bir destek deneyimi sunuyoruz.
+              </p>
+            </div>
+
+            {[
+              ['Ürün', ['Destek Bul', 'İş Planı', 'Hesaplayıcı', 'Eğitim']],
+              ['Şirket', ['Hakkımızda', 'Ekibimiz', 'İletişim', 'Blog']],
+              ['Kaynaklar', ['KOSGEB', 'TÜBİTAK', 'Hibe Rehberi', 'Sık Sorulanlar']],
+            ].map(([title, links]) => (
+              <div key={title}>
+                <h4 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">{title}</h4>
+                <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                  {links.map((link) => (
+                    <li key={link} className="transition hover:text-white">{link}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col gap-4 border-t border-slate-700/80 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
+            <p>© 2026 Fortuno. Tüm hakları saklıdır.</p>
+            <div className="flex items-center gap-4">
+              <span>Gizlilik</span>
+              <span>Şartlar</span>
+              <span>İletişim</span>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* ── BAŞVURU FORMU MODAL ──────────────────────────────────────────── */}
       {basvuruProgram && (
@@ -989,7 +1369,7 @@ export default function App() {
             {/* Chat header */}
             <div className="bg-[#0f172a] p-4 text-white flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#F3D5D8] rounded-lg flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -1001,8 +1381,8 @@ export default function App() {
                 <button
                   id="clear-chat-btn"
                   onClick={() => {
-                    setChatMessages([{ id: 1, sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Nasıl yardımcı olabilirim?' }]);
-                    try { localStorage.removeItem('fortuno-chat'); } catch { }
+                    setChatMessages([CHAT_WELCOME]);
+                    api.chat.clear().catch(() => {});
                   }}
                   className="text-slate-400 hover:text-white transition text-xs"
                   title="Sohbeti sıfırla"
@@ -1022,7 +1402,7 @@ export default function App() {
                   key={i}
                   id={`quick-q-${i}`}
                   onClick={() => sendQuickQuestion(q)}
-                  className={`shrink-0 text-[10px] font-bold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${dark ? 'bg-slate-700 border-slate-600 text-purple-300 hover:bg-slate-600' : 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50'}`}
+                  className={`shrink-0 text-[10px] font-bold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${dark ? 'bg-[#2A3544] border-[#4B5563] text-[#F3D5D8] hover:bg-[#374151]' : 'bg-[#F3D5D8] border-[#EAD3D7] text-[#4A1525] hover:bg-[#eed0d5]'}`}
                 >
                   {q}
                 </button>
@@ -1034,7 +1414,7 @@ export default function App() {
               {chatMessages.map(msg => (
                 <div key={msg.id} className={`chat-bubble flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] rounded-2xl p-3 text-xs font-medium leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                      ? 'bg-purple-600 text-white rounded-tr-none'
+                      ? 'bg-[#1E293B] text-white rounded-tr-none'
                       : dark
                         ? 'bg-slate-800 text-slate-200 shadow-sm border border-slate-700 rounded-tl-none'
                         : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-tl-none'
@@ -1080,7 +1460,7 @@ export default function App() {
         <button
           id="open-chat-btn"
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="bg-gradient-to-tr from-purple-600 via-purple-700 to-pink-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center justify-center"
+          className="bg-[#1E293B] text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center justify-center"
         >
           {isChatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
         </button>

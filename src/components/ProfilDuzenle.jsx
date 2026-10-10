@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, Calendar, Save, CheckCircle2, Edit3, Shield, Sparkles, ChevronRight, Award } from 'lucide-react';
-import { guvenliKaydet, guvenliOku } from '../crypto';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Phone, Calendar, Save, CheckCircle2, Edit3, Shield, Sparkles, ChevronRight, Award, AlertTriangle } from 'lucide-react';
+import { api } from '../api';
 
-// ── localStorage key ────────────────────────────────────────────────────────
-const PROFIL_KEY = 'fortuno-profil';
+const AUTOSAVE_MS = 700;
 
 const defaultProfil = {
   ad: '',
@@ -67,26 +66,59 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
   const [editMode, setEditMode] = useState(true);
   const [yuklendi, setYuklendi] = useState(false);
 
-  // ── İlk yüklemede şifreli veriyi oku ───────────────────────────────────────
+  const [hata, setHata] = useState('');
+  const bekleyenKayit = useRef(null); // { zamanlayici, veri } — henüz gönderilmemiş değişiklik
+
+  // ── İlk yüklemede profili sunucudan oku ────────────────────────────────────
+  // Yükleme başarısızsa otomatik kayıt açılmaz — boş form sunucudaki veriyi ezmesin.
   useEffect(() => {
-    async function yukle() {
-      const saved = await guvenliOku(PROFIL_KEY);
-      if (saved) setProfil(prev => ({ ...prev, ...saved }));
-      setYuklendi(true);
-    }
-    yukle();
+    api.profile.get()
+      .then(({ profile }) => { setProfil(prev => ({ ...prev, ...profile })); setYuklendi(true); })
+      .catch(err => setHata(`Profil yüklenemedi: ${err.message}`));
   }, []);
 
   const oran = hesaplaOran(profil);
 
-  // ── Persist (şifreli) & notify parent ──────────────────────────────────────
+  const kaydet = async (veri) => {
+    try {
+      await api.profile.save(veri);
+      setHata('');
+      return true;
+    } catch (err) {
+      setHata(err.message);
+      return false;
+    }
+  };
+
+  const bekleyeniIptalEt = () => {
+    clearTimeout(bekleyenKayit.current?.zamanlayici);
+    bekleyenKayit.current = null;
+  };
+
+  // ── Değişiklikte üst bileşene bildir + gecikmeli otomatik kaydet ───────────
   useEffect(() => {
     if (!yuklendi) return;
-    guvenliKaydet(PROFIL_KEY, profil);
     if (onProfilChange) onProfilChange(profil);
+    bekleyeniIptalEt();
+    bekleyenKayit.current = {
+      veri: profil,
+      zamanlayici: setTimeout(() => { bekleyenKayit.current = null; kaydet(profil); }, AUTOSAVE_MS),
+    };
   }, [profil, onProfilChange, yuklendi]);
 
-  const handleSave = () => {
+  // Sayfadan çıkarken bekleyen değişikliği hemen gönder
+  useEffect(() => () => {
+    const bekleyen = bekleyenKayit.current;
+    if (bekleyen) {
+      clearTimeout(bekleyen.zamanlayici);
+      api.profile.save(bekleyen.veri).catch(() => {});
+    }
+  }, []);
+
+  const handleSave = async () => {
+    if (!yuklendi) return;
+    bekleyeniIptalEt();
+    if (!(await kaydet(profil))) return;
     setKaydedildi(true);
     setEditMode(false);
     setTimeout(() => setKaydedildi(false), 2500);
@@ -99,8 +131,8 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
   const text  = dark ? 'text-slate-100' : 'text-[#0f172a]';
   const sub   = dark ? 'text-slate-400' : 'text-slate-500';
   const input = dark
-    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:ring-purple-500 focus:border-purple-500'
-    : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:ring-purple-500 focus:border-purple-500';
+    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:ring-[#A8D5F2] focus:border-[#A8D5F2]'
+    : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:ring-[#A8D5F2] focus:border-[#A8D5F2]';
 
   // ── Progress ring color ────────────────────────────────────────────────────
   const ringColor = oran === 100 ? '#10b981' : oran >= 50 ? '#f59e0b' : '#ef4444';
@@ -112,11 +144,11 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
 
       {/* ── Başlık ─────────────────────────────────────────────────── */}
       <div className="text-center mb-10">
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4 ${dark ? 'bg-pink-900/40 text-pink-300' : 'bg-pink-50 text-pink-700'}`}>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4 ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-[#EAF4FB] text-[#2B5472]'}`}>
           <User className="w-4 h-4" /> Girişimci Profilim
         </div>
         <h2 className={`text-4xl font-black mb-3 ${text}`}>
-          Profilini Oluştur 💜
+          Profilini Oluştur ✨
         </h2>
         <p className={`max-w-2xl mx-auto text-base ${sub}`}>
           Bilgilerini doldur, sana özel destek programlarını otomatik olarak eşleştirelim.
@@ -181,7 +213,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
         <div className="text-center mb-8">
           <button
             onClick={() => setEditMode(true)}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition ${dark ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-100 hover:bg-purple-200 text-purple-800'}`}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition ${dark ? 'bg-[#A8D5F2] hover:bg-[#9BC0E0] text-[#1F2D3D]' : 'bg-[#EAF4FB] hover:bg-[#DDEEF8] text-[#2B5472]'}`}
           >
             <Edit3 className="w-4 h-4" /> Profili Düzenle
           </button>
@@ -189,7 +221,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
       ) : (
         <div className={`${card} border rounded-2xl shadow-lg p-6 md:p-8 mb-8`}>
           <h3 className={`text-lg font-black mb-6 flex items-center gap-2 ${text}`}>
-            <Edit3 className="w-5 h-5 text-purple-500" /> Kişisel Bilgiler
+            <Edit3 className="w-5 h-5 text-[#7DA5C2]" /> Kişisel Bilgiler
           </h3>
 
           <div className="grid md:grid-cols-2 gap-5">
@@ -307,7 +339,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
           <div className="mt-6 flex items-center gap-4">
             <button
               onClick={handleSave}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition flex items-center gap-2"
+              className="bg-[#1E293B] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               {kaydedildi ? 'Kaydedildi! ✓' : 'Profili Kaydet'}
@@ -317,12 +349,17 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
                 <CheckCircle2 className="w-4 h-4" /> Başarıyla kaydedildi!
               </span>
             )}
+            {hata && (
+              <span className="text-red-500 text-sm font-bold flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" /> {hata}
+              </span>
+            )}
           </div>
 
           {/* Güvenlik notu */}
           <div className={`mt-4 flex items-center gap-2 text-xs ${sub}`}>
             <Shield className="w-3.5 h-3.5" />
-            Bilgileriniz sadece bu cihazda saklanır, hiçbir sunucuya gönderilmez.
+            Bilgileriniz hesabınıza bağlı olarak güvenli sunucumuzda saklanır, üçüncü kişilerle paylaşılmaz.
           </div>
         </div>
       )}
@@ -330,11 +367,11 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
       {/* ── Profil Tamamsa → Sihirbaza Yönlendir ──────────────────── */}
       {oran === 100 && (
         <div className="rounded-2xl overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>
+          style={{ background: 'linear-gradient(135deg, #A8D5F2, #F7DDE7)' }}>
           <div className="p-8 text-center text-white">
             <div className="text-4xl mb-3">🎉</div>
             <h3 className="text-2xl font-black mb-2">Profilin Hazır!</h3>
-            <p className="text-purple-100 text-sm max-w-xl mx-auto mb-5">
+            <p className="text-[#3E5369] text-sm max-w-xl mx-auto mb-5">
               Artık Destek Sihirbazı senin profiline göre en uygun programları otomatik filtreleyebilir.
               "Hadi Başvur" butonuyla doğrudan başvurabilirsin!
             </p>
@@ -344,7 +381,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
                 const event = new CustomEvent('fortuno-navigate', { detail: 'sihirbaz' });
                 window.dispatchEvent(event);
               }}
-              className="bg-white text-purple-700 font-black px-8 py-3 rounded-xl hover:bg-purple-50 transition shadow-lg text-sm flex items-center gap-2 mx-auto"
+              className="bg-white text-[#2B5472] font-black px-8 py-3 rounded-xl hover:bg-[#F3F9FD] transition shadow-lg text-sm flex items-center gap-2 mx-auto"
             >
               <Sparkles className="w-4 h-4" />
               Destek Sihirbazına Git

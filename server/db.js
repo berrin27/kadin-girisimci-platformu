@@ -1,0 +1,129 @@
+// ── Fortuno Veritabanı (SQLite) ──────────────────────────────────────────────
+// Node'un yerleşik node:sqlite modülü kullanılır — native derleme gerekmez.
+// Şema değişiklikleri MIGRATIONS dizisine sırayla eklenir; user_version ile
+// hangi migration'ın uygulandığı takip edilir.
+
+import { DatabaseSync } from 'node:sqlite';
+import { mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DB_PATH = process.env.DB_PATH || resolve(__dirname, 'data', 'fortuno.db');
+
+mkdirSync(dirname(DB_PATH), { recursive: true });
+
+export const db = new DatabaseSync(DB_PATH);
+db.exec('PRAGMA journal_mode = WAL;');
+db.exec('PRAGMA foreign_keys = ON;');
+
+const MIGRATIONS = [
+  // 1 — ilk şema
+  `
+  CREATE TABLE users (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    email             TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash     TEXT NOT NULL,
+    kanban_initialized INTEGER NOT NULL DEFAULT 0,
+    created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE profiles (
+    user_id      INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    ad           TEXT NOT NULL DEFAULT '',
+    soyad        TEXT NOT NULL DEFAULT '',
+    yas          TEXT NOT NULL DEFAULT '',
+    telefon      TEXT NOT NULL DEFAULT '',
+    sektor       TEXT NOT NULL DEFAULT '',
+    profil_tipi  TEXT NOT NULL DEFAULT '',
+    asama        TEXT NOT NULL DEFAULT '',
+    medeni_durum TEXT NOT NULL DEFAULT '',
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE applications (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    program_id          TEXT NOT NULL,
+    program_title       TEXT NOT NULL,
+    program_institution TEXT NOT NULL DEFAULT '',
+    program_amount      TEXT NOT NULL DEFAULT '',
+    durum               TEXT NOT NULL DEFAULT 'beklemede',
+    ad                  TEXT NOT NULL,
+    soyad               TEXT NOT NULL,
+    yas                 TEXT NOT NULL DEFAULT '',
+    telefon             TEXT NOT NULL,
+    email               TEXT NOT NULL DEFAULT '',
+    sehir               TEXT NOT NULL DEFAULT '',
+    motivasyon          TEXT NOT NULL DEFAULT '',
+    is_aciklamasi       TEXT NOT NULL DEFAULT '',
+    kvkk_onay_at        TEXT NOT NULL,
+    created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_applications_user ON applications(user_id);
+
+  CREATE TABLE kanban_cards (
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id          TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    institution TEXT NOT NULL DEFAULT '',
+    amount      TEXT NOT NULL DEFAULT '',
+    column_id   TEXT NOT NULL,
+    deadline    TEXT NOT NULL DEFAULT '',
+    priority    TEXT NOT NULL DEFAULT 'orta',
+    note        TEXT NOT NULL DEFAULT '',
+    starred     INTEGER NOT NULL DEFAULT 0,
+    sonuc       TEXT,
+    color       TEXT NOT NULL DEFAULT '',
+    position    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, id)
+  );
+
+  CREATE TABLE favorites (
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind       TEXT NOT NULL CHECK (kind IN ('program', 'fuar')),
+    item_id    TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, kind, item_id)
+  );
+
+  CREATE TABLE chat_messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender     TEXT NOT NULL CHECK (sender IN ('user', 'bot')),
+    text       TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_chat_user ON chat_messages(user_id, id);
+  `,
+];
+
+function migrate() {
+  const { user_version: current } = db.prepare('PRAGMA user_version').get();
+  for (let v = current; v < MIGRATIONS.length; v++) {
+    db.exec('BEGIN');
+    try {
+      db.exec(MIGRATIONS[v]);
+      db.exec(`PRAGMA user_version = ${v + 1}`);
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+  }
+}
+
+migrate();
+
+// Birden çok sorguyu tek işlemde çalıştırır; hata olursa geri alır.
+export function transaction(fn) {
+  db.exec('BEGIN');
+  try {
+    const result = fn();
+    db.exec('COMMIT');
+    return result;
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
