@@ -530,3 +530,83 @@ export const ulusalIstatistikler = [
         kaynak: "https://ticaret.gov.tr/haberler/ticaret-bakani-omer-bolat-kadem-koopro-programinin-kapanis-toreninde-konustu",
     },
 ];
+
+// ── Eğitimler (Eğitimler sayfası) ────────────────────────────────────────────
+// Yalnızca resmi bağlantısı doğrulanan, kadın girişimcilere açık eğitimler.
+// konu: 'is-kurma' | 'finans' | 'dijital' | 'ihracat'
+// sertifika: true (belge veriliyor) | false | null (kaynakta belirtilmemiş)
+// adim: "Nereden başlamalıyım?" yolundaki adım (1 iş kurma, 2 para yönetimi, 3 dijital & ihracat)
+export const egitimler = [
+    {
+        id: "kosgeb-online-girisimcilik",
+        baslik: "KOSGEB Online Girişimcilik Eğitimi",
+        kurum: "KOSGEB",
+        konu: "is-kurma", adim: 1,
+        bicim: "Online · kendi hızında",
+        ucret: "Ücretsiz",
+        sertifika: true,
+        aciklama: "İş fikri geliştirme, iş modeli, pazarlama ve finansal planlama temelleri. e-Devlet şifresiyle KOSGEB e-Akademi'ye girilerek tamamlanır. Bazı destek ve kredilerde (ör. Halkbank'ın 35 yaş altı sıfır faizli esnaf kredisi) bu eğitimin belgesi şart koşulur.",
+        link: "https://lms.kosgeb.gov.tr",
+        kaynak: "https://www.kosgeb.gov.tr/site/tr/genel/destekdetay/1231/girisimci-destek-programi",
+    },
+    {
+        id: "iskur-kosgeb-uygulamali",
+        baslik: "Uygulamalı Girişimcilik Eğitimi",
+        kurum: "İŞKUR · KOSGEB",
+        konu: "is-kurma", adim: 1,
+        bicim: "Sınıf içi · il müdürlükleri",
+        ucret: "Ücretsiz",
+        sertifika: true,
+        aciklama: "İŞKUR ve KOSGEB iş birliğiyle illerde düzenlenen uygulamalı girişimcilik eğitimi. Tamamlayanlara Uygulamalı Girişimcilik Eğitimi Katılım Belgesi verilir. Açılan dönemler için il İŞKUR veya KOSGEB müdürlüğüne danış.",
+        link: "https://www.iskur.gov.tr",
+        kaynak: "https://www.alomaliye.com/2016/09/02/iskur-ve-kosgeb-arasindaki-girisimcilik-egitimi-isbirligi-protokolu/",
+    },
+    {
+        id: "yukselen-kadinlar-tir",
+        baslik: "Yükselen Kadınlar Girişimcilik Eğitim Tırı",
+        kurum: "Aile ve Sosyal Hizmetler Bakanlığı · Halkbank",
+        konu: "is-kurma", adim: 1,
+        bicim: "Yüz yüze · il il geziyor",
+        ucret: "Ücretsiz",
+        sertifika: null,
+        aciklama: "\"Kendi İşim, Benim İzim\" projesi kapsamında illeri dolaşan mobil eğitim: girişimcilik, dijital pazarlama ve e-ticaret, finansal okuryazarlık, şirket kuruluşu ve kadınlara yönelik devlet destekleri. Tırın iline geleceği tarihi Aile ve Sosyal Hizmetler il müdürlüğü duyurularından takip et.",
+        link: "https://kadingirisimci.gov.tr/",
+        kaynak: "https://aile.gov.tr/van/haberler/yukselen-kadinlar-girisimcilik-egitim-tiri-van-da-kadin-girisimcilerle-bulustu/",
+    },
+    {
+        id: "halkbank-ureten-kadinlar-akademisi",
+        baslik: "Üreten Kadınlar Akademisi",
+        kurum: "Halkbank",
+        konu: "finans", adim: 2,
+        bicim: "Online · video ve makale",
+        ucret: "Üyelikle erişim",
+        sertifika: true,
+        aciklama: "Finansal planlama, nakit akışı yönetimi, marka yönetimi, satış ve pazarlama, e-ihracat, yapay zekâ ve teşvik mevzuatı gibi konularda içerikler ve bir sertifika programı. Siteye üye olarak erişilir.",
+        link: "https://uretenkadinlarakademisi.halkbank.com.tr",
+        kaynak: "https://kadingirisimci.gov.tr/faydali-linkler/",
+    },
+    {
+        id: "google-dijital-atolye",
+        baslik: "Google Dijital Atölye Kursları",
+        kurum: "Google (Grow with Google)",
+        konu: "dijital", adim: 3,
+        bicim: "Online · kendi hızında",
+        ucret: "Ücretsiz",
+        sertifika: null,
+        aciklama: "Dijital pazarlama, arama motorları, sosyal medya ve işletmeni internette görünür kılma gibi temel dijital beceri kursları. Google İşletme Profili ve reklam araçlarıyla ilgili ürün eğitimleri de var.",
+        link: "https://skillshop.exceedlms.com/student/catalog/list?category_ids=7899-google-dijital-atolye&locale=tr",
+        kaynak: "https://grow.google/intl/tr/",
+    },
+    {
+        id: "ticaret-ihracat-egitimi",
+        baslik: "İhracat Süreçleri ve Devlet Destekleri Eğitimi",
+        kurum: "Ticaret Bakanlığı",
+        konu: "ihracat", adim: 3,
+        bicim: "Online · 3 gün",
+        ucret: "Ücretsiz",
+        sertifika: true,
+        aciklama: "İhracatın adımları, gümrük ve lojistik süreçleri ile ihracat destekleri anlatılır. Yılda birkaç dönem açılır (2026'da Mart, Mayıs, Haziran ve Eylül); eğitimin en az üçte ikisine katılanlara dijital katılım belgesi verilir.",
+        link: "https://egitimbasvuru.ticaret.gov.tr/Ihracat",
+        kaynak: "https://www.alomaliye.com/2026/06/10/ticaret-bakanligi-ihracat-surecleri-ve-devlet-destekleri-egitim-programi-23-24-25-haziran-2026/",
+    },
+];

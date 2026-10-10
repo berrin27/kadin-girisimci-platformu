@@ -7,6 +7,7 @@ import BasvuruFormu from './components/BasvuruFormu';
 import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
+import NakitAkisi from './components/NakitAkisi';
 import BilgiSayfasi from './components/BilgiSayfasi';
 import Navbar from './components/Navbar';
 import DestekSorulari, { SecimOzeti } from './components/DestekSorulari';
@@ -841,6 +842,8 @@ export default function App({ user, onLogout }) {
       ) : null}
 
       {/* ── MODÜLER İŞ PLANI ─────────────────────────────────────────────── */}
+      {activeSection === 'nakit-akisi' && <NakitAkisi dark={dark} />}
+
       {showIsPlani && (
         <IsPlani dark={dark} />
       )}

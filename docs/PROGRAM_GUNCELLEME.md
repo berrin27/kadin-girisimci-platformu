@@ -85,6 +85,12 @@ Ana sayfadaki "Türkiye'de kadın girişimciliği" kutuları resmi kaynaklı rak
 Kurumlar daha yeni bir rakam açıkladıysa `deger`, `aciklama` ve `kaynak`'ı güncelle; kaynağı
 olmayan veya tahmini rakam ekleme. "Fortuno'da" satırındaki sayılar veriden otomatik hesaplanır.
 
+## Eğitimler (`egitimler`)
+
+Eğitimler sayfasındaki ücretsiz eğitimler. Bağlantının çalıştığını ve programın hâlâ sürdüğünü
+kontrol et; kapanan programı sil, yeni bir resmi eğitim çıktıysa ekle. `sertifika` yalnızca kaynakta
+belge verildiği yazıyorsa `true` olur, belirtilmemişse `null` bırak.
+
 ## Pull request
 
 - Dal adı: `program-guncelleme/YYYY-AA-GG`

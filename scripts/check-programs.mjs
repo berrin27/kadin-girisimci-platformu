@@ -3,7 +3,7 @@
 // src/data.js'teki programların yapısını ve eşleşme kapsamını kontrol eder.
 // Hata varsa 1 ile çıkar (haftalık güncelleme ajanı PR açmadan önce çalıştırır).
 
-import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, ulusalIstatistikler, SON_KONTROL } from '../src/data.js';
+import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, ulusalIstatistikler, egitimler, SON_KONTROL } from '../src/data.js';
 
 const SEKTOR = ['yerel_isletme', 'ev_emegi', 'teknoloji', 'e_ticaret', 'kooperatif', 'sosyal_girisim', 'kırsal'];
 const YAS = ['genc_uni', 'genc_girisimci', 'standart', 'olgun_girisimci'];
@@ -80,6 +80,19 @@ for (const st of ulusalIstatistikler) {
   if (typeof st.deger !== 'number' || !(st.deger > 0)) hata(`İstatistik ${ad}: deger pozitif sayı olmalı`);
   if (!IKONLAR.includes(st.ikon)) hata(`İstatistik ${ad}: ikon "${st.ikon}" App.jsx'te tanımlı değil`);
   if (!/^https:\/\//.test(st.kaynak || '')) hata(`İstatistik ${ad}: kaynak https:// olmalı`);
+}
+
+const EGITIM_KONULARI = ['is-kurma', 'finans', 'dijital', 'ihracat'];
+const egitimIdleri = new Set();
+for (const e of egitimler) {
+  const ad = e.id || e.baslik;
+  for (const alan of ['id', 'baslik', 'kurum', 'konu', 'bicim', 'ucret', 'aciklama', 'link', 'kaynak']) if (!e[alan]) hata(`Eğitim ${ad}: "${alan}" boş`);
+  if (egitimIdleri.has(e.id)) hata(`Eğitim ${ad}: id tekrarlanıyor`);
+  egitimIdleri.add(e.id);
+  if (!EGITIM_KONULARI.includes(e.konu)) hata(`Eğitim ${ad}: konu "${e.konu}" geçersiz`);
+  if (![1, 2, 3].includes(e.adim)) hata(`Eğitim ${ad}: adim 1, 2 veya 3 olmalı`);
+  if (![true, false, null].includes(e.sertifika)) hata(`Eğitim ${ad}: sertifika true/false/null olmalı`);
+  for (const url of [e.link, e.kaynak]) if (url && !/^https:\/\//.test(url)) hata(`Eğitim ${ad}: bağlantı https:// olmalı`);
 }
 
 // Eşleşme kapsamı: her sektör + yaş + aşama için en az bir program olmalı
