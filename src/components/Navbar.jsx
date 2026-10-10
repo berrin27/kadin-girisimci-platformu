@@ -14,7 +14,6 @@ const NAV_MENU = [
     label: 'Araçlar',
     children: [
       { id: 'is-plani', label: 'İş Planı', aciklama: 'Banka, hibe ve yatırımcı için plan hazırla' },
-      { id: 'hesaplayici', label: 'Hibe Hesaplayıcı', aciklama: 'Ne kadar destek alabileceğini gör' },
     ],
   },
   { id: 'egitim', label: 'Eğitimler', sections: ['egitim'] },

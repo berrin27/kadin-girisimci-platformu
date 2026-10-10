@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import HibeHesaplayici from './components/HibeHesaplayici';
 import BasvuruTakip from './components/BasvuruTakip';
 import EgitimPortali from './components/EgitimPortali';
 import FuarDestekleri from './components/FuarDestekleri';
@@ -10,12 +9,13 @@ import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
 import BilgiSayfasi from './components/BilgiSayfasi';
 import Navbar from './components/Navbar';
+import DestekSorulari, { SecimOzeti } from './components/DestekSorulari';
 import FortunoLogo from './components/FortunoLogo';
 import { supportData, basvuruTakvimi, etkinlikler, ulusalIstatistikler, SON_KONTROL } from './data';
 import { api } from './api';
 import {
-  Sparkles, ArrowRight, CheckCircle2, MessageSquare, X,
-  Building2, ExternalLink, Send, Loader2, BookOpen, Globe, Award,
+  Sparkles, CheckCircle2, MessageSquare, X,
+  ExternalLink, Send, Loader2, BookOpen, Globe, Award,
   Heart, ChevronDown, Calendar,
   BadgeCheck, Gift, HandCoins, Hourglass, Banknote, Landmark, Ship, Handshake
 } from 'lucide-react';
@@ -241,7 +241,7 @@ export default function App({ user, onLogout }) {
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState('sihirbaz'); // sihirbaz | kaynakca | hesaplayici | takip | favoriler
+  const [activeSection, setActiveSection] = useState('sihirbaz'); // Navbar.jsx'teki NAV_MENU / HESAP_MENU sayfa kimlikleri
   const [favorites, setFavorites] = useState([]);
   const [heartPoppingId, setHeartPoppingId] = useState(null);
   const [confettiActive, setConfettiActive] = useState(false);
@@ -275,14 +275,39 @@ export default function App({ user, onLogout }) {
     if (alanlar.some(([deger]) => deger)) setProfildenDolu(true);
   }, []);
 
+  // Eşleşen programları bulur. sessiz: profilden otomatik aramada bekleme/konfeti yok.
+  const aramaYap = useCallback((d, { sessiz = false } = {}) => {
+    if (!d.sektor || !d.profil || !d.asama || !d.medeniDurum) return;
+    setSektor(d.sektor); setProfil(d.profil); setAsama(d.asama); setMedeniDurum(d.medeniDurum);
+    const bitir = () => {
+      const results = buildMatchCandidates(d);
+      setKurumFilter('Tümü'); // önceki aramanın kurum filtresi yeni sonuçları gizlemesin
+      setFilteredResults(results);
+      setHasSearched(true);
+      setIsSkeletonLoading(false);
+      if (!sessiz && results.length > 0) {
+        setConfettiActive(true);
+        setTimeout(() => setConfettiActive(false), 2000);
+      }
+    };
+    if (sessiz) { bitir(); return; }
+    setIsSkeletonLoading(true);
+    setHasSearched(false);
+    setTimeout(bitir, 900);
+  }, []);
+
   // Kullanıcı verilerini sunucudan yükle
   useEffect(() => {
     api.favorites.list('program').then(({ ids }) => setFavorites(ids)).catch(() => {});
-    api.profile.get().then(({ profile }) => profiliUygula(profile)).catch(() => {});
+    api.profile.get().then(({ profile }) => {
+      profiliUygula(profile);
+      const { sektor: s, profilTipi: p, asama: a, medeniDurum: m } = profile;
+      if (s && p && a && m) aramaYap({ sektor: s, profil: p, asama: a, medeniDurum: m }, { sessiz: true });
+    }).catch(() => {});
     api.chat.history()
       .then(({ messages }) => { if (messages.length) setChatMessages([CHAT_WELCOME, ...messages]); })
       .catch(() => {});
-  }, [profiliUygula]);
+  }, [profiliUygula, aramaYap]);
 
   // Confetti CSS inject (one-time)
   useEffect(() => {
@@ -324,24 +349,17 @@ export default function App({ user, onLogout }) {
     setTimeout(() => setHeartPoppingId(null), 350);
   }, [favorites]);
 
-  const handleFindSupport = (e) => {
-    e.preventDefault();
-    if (!sektor || !profil || !asama || !medeniDurum) return;
-    setIsSkeletonLoading(true);
-    setHasSearched(false);
-    setTimeout(() => {
-      const results = buildMatchCandidates({ sektor, profil, asama, medeniDurum });
-      setKurumFilter('Tümü'); // önceki aramanın kurum filtresi yeni sonuçları gizlemesin
-
-      setFilteredResults(results);
-      setHasSearched(true);
-      setIsSkeletonLoading(false);
-      if (results.length > 0) {
-        setConfettiActive(true);
-        setTimeout(() => setConfettiActive(false), 3000);
-      }
-    }, 1400);
-  };
+  // Sonuçlardan "en fazla ne kadar destek" özeti (eski Hibe Hesaplayıcı'nın yerini alır)
+  const destekOzeti = useMemo(() => {
+    const enYuksek = (turler, alan) => filteredResults
+      .filter(p => turler.includes(p.destekTuru) && p[alan])
+      .reduce((a, p) => (!a || p[alan] > a[alan] ? p : a), null);
+    return {
+      hibe: enYuksek(['hibe'], 'hibeUstLimit'),
+      finansman: enYuksek(['kredi', 'geri_odemeli', 'yatirim'], 'finansmanUstLimit'),
+      geriOdemesizSayisi: filteredResults.filter(p => p.destekTuru === 'hibe').length,
+    };
+  }, [filteredResults]);
 
   // Mesajı sunucuya gönderir; Gemini veya hazır yanıt motoru sunucuda çalışır.
   const sendChat = useCallback(async (text, { useHistory = true } = {}) => {
@@ -383,10 +401,6 @@ export default function App({ user, onLogout }) {
       : filteredResults.filter(r => r.institution === kurumFilter),
     [filteredResults, kurumFilter]
   );
-  const bestMatchScore = useMemo(
-    () => (displayedResults.length ? Math.max(...displayedResults.map(r => r.combinedScore)) : 0),
-    [displayedResults]
-  );
   // Tam eşleşme yoksa hangi kriterin gevşetildiği (tüm sonuçlar aynı seviyededir)
   const yakinEslesme = filteredResults[0]?.yakin || false;
 
@@ -404,7 +418,6 @@ export default function App({ user, onLogout }) {
   const showFavoriler   = activeSection === 'favoriler';
   const showKaynakca    = activeSection === 'kaynakca';
   const showIsPlani     = activeSection === 'is-plani';
-  const showHesaplayici = activeSection === 'hesaplayici';
   const showTakip       = activeSection === 'takip';
   const showEgitim      = activeSection === 'egitim';
   const showFuar        = activeSection === 'fuar';
@@ -449,7 +462,7 @@ export default function App({ user, onLogout }) {
 
               <div className="hero-stats mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <button
-                  onClick={() => setActiveSection('sihirbaz')}
+                  onClick={() => goToSection('sihirbaz', 'destek-sorulari')}
                   className="rounded-full border border-[#EAE3D9] bg-[#F3D5D8] px-6 py-3 text-sm font-bold text-[#4A1525] shadow-[0_12px_24px_rgba(244,196,203,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#eed0d5]"
                 >
                   Destek Bul
@@ -522,129 +535,25 @@ export default function App({ user, onLogout }) {
 
       {/* ── ANA İÇERİK ─────────────────────────────────────────────────────── */}
       {showSihirbaz ? (
-        <main className="max-w-6xl mx-auto px-4 mt-12 pb-24 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <main className="max-w-6xl mx-auto px-4 mt-12 pb-24 space-y-6">
 
-          {/* Sol Kolon: Form */}
-          <div className={`lg:col-span-1 ${card} p-6 rounded-2xl shadow-xl border h-fit`}>
-            <div className={`flex items-center gap-2 mb-6 pb-3 border-b ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
-              <Building2 className="w-5 h-5 text-[#1E293B]" />
-              <h2 className="text-xl font-bold">Destek Sihirbazı</h2>
-            </div>
-            {profildenDolu && (
-              <p className={`-mt-3 mb-5 text-xs ${subtext}`}>
-                ✨ Bilgiler profilinden dolduruldu — istersen burada değiştirebilirsin.
-              </p>
-            )}
-            <form onSubmit={handleFindSupport} className="space-y-6">
-              {[
-                {
-                  label: '1. Ne Tür Bir İş Kurmak Veya Büyütmek İstiyorsunuz?',
-                  value: sektor, setter: setSektor, id: 'sektor-select',
-                  options: [
-                    ['', 'Sektör Seçiniz...'],
-                    ['ev_emegi', 'Ev Emeği & Mikro Üretim (Şirketsiz)'],
-                    ['yerel_isletme', 'Yerel İşletme (Kafe, Butik, Salon, Hizmet)'],
-                    ['teknoloji', 'Teknoloji (Yazılım, Mobil Uygulama, Ar-Ge)'],
-                    ['e_ticaret', 'E-Ticaret & Global İhracat'],
-                    ['kooperatif', 'Kadın Kooperatifleri & Ortak Yerel Üretim'],
-                    ['sosyal_girisim', 'Sosyal Girişim (Toplumsal Fayda & Çevre)'],
-                    ['kırsal', 'Kırsal Alan / Tarım, Hayvancılık & Turizm'],
-                  ],
-                },
-                {
-                  label: '2. Yaşınız ve Profiliniz Nedir?',
-                  value: profil, setter: setProfil, id: 'profil-select',
-                  options: [
-                    ['', 'Profil Seçiniz...'],
-                    ['genc_uni',       '🎓 18-25 Yaş — Üniversite öğrencisi veya yeni mezun'],
-                    ['genc_girisimci', '💼 26-35 Yaş — Genç profesyonel girişimci'],
-                    ['standart',       '🌟 36-50 Yaş — Deneyimli kadın girişimci'],
-                    ['olgun_girisimci','👑 50+ Yaş — Olgun ve köklü deneyim sahibi'],
-                  ],
-                },
-                {
-                  label: '3. Girişiminizin Şu Anki Durumu Nedir?',
-                  value: asama, setter: setAsama, id: 'asama-select',
-                  options: [
-                    ['', 'Aşama Seçiniz...'],
-                    ['fikir', '💡 Fikir Aşaması — Şirket henüz kurulmadı'],
-                    ['yeni_kurulmus', '🌱 Yeni Kurulmuş — Son 1 yıl içinde açıldı'],
-                    ['buyume', '📈 Büyüme Döneminde — 1-3 yıllık, istikrar arıyorum'],
-                    ['kriz_donemi', '🔄 Yeniden Yapılanma — Tutunmakta zorlanıyorum, destek lazım'],
-                    ['kokenlesik', '🏆 Köklü İşletme — 3 yıldan fazla, ölçeklenmek istiyorum'],
-                  ],
-                },
-                {
-                  label: '4. Medeni Durumunuz Nedir?',
-                  value: medeniDurum, setter: setMedeniDurum, id: 'medeni-select',
-                  options: [
-                    ['', 'Medeni Durum Seçiniz...'],
-                    ['hepsi',   '💜 Hepsi için — Medeni durum fark etmez'],
-                    ['bekar',   '🌸 Bekar — Hiç evlenmemiş'],
-                    ['evli',    '💍 Evli — Eş ile birlikte yaşayan'],
-                    ['dul',     '🖤 Dul — Eşini kaybetmiş'],
-                    ['bosanmis','🔓 Boşanmış / Ayrı yaşayan'],
-                  ],
-                },
-              ].map(({ label, value, setter, id, options }) => (
-                <div key={id}>
-                  <label htmlFor={id} className={`block text-sm font-bold mb-2 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>{label}</label>
-                  <select
-                    id={id}
-                    value={value}
-                    onChange={e => setter(e.target.value)}
-                    className={`w-full p-3 border rounded-xl font-medium text-sm focus:outline-none focus:ring-2 transition ${inputCls} ${dark ? 'text-white' : ''}`}
-                    required
-                  >
-                    {options.map(([val, lbl]) => <option key={val} value={val}>{lbl}</option>)}
-                  </select>
-                </div>
-              ))}
-              <button
-                id="find-support-btn"
-                type="submit"
-                disabled={isSkeletonLoading}
-                className="w-full bg-[#1E293B] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-95 transition disabled:opacity-70"
-              >
-                {isSkeletonLoading
-                  ? <span className="flex items-center gap-2 justify-center"><Loader2 className="w-5 h-5 animate-spin" /> Aranıyor...</span>
-                  : <span className="flex items-center gap-2 justify-center">Uygun Teşvikleri Bul <ArrowRight className="w-5 h-5" /></span>}
-              </button>
-            </form>
+          {/* Sorular (adım adım) ya da tamamlandıysa seçim özeti */}
+          {!hasSearched && !isSkeletonLoading ? (
+            <DestekSorulari
+              key={`${sektor}-${profil}-${asama}-${medeniDurum}`}
+              degerler={{ sektor, profil, asama, medeniDurum }}
+              onTamamla={aramaYap}
+              dark={dark}
+              profildenDolu={profildenDolu}
+            />
+          ) : (
+            <SecimOzeti degerler={{ sektor, profil, asama, medeniDurum }} onDegistir={() => setHasSearched(false)} dark={dark} />
+          )}
 
-            {/* FAQ Accordion */}
-            <div id="sss" className={`mt-8 pt-6 border-t scroll-mt-24 ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
-              <h3 className="font-bold text-sm mb-3 text-[#1E293B] flex items-center gap-1">
-                <Sparkles className="w-4 h-4" /> Sık Sorulan Sorular
-              </h3>
-              <div className="space-y-2">
-                {faqVerisi.map((faq, i) => (
-                  <div key={i} className={`rounded-xl border overflow-hidden ${dark ? 'border-slate-700' : 'border-slate-200'}`}>
-                    <button
-                      id={`faq-btn-${i}`}
-                      onClick={() => setOpenFaqIdx(openFaqIdx === i ? null : i)}
-                      className={`w-full text-left px-4 py-3 text-xs font-bold flex justify-between items-center transition ${dark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-800'}`}
-                    >
-                      {faq.soru}
-                      <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${openFaqIdx === i ? 'rotate-180' : ''}`} />
-                    </button>
-                    <div
-                      className="faq-body"
-                      style={{ maxHeight: openFaqIdx === i ? '200px' : '0', opacity: openFaqIdx === i ? 1 : 0 }}
-                    >
-                      <p className={`px-4 py-3 text-xs leading-relaxed ${dark ? 'text-slate-400 bg-slate-900' : 'text-slate-600 bg-white'}`}>
-                        {faq.cevap}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sağ Kolon: Sonuçlar */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className={`${card} p-6 rounded-2xl shadow-xl border min-h-[460px]`}>
+          {/* Sonuçlar */}
+          {(hasSearched || isSkeletonLoading) && (
+          <div className="space-y-6">
+            <div className={`${card} p-6 rounded-2xl shadow-xl border`}>
               <h3 className="text-xl font-bold mb-4 pb-3 border-b border-slate-100/20 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 <span>Eşleşen Finansal Destekler ve Teşvik Paketleri</span>
@@ -667,15 +576,19 @@ export default function App({ user, onLogout }) {
               )}
 
               {hasSearched && filteredResults.length > 0 && (
-                <div className="mb-5 grid md:grid-cols-2 gap-3">
-                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>En Yüksek Uyum</div>
-                    <div className="mt-2 text-xl font-black text-emerald-500">{bestMatchScore}/100</div>
-                  </div>
-                  <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-                    <div className={`text-[11px] uppercase tracking-wider ${subtext}`}>Öncelikli Eşleşme</div>
-                    <div className={`mt-2 text-base font-bold ${dark ? 'text-white' : 'text-[#1E293B]'}`}>{displayedResults[0]?.title || 'Bekleniyor'}</div>
-                  </div>
+                <div className="mb-5 grid gap-3 md:grid-cols-3">
+                  {[
+                    destekOzeti.hibe && { baslik: 'Geri ödemesiz destek', deger: `${destekOzeti.hibe.hibeUstLimit.toLocaleString('tr-TR')} ₺'ye kadar`, alt: destekOzeti.hibe.title, renk: 'text-emerald-600' },
+                    destekOzeti.finansman && { baslik: 'Kredi / geri ödemeli finansman', deger: `${destekOzeti.finansman.finansmanUstLimit.toLocaleString('tr-TR')} ₺'ye kadar`, alt: destekOzeti.finansman.title, renk: dark ? 'text-sky-300' : 'text-sky-700' },
+                    { baslik: 'Eşleşen program', deger: `${filteredResults.length} program`, alt: `${destekOzeti.geriOdemesizSayisi} tanesi geri ödemesiz`, renk: dark ? 'text-white' : 'text-[#1E293B]' },
+                  ].filter(Boolean).map(k => (
+                    <div key={k.baslik} className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4`}>
+                      <div className={`text-[11px] font-bold uppercase tracking-wider ${subtext}`}>{k.baslik}</div>
+                      <div className={`mt-1.5 text-xl font-black ${k.renk}`}>{k.deger}</div>
+                      <div className={`mt-0.5 text-xs ${subtext} line-clamp-1`}>{k.alt}</div>
+                    </div>
+                  ))}
+                  <p className={`md:col-span-3 -mt-1 text-[11px] ${subtext}`}>Tutarlar tek bir programdaki en yüksek resmi üst limittir; destekler genelde birbirine eklenmez.</p>
                 </div>
               )}
 
@@ -702,17 +615,8 @@ export default function App({ user, onLogout }) {
 
               {/* İçerik */}
               {isSkeletonLoading ? (
-                <div key="loading" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map(n => <SkeletonCard key={n} dark={dark} />)}
-                </div>
-              ) : !hasSearched ? (
-                <div key="not-searched" className="flex flex-col items-center justify-center text-center pt-16 px-4">
-                  <div className="w-16 h-16 bg-[#F3D5D8] text-[#4A1525] rounded-full flex items-center justify-center mb-4">
-                    <Sparkles className="w-8 h-8" />
-                  </div>
-                  <p className={`font-medium ${subtext}`}>
-                    Soldaki sihirbazı kullanarak kriterlerinizi girin, FortunoAI arka plandaki tüm devlet ve vakıf veritabanını tarasın.
-                  </p>
+                <div key="loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map(n => <SkeletonCard key={n} dark={dark} />)}
                 </div>
               ) : displayedResults.length === 0 ? (
                 <div key="no-results" className="flex flex-col items-center justify-center text-center pt-16 px-4">
@@ -722,7 +626,7 @@ export default function App({ user, onLogout }) {
                   </p>
                 </div>
               ) : (
-                <div key="results" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div key="results" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayedResults.map((item, idx) => (
                     <div
                       key={item.id}
@@ -789,6 +693,39 @@ export default function App({ user, onLogout }) {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+          )}
+
+          {/* Sık sorulan sorular */}
+          <div className={`${card} p-6 rounded-2xl border`}>
+            {/* FAQ Accordion */}
+            <div id="sss" className="scroll-mt-24">
+              <h3 className="font-bold text-sm mb-3 text-[#1E293B] flex items-center gap-1">
+                <Sparkles className="w-4 h-4" /> Sık Sorulan Sorular
+              </h3>
+              <div className="space-y-2">
+                {faqVerisi.map((faq, i) => (
+                  <div key={i} className={`rounded-xl border overflow-hidden ${dark ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <button
+                      id={`faq-btn-${i}`}
+                      onClick={() => setOpenFaqIdx(openFaqIdx === i ? null : i)}
+                      className={`w-full text-left px-4 py-3 text-xs font-bold flex justify-between items-center transition ${dark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-800'}`}
+                    >
+                      {faq.soru}
+                      <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${openFaqIdx === i ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div
+                      className="faq-body"
+                      style={{ maxHeight: openFaqIdx === i ? '200px' : '0', opacity: openFaqIdx === i ? 1 : 0 }}
+                    >
+                      <p className={`px-4 py-3 text-xs leading-relaxed ${dark ? 'text-slate-400 bg-slate-900' : 'text-slate-600 bg-white'}`}>
+                        {faq.cevap}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </main>
@@ -895,7 +832,7 @@ export default function App({ user, onLogout }) {
             <Award className="w-10 h-10 mx-auto mb-3 opacity-90" />
             <h3 className="text-2xl font-black mb-2">Hangi Destek Size Uygun?</h3>
             <p className="text-slate-200 mb-5 max-w-lg mx-auto">Kafanız karıştıysa endişelenmeyin! FortunoAI sizi 3 basit soruyla en uygun programa yönlendirir.</p>
-            <button id="goto-sihirbaz-btn" onClick={() => setActiveSection('sihirbaz')}
+            <button id="goto-sihirbaz-btn" onClick={() => goToSection('sihirbaz', 'destek-sorulari')}
               className="bg-[#F3D5D8] text-[#4A1525] font-black px-8 py-3 rounded-xl hover:bg-[#eed0d5] transition shadow-lg">
               Destek Sihirbazını Başlat →
             </button>
@@ -909,20 +846,6 @@ export default function App({ user, onLogout }) {
       )}
 
       {/* ── HİBE HESAPLAYICI ──────────────────────────────────────────────── */}
-      {showHesaplayici && (
-        <main className="max-w-4xl mx-auto px-4 mt-12 pb-24">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-violet-50 text-violet-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
-              🧮 Finansal Araç
-            </div>
-            <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Hibe Hesaplayıcı</h2>
-            <p className={`max-w-xl mx-auto text-sm ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
-              3 adımda girişiminize uygun hibe ve kredi tutarlarını öğrenin.
-            </p>
-          </div>
-          <HibeHesaplayici dark={dark} />
-        </main>
-      )}
 
       {/* ── BAŞVURU TAKİP ─────────────────────────────────────────────────── */}
       {showTakip && (
