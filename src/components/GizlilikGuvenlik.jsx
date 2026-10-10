@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { bugunYerel } from '../tarih';
 import { Shield, Lock, Download, Trash2, Eye, EyeOff, CheckCircle2, AlertTriangle, FileText, Key, Database, Cookie, Loader2 } from 'lucide-react';
 import { api } from '../api';
 
@@ -16,7 +17,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
   // ── Veri durumunu kontrol et ───────────────────────────────────────────────
   useEffect(() => {
     api.profile.get().then(({ profile }) => setProfilVar(!!profile.ad)).catch(() => {});
-    api.applications.list().then(({ applications }) => setBasvuruSayisi(applications.length)).catch(() => {});
+    api.kanban.get().then(({ cards }) => setBasvuruSayisi(cards.length)).catch(() => {});
   }, []);
 
   // ── Verileri Görüntüle ─────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `fortuno-verilerim-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `fortuno-verilerim-${bugunYerel()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -191,7 +192,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
               </p>
             </div>
             <div>
-              <p className={`text-xs font-bold ${sub}`}>Başvuru Sayısı</p>
+              <p className={`text-xs font-bold ${sub}`}>Takip Ettiğin Başvuru</p>
               <p className={`text-sm font-black ${text}`}>{basvuruSayisi} adet</p>
             </div>
             <div>

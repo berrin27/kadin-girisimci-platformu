@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { bugunYerel } from '../tarih';
 import {
   Search,
   CalendarDays,
@@ -36,7 +37,7 @@ const TURLER = Object.keys(TUR_STIL);
 
 const DURUM_ETIKET = { acik: 'Başvurular açık', yaklasan: 'Yaklaşan', bitti: 'Sona erdi' };
 
-const bugun = () => new Date().toISOString().slice(0, 10);
+const bugun = bugunYerel;
 const tarihYaz = (iso, saat) => {
   const t = new Date(`${iso}T12:00:00`).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   return saat ? `${t} · ${saat}` : t;

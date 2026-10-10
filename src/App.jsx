@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { bugunYerel } from './tarih';
 import BasvuruTakip from './components/BasvuruTakip';
 import EgitimPortali from './components/EgitimPortali';
 import FuarDestekleri from './components/FuarDestekleri';
 import ProfilDuzenle from './components/ProfilDuzenle';
-import BasvuruFormu from './components/BasvuruFormu';
 import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
@@ -23,7 +23,7 @@ import {
 
 // Ana sayfa istatistikleri — uydurma rakam yerine sitedeki doğrulanmış veriden hesaplanır
 const HERO_ISTATISTIK = (() => {
-  const bugun = new Date().toISOString().slice(0, 10);
+  const bugun = bugunYerel();
   const hibeler = supportData.filter(p => p.destekTuru === 'hibe');
   const enYuksekHibe = hibeler.reduce((a, p) => ((p.hibeUstLimit || 0) > (a?.hibeUstLimit || 0) ? p : a), null);
   const enYakin = etkinlikler
@@ -121,7 +121,7 @@ const TAKVIM_DURUM = {
   kapandi:    { label: '✓ Tamamlandı',       cls: 'bg-slate-200 text-slate-600' },
 };
 
-const takvimDurumu = ({ baslangic, bitis }, bugun = new Date().toISOString().slice(0, 10)) => {
+const takvimDurumu = ({ baslangic, bitis }, bugun = bugunYerel()) => {
   if (bugun < baslangic) return 'yaklasiyor';
   if (bugun <= bitis) return 'acik';
   return 'kapandi';
@@ -249,7 +249,9 @@ export default function App({ user, onLogout }) {
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
   const [kurumFilter, setKurumFilter] = useState('Tümü');
   const [profildenDolu, setProfildenDolu] = useState(false);
-  const [basvuruProgram, setBasvuruProgram] = useState(null);
+  // Başvurularım panosunda olan programlar (kart id'si p-<program id>)
+  const [takiptekiler, setTakiptekiler] = useState([]);
+  const [takibeEkleniyor, setTakibeEkleniyor] = useState(null);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -300,6 +302,7 @@ export default function App({ user, onLogout }) {
   // Kullanıcı verilerini sunucudan yükle
   useEffect(() => {
     api.favorites.list('program').then(({ ids }) => setFavorites(ids)).catch(() => {});
+    api.kanban.get().then(({ cards }) => setTakiptekiler(cards.map(c => c.id))).catch(() => {});
     api.profile.get().then(({ profile }) => {
       profiliUygula(profile);
       const { sektor: s, profilTipi: p, asama: a, medeniDurum: m } = profile;
@@ -332,6 +335,18 @@ export default function App({ user, onLogout }) {
 
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+  // Programı Başvurularım panosuna "İlgileniyorum" olarak ekler (başvuru kurumda yapılır)
+  const takibeEkle = async (item) => {
+    setTakibeEkleniyor(item.id);
+    try {
+      await api.kanban.add({ programId: item.id, title: item.title, institution: item.institution, amount: item.amount, link: item.link });
+    } catch (err) {
+      if (err.status !== 409) { window.alert(err.message); setTakibeEkleniyor(null); return; }
+    }
+    setTakiptekiler(prev => [...prev, `p-${item.id}`]);
+    setTakibeEkleniyor(null);
+  };
+
   // anchor verilirse sayfa çizildikten sonra o bölüme kaydırılır (ör. footer → SSS)
   const goToSection = (id, anchor) => {
     setActiveSection(id);
@@ -671,16 +686,28 @@ export default function App({ user, onLogout }) {
                           href={item.link}
                           target="_blank"
                           rel="noreferrer"
-                          className={`w-full text-xs font-bold py-2 px-3 rounded-lg border flex items-center justify-center gap-1.5 transition ${dark ? 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                          className="w-full text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-[#1E293B] text-white hover:opacity-90 shadow-md"
                         >
-                          Resmi Başvuru Linki <ExternalLink className="w-3.5 h-3.5" />
+                          Resmi sayfada başvur <ExternalLink className="w-3.5 h-3.5" />
                         </a>
-                        <button
-                          onClick={() => setBasvuruProgram(item)}
-                          className="w-full mt-2 text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-[#1E293B] text-white hover:opacity-90 shadow-md"
-                        >
-                          🚀 Hadi Başvur!
-                        </button>
+                        {takiptekiler.includes(`p-${item.id}`) ? (
+                          <button
+                            type="button"
+                            onClick={() => goToSection('takip')}
+                            className={`w-full mt-2 text-xs font-bold py-2 px-3 rounded-lg border flex items-center justify-center gap-1.5 transition ${dark ? 'border-emerald-700/60 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}
+                          >
+                            ✓ Takibinde · Başvurularım'a git
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => takibeEkle(item)}
+                            disabled={takibeEkleniyor === item.id}
+                            className={`w-full mt-2 text-xs font-bold py-2 px-3 rounded-lg border flex items-center justify-center gap-1.5 transition disabled:opacity-60 ${dark ? 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                          >
+                            ＋ Takibime ekle
+                          </button>
+                        )}
                         <a
                           href={item.kaynak}
                           target="_blank"
@@ -934,15 +961,6 @@ export default function App({ user, onLogout }) {
           </div>
         </div>
       </footer>
-
-      {/* ── BAŞVURU FORMU MODAL ──────────────────────────────────────────── */}
-      {basvuruProgram && (
-        <BasvuruFormu
-          dark={dark}
-          program={basvuruProgram}
-          onClose={() => setBasvuruProgram(null)}
-        />
-      )}
 
       {/* ── CHATBOT ──────────────────────────────────────────────────────────── */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">

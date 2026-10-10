@@ -373,7 +373,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
             <h3 className="text-2xl font-black mb-2">Profilin Hazır!</h3>
             <p className="text-[#3E5369] text-sm max-w-xl mx-auto mb-5">
               Artık Destek Sihirbazı senin profiline göre en uygun programları otomatik filtreleyebilir.
-              "Hadi Başvur" butonuyla doğrudan başvurabilirsin!
+              Beğendiğin programları "Takibime ekle" ile Başvurularım'a ekleyip adım adım ilerletebilirsin.
             </p>
             <button
               onClick={() => {

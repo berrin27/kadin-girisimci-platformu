@@ -1,18 +1,25 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { bugunYerel } from '../tarih';
 import {
   Plus, X, Check, ChevronRight, Calendar, AlertTriangle,
   TrendingUp, Award, Clock, Filter, Search, Star, StarOff,
-  Kanban, List, BarChart3, Flame, Zap, Target, Loader2
+  Kanban, List, BarChart3, Flame, Zap, Target, Loader2, ExternalLink, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { api } from '../api';
 
+// Başvurular kurumların resmi sayfalarından yapılır; bu pano kullanıcının
+// kendi ilerlemesini takip etmesi içindir. Kartları kullanıcı kendisi taşır.
 const COLUMNS = [
-  { id: 'arastirma',  label: 'Araştırılıyor', emoji: '🔍', color: '#3b82f6', bg: '#eff6ff' },
-  { id: 'hazirlik',   label: 'Hazırlık',       emoji: '📝', color: '#f59e0b', bg: '#fffbeb' },
-  { id: 'basvuruldu', label: 'Başvuruldu',      emoji: '📤', color: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'beklemede',  label: 'Beklemede',       emoji: '⏳', color: '#f97316', bg: '#fff7ed' },
-  { id: 'sonuc',      label: 'Sonuçlandı',      emoji: '✅', color: '#22c55e', bg: '#f0fdf4' },
+  { id: 'arastirma',  label: 'İlgileniyorum',     emoji: '🔖', color: '#3b82f6', bg: '#eff6ff' },
+  { id: 'hazirlik',   label: 'Hazırlanıyorum',    emoji: '📝', color: '#f59e0b', bg: '#fffbeb' },
+  { id: 'basvuruldu', label: 'Başvurdum',         emoji: '📤', color: '#8b5cf6', bg: '#f5f3ff' },
+  { id: 'beklemede',  label: 'Sonuç bekliyorum',  emoji: '⏳', color: '#f97316', bg: '#fff7ed' },
+  { id: 'sonuc',      label: 'Sonuçlandı',        emoji: '✅', color: '#22c55e', bg: '#f0fdf4' },
 ];
+const BASVURU_SONRASI = ['basvuruldu', 'beklemede', 'sonuc'];
+const bugunISO = bugunYerel;
+const kisaTarih = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+const BOS_FORM = { title: '', institution: '', amount: '', column: 'arastirma', deadline: '', priority: 'orta', note: '', starred: false, sonuc: null, link: '', basvuruTarihi: '' };
 
 const PRIORITIES = [
   { id: 'yuksek', label: 'Yüksek', color: '#ef4444', icon: '🔴' },
@@ -22,63 +29,10 @@ const PRIORITIES = [
 
 const CARD_COLORS = ['#7c3aed', '#2563eb', '#db2777', '#059669', '#f97316', '#0891b2', '#dc2626', '#7c3aed'];
 
-const today = new Date();
-const addDays = (d) => { const dt = new Date(today); dt.setDate(dt.getDate() + d); return dt.toISOString().split('T')[0]; };
-
-// Yeni kullanıcıya panonun nasıl kullanıldığını gösteren örnek kartlar (gerçek programlar)
-const INITIAL_CARDS = [
-  {
-    id: 'k1', title: 'KOSGEB İş Kurma Desteği', institution: 'KOSGEB',
-    amount: '30.000 TL', column: 'arastirma', color: '#7c3aed',
-    deadline: addDays(45), priority: 'yuksek', starred: true,
-    note: 'Şahıs işletmesi kuruldu, ilk yıl içinde başvurulacak.',
-    sonuc: null,
-  },
-  {
-    id: 'k2', title: 'Halkbank Kadın Girişimci Kredisi', institution: 'Halkbank',
-    amount: '600.000 TL', column: 'hazirlik', color: '#2563eb',
-    deadline: addDays(20), priority: 'yuksek', starred: true,
-    note: 'İş planı taslağı %70 tamamlandı.',
-    sonuc: null,
-  },
-  {
-    id: 'k3', title: 'KOOP-DES Kooperatif Desteği', institution: 'Ticaret Bakanlığı',
-    amount: '750.000 TL', column: 'basvuruldu', color: '#db2777',
-    deadline: addDays(-5), priority: 'orta', starred: false,
-    note: 'Başvuru İl Müdürlüğüne teslim edildi, onay bekleniyor.',
-    sonuc: null,
-  },
-  {
-    id: 'k4', title: 'Ticaret Bakanlığı E-İhracat Desteği', institution: 'Ticaret Bakanlığı',
-    amount: 'Giderlerin %50-75\'i', column: 'beklemede', color: '#059669',
-    deadline: addDays(60), priority: 'orta', starred: false,
-    note: 'Pazaryeri faturaları değerlendirmede.',
-    sonuc: null,
-  },
-  {
-    id: 'k5', title: 'Kırsal Kalkınma Yatırım Programı', institution: 'Tarım ve Orman Bakanlığı',
-    amount: '150.000 TL', column: 'sonuc', color: '#f97316',
-    deadline: addDays(-30), priority: 'dusuk', starred: false,
-    note: 'Kabul edildi! Hibe sözleşmesi imzalandı.',
-    sonuc: 'kabul',
-  },
-];
-
 const daysLeft = (deadline) => {
   if (!deadline) return null;
-  const diff = Math.ceil((new Date(deadline) - today) / (1000 * 60 * 60 * 24));
+  const diff = Math.ceil((new Date(`${deadline}T23:59:59`) - new Date()) / (1000 * 60 * 60 * 24));
   return diff;
-};
-
-const parseAmount = (str) => {
-  if (!str) return 0;
-  return parseFloat(str.replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
-};
-
-const formatAmount = (n) => {
-  if (n >= 1_000_000) return `₺${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `₺${(n / 1_000).toFixed(0)}K`;
-  return `₺${n}`;
 };
 
 export default function BasvuruTakip({ dark }) {
@@ -87,10 +41,10 @@ export default function BasvuruTakip({ dark }) {
   const [hata, setHata] = useState('');
   const kayitSirasi = useRef(Promise.resolve());
 
-  // Pano sunucudan yüklenir; hiç kaydedilmemişse örnek kartlar gösterilir.
+  // Pano sunucudan yüklenir; yeni kullanıcıda boştur (örnek/sahte kart gösterilmez).
   useEffect(() => {
     api.kanban.get()
-      .then(({ initialized, cards }) => { setCards(initialized ? cards : INITIAL_CARDS); setYuklendi(true); })
+      .then(({ cards }) => { setCards(cards); setYuklendi(true); })
       .catch(err => setHata(`Pano yüklenemedi: ${err.message}`));
   }, []);
   const [draggingId, setDraggingId] = useState(null);
@@ -100,10 +54,7 @@ export default function BasvuruTakip({ dark }) {
   const [view, setView] = useState('kanban'); // kanban | liste | analiz
   const [filterPriority, setFilterPriority] = useState('all');
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({
-    title: '', institution: '', amount: '', column: 'arastirma',
-    deadline: '', priority: 'orta', note: '', starred: false, sonuc: null,
-  });
+  const [form, setForm] = useState(BOS_FORM);
 
   // Kayıtlar sırayla gönderilir — hızlı sürükle-bırakta eski durum yenisini ezmesin.
   const save = (updated) => {
@@ -120,9 +71,15 @@ export default function BasvuruTakip({ dark }) {
   const onDragOver  = (e, colId) => { e.preventDefault(); setDragOverCol(colId); };
   const onDrop = (e, colId) => {
     e.preventDefault();
-    if (draggingId) save(cards.map(c => c.id === draggingId ? { ...c, column: colId } : c));
+    if (draggingId) tasi(draggingId, colId);
     setDraggingId(null); setDragOverCol(null);
   };
+
+  // Kartı başka sütuna taşı; ilk kez "Başvurdum" ve sonrasına geçerken başvuru tarihini kaydet
+  const tasi = (id, colId) => save(cards.map(c => (c.id === id
+    ? { ...c, column: colId, basvuruTarihi: c.basvuruTarihi || (BASVURU_SONRASI.includes(colId) ? bugunISO() : '') }
+    : c)));
+  const komsuSutun = (colId, yon) => COLUMNS[COLUMNS.findIndex(k => k.id === colId) + yon];
   const onDragEnd = () => { setDraggingId(null); setDragOverCol(null); };
 
   const deleteCard  = (id) => save(cards.filter(c => c.id !== id));
@@ -130,20 +87,21 @@ export default function BasvuruTakip({ dark }) {
 
   const openAdd = () => {
     setEditCard(null);
-    setForm({ title: '', institution: '', amount: '', column: 'arastirma', deadline: '', priority: 'orta', note: '', starred: false, sonuc: null });
+    setForm(BOS_FORM);
     setShowModal(true);
   };
   const openEdit = (c) => {
     setEditCard(c.id);
-    setForm({ title: c.title, institution: c.institution || '', amount: c.amount || '', column: c.column, deadline: c.deadline || '', priority: c.priority || 'orta', note: c.note || '', starred: c.starred || false, sonuc: c.sonuc });
+    setForm({ ...BOS_FORM, title: c.title, institution: c.institution || '', amount: c.amount || '', column: c.column, deadline: c.deadline || '', priority: c.priority || 'orta', note: c.note || '', starred: c.starred || false, sonuc: c.sonuc, link: c.link || '', basvuruTarihi: c.basvuruTarihi || '' });
     setShowModal(true);
   };
   const submitForm = () => {
     if (!form.title.trim()) return;
+    const tarihli = { ...form, basvuruTarihi: form.basvuruTarihi || (BASVURU_SONRASI.includes(form.column) ? bugunISO() : '') };
     if (editCard) {
-      save(cards.map(c => c.id === editCard ? { ...c, ...form } : c));
+      save(cards.map(c => c.id === editCard ? { ...c, ...tarihli } : c));
     } else {
-      save([...cards, { id: `k${Date.now()}`, ...form, color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)] }]);
+      save([...cards, { id: `k${Date.now()}`, ...tarihli, color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)] }]);
     }
     setShowModal(false);
   };
@@ -159,11 +117,12 @@ export default function BasvuruTakip({ dark }) {
   // ── Stats
   const stats = useMemo(() => {
     const total = cards.length;
-    const totalAmount = cards.reduce((s, c) => s + parseAmount(c.amount), 0);
+    const applied = cards.filter(c => BASVURU_SONRASI.includes(c.column)).length;
     const accepted = cards.filter(c => c.sonuc === 'kabul').length;
     const pending = cards.filter(c => ['basvuruldu', 'beklemede'].includes(c.column)).length;
-    const urgent = cards.filter(c => { const d = daysLeft(c.deadline); return d !== null && d >= 0 && d <= 14; }).length;
-    return { total, totalAmount, accepted, pending, urgent };
+    // son günü yaklaşan: henüz başvurulmamış kartlar
+    const urgent = cards.filter(c => { const d = daysLeft(c.deadline); return !BASVURU_SONRASI.includes(c.column) && d !== null && d >= 0 && d <= 14; }).length;
+    return { total, applied, accepted, pending, urgent };
   }, [cards]);
 
   // ── Theme
@@ -200,8 +159,8 @@ export default function BasvuruTakip({ dark }) {
               <Kanban className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className={`text-2xl font-black ${text}`}>Başvuru Takip Çizelgesi</h2>
-              <p className={`text-xs mt-0.5 ${sub}`}>Hibe başvurularınızı planlayın, takip edin ve sonuçlandırın</p>
+              <h2 className={`text-2xl font-black ${text}`}>Başvurularım</h2>
+              <p className={`text-xs mt-0.5 ${sub}`}>Başvurmak istediğin programları ekle ve adım adım ilerlet. Başvurular kurumların resmi sayfalarından yapılır.</p>
             </div>
           </div>
         </div>
@@ -230,18 +189,46 @@ export default function BasvuruTakip({ dark }) {
             onClick={openAdd}
             className="bg-[#1E293B] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm shadow-lg shadow-slate-500/20 hover:opacity-90 transition hover:scale-105 active:scale-95"
           >
-            <Plus className="w-4 h-4" /> Yeni Başvuru
+            <Plus className="w-4 h-4" /> Kendim ekle
           </button>
         </div>
       </div>
 
+      {cards.length === 0 ? (
+        <div className={`${cardBase} border rounded-3xl p-8 md:p-12 text-center`}>
+          <div className="text-4xl mb-3">🔖</div>
+          <h3 className={`text-xl font-black ${text}`}>Henüz takip ettiğin bir başvuru yok</h3>
+          <p className={`mt-2 max-w-xl mx-auto text-sm ${sub}`}>
+            Destek Bul'da sana uygun programları gör, beğendiğine "Takibime ekle" de. Program buraya gelir; hazırlandıkça, başvurdukça kartı ilerletirsin.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2 text-xs font-bold">
+            {COLUMNS.map((col, i) => (
+              <span key={col.id} className={`rounded-full px-3 py-1.5 ${dark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                {col.emoji} {col.label}{i < COLUMNS.length - 1 ? ' →' : ''}
+              </span>
+            ))}
+          </div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('fortuno-navigate', { detail: 'sihirbaz' }))}
+              className="rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+            >
+              Destek Bul'dan program ekle
+            </button>
+            <button type="button" onClick={openAdd} className={`rounded-xl px-5 py-2.5 text-sm font-bold ${dark ? 'bg-slate-700 text-slate-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+              Kendim ekle
+            </button>
+          </div>
+        </div>
+      ) : (<>
       {/* ── İSTATİSTİK KARTLARI ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Toplam Başvuru', value: stats.total, sub: 'program takipte', icon: <Target className="w-5 h-5" />, grad: 'from-slate-600 to-slate-800', glow: 'shadow-slate-500/20' },
-          { label: 'Toplam Potansiyel', value: formatAmount(stats.totalAmount), sub: 'hibe tutarı', icon: <TrendingUp className="w-5 h-5" />, grad: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/25' },
-          { label: 'Değerlendirmede', value: stats.pending, sub: 'başvuru bekliyor', icon: <Clock className="w-5 h-5" />, grad: 'from-orange-500 to-amber-600', glow: 'shadow-orange-500/25' },
-          { label: 'Acil Deadline', value: stats.urgent, sub: '14 gün içinde', icon: <Flame className="w-5 h-5" />, grad: 'from-red-500 to-rose-600', glow: 'shadow-red-500/25' },
+          { label: 'Takip ettiğin', value: stats.total, sub: 'program', icon: <Target className="w-5 h-5" />, grad: 'from-slate-600 to-slate-800', glow: 'shadow-slate-500/20' },
+          { label: 'Başvurduğun', value: stats.applied, sub: `${stats.accepted} tanesi kabul edildi`, icon: <TrendingUp className="w-5 h-5" />, grad: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/25' },
+          { label: 'Sonuç bekleyen', value: stats.pending, sub: 'başvuru', icon: <Clock className="w-5 h-5" />, grad: 'from-orange-500 to-amber-600', glow: 'shadow-orange-500/25' },
+          { label: 'Son günü yaklaşan', value: stats.urgent, sub: '14 gün içinde, henüz başvurulmadı', icon: <Flame className="w-5 h-5" />, grad: 'from-red-500 to-rose-600', glow: 'shadow-red-500/25' },
         ].map((s, i) => (
           <div key={i} className={`${cardBase} border rounded-2xl p-4 shadow-lg ${s.glow} relative overflow-hidden`}>
             <div className={`absolute top-0 right-0 w-20 h-20 rounded-full bg-gradient-to-br ${s.grad} opacity-10 -translate-y-6 translate-x-6`} />
@@ -292,7 +279,6 @@ export default function BasvuruTakip({ dark }) {
           {COLUMNS.map(col => {
             const colCards = filtered.filter(c => c.column === col.id);
             const isDragTarget = dragOverCol === col.id;
-            const colTotal = colCards.reduce((s, c) => s + parseAmount(c.amount), 0);
             return (
               <div
                 key={col.id}
@@ -312,11 +298,6 @@ export default function BasvuruTakip({ dark }) {
                       {colCards.length}
                     </span>
                   </div>
-                  {colTotal > 0 && (
-                    <p className="text-[10px] font-bold" style={{ color: col.color }}>
-                      {formatAmount(colTotal)} potansiyel
-                    </p>
-                  )}
                 </div>
 
                 {/* Cards */}
@@ -343,7 +324,7 @@ export default function BasvuruTakip({ dark }) {
 
                         <div className="flex items-start justify-between gap-1 mb-1.5">
                           <p className={`font-bold text-xs leading-snug flex-1 ${text}`}>{c.title}</p>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+                          <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition shrink-0">
                             <button onClick={() => toggleStar(c.id)} className="p-0.5 rounded">
                               {c.starred ? <Star className="w-3 h-3 text-amber-400 fill-amber-400" /> : <StarOff className="w-3 h-3 text-slate-300" />}
                             </button>
@@ -388,6 +369,9 @@ export default function BasvuruTakip({ dark }) {
                           <p className={`mt-2 text-[10px] leading-snug italic ${sub} opacity-75 line-clamp-2`}>{c.note}</p>
                         )}
 
+                        {c.basvuruTarihi && BASVURU_SONRASI.includes(c.column) && (
+                          <p className={`mt-2 text-[10px] font-semibold ${sub}`}>📤 Başvuru: {kisaTarih(c.basvuruTarihi)}</p>
+                        )}
                         {c.sonuc === 'kabul' && (
                           <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-emerald-500">
                             <Award className="w-3 h-3" /> Kabul Edildi!
@@ -396,6 +380,28 @@ export default function BasvuruTakip({ dark }) {
                         {c.sonuc === 'ret' && (
                           <div className="mt-2 text-[10px] font-bold text-red-400">✗ Reddedildi</div>
                         )}
+
+                        <div className={`mt-2.5 flex items-center justify-between gap-1 border-t pt-2 ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
+                          {c.link ? (
+                            <a href={c.link} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-bold text-sky-600 hover:underline">
+                              Resmi sayfa <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : <span />}
+                          <div className="flex items-center gap-0.5">
+                            {komsuSutun(c.column, -1) && (
+                              <button type="button" onClick={() => tasi(c.id, komsuSutun(c.column, -1).id)} title={`${komsuSutun(c.column, -1).label} sütununa taşı`} aria-label={`${komsuSutun(c.column, -1).label} sütununa taşı`}
+                                className={`rounded-md p-1 ${dark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-100'}`}>
+                                <ArrowLeft className="w-3 h-3" />
+                              </button>
+                            )}
+                            {komsuSutun(c.column, 1) && (
+                              <button type="button" onClick={() => tasi(c.id, komsuSutun(c.column, 1).id)} title={`${komsuSutun(c.column, 1).label} sütununa taşı`}
+                                className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-1 text-[10px] font-bold ${dark ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}>
+                                {komsuSutun(c.column, 1).label} <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -518,22 +524,22 @@ export default function BasvuruTakip({ dark }) {
           {/* Öncelik & Tutar */}
           <div className={`${cardBase} border rounded-2xl p-5 shadow-lg`}>
             <h3 className={`font-black text-sm mb-4 flex items-center gap-2 ${text}`}>
-              <Zap className="w-4 h-4 text-amber-500" /> Öncelik & Tutar Analizi
+              <Zap className="w-4 h-4 text-amber-500" /> Önceliğe Göre
             </h3>
             <div className="space-y-3">
               {PRIORITIES.map(pri => {
                 const priCards = cards.filter(c => c.priority === pri.id);
-                const total = priCards.reduce((s, c) => s + parseAmount(c.amount), 0);
+                const basvurulan = priCards.filter(c => BASVURU_SONRASI.includes(c.column)).length;
                 return (
                   <div key={pri.id} className={`flex items-center justify-between p-3 rounded-xl ${dark ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{pri.icon}</span>
                       <div>
                         <p className={`text-xs font-bold ${text}`}>{pri.label} Öncelik</p>
-                        <p className={`text-[10px] ${sub}`}>{priCards.length} başvuru</p>
+                        <p className={`text-[10px] ${sub}`}>{priCards.length} program takipte</p>
                       </div>
                     </div>
-                    <p className="text-sm font-black text-emerald-500">{formatAmount(total)}</p>
+                    <p className="text-xs font-black text-emerald-500">{basvurulan}/{priCards.length} başvuruldu</p>
                   </div>
                 );
               })}
@@ -589,6 +595,8 @@ export default function BasvuruTakip({ dark }) {
         </div>
       )}
 
+      </>)}
+
       {/* ══════════════════════════════════════════════════════════════ */}
       {/* ── MODAL ──────────────────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════ */}
@@ -604,7 +612,7 @@ export default function BasvuruTakip({ dark }) {
                 <div className="w-8 h-8 rounded-xl bg-[#1E293B] flex items-center justify-center">
                   {editCard ? <ChevronRight className="w-4 h-4 text-white" /> : <Plus className="w-4 h-4 text-white" />}
                 </div>
-                <h3 className={`font-black text-lg ${text}`}>{editCard ? 'Başvuruyu Düzenle' : 'Yeni Başvuru Ekle'}</h3>
+                <h3 className={`font-black text-lg ${text}`}>{editCard ? 'Kartı düzenle' : 'Takibime program ekle'}</h3>
               </div>
               <button onClick={() => setShowModal(false)} className={`p-1.5 rounded-lg transition ${dark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-100'}`}>
                 <X className="w-5 h-5" />
@@ -622,7 +630,7 @@ export default function BasvuruTakip({ dark }) {
                   <input type="text" value={form.institution} onChange={e => setForm(p => ({ ...p, institution: e.target.value }))} placeholder="KOSGEB, TÜBİTAK..." className={inputCls} />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>Hibe Miktarı</label>
+                  <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>Tutar</label>
                   <input type="text" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} placeholder="300.000 TL" className={inputCls} />
                 </div>
                 <div>
@@ -649,6 +657,16 @@ export default function BasvuruTakip({ dark }) {
                       <option value="kabul">✅ Kabul Edildi</option>
                       <option value="ret">❌ Reddedildi</option>
                     </select>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>Resmi başvuru sayfası</label>
+                  <input type="url" value={form.link} onChange={e => setForm(p => ({ ...p, link: e.target.value }))} placeholder="https://" className={inputCls} />
+                </div>
+                {BASVURU_SONRASI.includes(form.column) && (
+                  <div>
+                    <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>Başvuru Tarihi</label>
+                    <input type="date" value={form.basvuruTarihi} onChange={e => setForm(p => ({ ...p, basvuruTarihi: e.target.value }))} className={inputCls} />
                   </div>
                 )}
                 <div className="col-span-2">

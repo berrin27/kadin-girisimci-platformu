@@ -4,6 +4,7 @@
 // Hata varsa 1 ile çıkar (haftalık güncelleme ajanı PR açmadan önce çalıştırır).
 
 import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, ulusalIstatistikler, egitimler, SON_KONTROL } from '../src/data.js';
+import { bugunYerel } from '../src/tarih.js';
 
 const SEKTOR = ['yerel_isletme', 'ev_emegi', 'teknoloji', 'e_ticaret', 'kooperatif', 'sosyal_girisim', 'kırsal'];
 const YAS = ['genc_uni', 'genc_girisimci', 'standart', 'olgun_girisimci'];
@@ -68,7 +69,7 @@ for (const e of etkinlikler) {
   if (e.baslangic != null && !iso.test(e.baslangic)) hata(`Etkinlik ${ad}: baslangic YYYY-AA-GG veya null olmalı`);
   if (e.baslangic && e.bitis && e.baslangic > e.bitis) hata(`Etkinlik ${ad}: başlangıç bitişten sonra`);
   for (const url of [e.link, e.kaynak]) if (url && !/^https:\/\//.test(url)) hata(`Etkinlik ${ad}: bağlantı https:// olmalı`);
-  const bugun = new Date().toISOString().slice(0, 10);
+  const bugun = bugunYerel();
   if (e.bitis && e.bitis < bugun) uyarilar.push(`Sona ermiş etkinlik (silinebilir): ${ad} — ${e.bitis}`);
 }
 for (const k of fuarKaynaklari) if (!/^https:\/\//.test(k.link || '')) hata(`Fuar kaynağı "${k.baslik}": bağlantı https:// olmalı`);

@@ -55,13 +55,10 @@ export const api = {
     get: () => get('/profile'),
     save: (profile) => put('/profile', profile),
   },
-  applications: {
-    list: () => get('/applications'),
-    create: (application) => post('/applications', application),
-  },
   kanban: {
     get: () => get('/kanban'),
     save: (cards) => put('/kanban', { cards }),
+    add: (kart) => post('/kanban/kart', kart),
   },
   favorites: {
     list: (kind) => get(`/favorites/${kind}`),

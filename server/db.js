@@ -141,6 +141,15 @@ const MIGRATIONS = [
   );
   CREATE INDEX idx_user_events ON user_events(user_id, tarih);
   `,
+
+  // 5 — takip kartlarına resmi bağlantı ve başvuru tarihi; eski örnek (demo)
+  // kartları temizle. Örnek kartların id'si k1–k5'tir; kullanıcı kartları
+  // k<zaman damgası> veya p-<program id> biçimindedir, bu yüzden karışmaz.
+  `
+  ALTER TABLE kanban_cards ADD COLUMN link TEXT NOT NULL DEFAULT '';
+  ALTER TABLE kanban_cards ADD COLUMN basvuru_tarihi TEXT NOT NULL DEFAULT '';
+  DELETE FROM kanban_cards WHERE id IN ('k1', 'k2', 'k3', 'k4', 'k5');
+  `,
 ];
 
 function migrate() {
