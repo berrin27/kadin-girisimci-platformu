@@ -8,7 +8,8 @@ import BasvuruFormu from './components/BasvuruFormu';
 import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
-import { supportData, basvuruTakvimi, SON_KONTROL } from './data';
+import BilgiSayfasi from './components/BilgiSayfasi';
+import { supportData, basvuruTakvimi, etkinlikler, SON_KONTROL } from './data';
 import { api } from './api';
 import {
   Sparkles, TurkishLira, ArrowRight, CheckCircle2, MessageSquare, X,
@@ -27,6 +28,37 @@ const NAV_ITEMS = [
   { id: 'guncel',      label: 'Güncel' },
   { id: 'guvenlik',    label: 'Güvenlik' },
   { id: 'kaynakca',    label: 'Kaynakça' },
+];
+
+// Ana sayfa istatistikleri — uydurma rakam yerine sitedeki doğrulanmış veriden hesaplanır
+const HERO_ISTATISTIK = (() => {
+  const bugun = new Date().toISOString().slice(0, 10);
+  return {
+    program: supportData.length,
+    kurum: new Set(supportData.map(p => p.institution)).size,
+    acikBasvuru: etkinlikler.filter(e => (!e.baslangic || e.baslangic <= bugun) && bugun <= e.bitis).length
+      + basvuruTakvimi.filter(t => t.baslangic <= bugun && bugun <= t.bitis).length,
+  };
+})();
+
+// Footer bağlantıları: section → uygulama içi sayfa, href → resmi dış site
+const FOOTER_LINKLERI = [
+  ['Ürün', [
+    { label: 'Destek Bul', section: 'sihirbaz' },
+    { label: 'İş Planı', section: 'is-plani' },
+    { label: 'Hesaplayıcı', section: 'hesaplayici' },
+    { label: 'Eğitim', section: 'egitim' },
+  ]],
+  ['Şirket', [
+    { label: 'Hakkımızda', section: 'hakkimizda' },
+    { label: 'İletişim', section: 'iletisim' },
+  ]],
+  ['Kaynaklar', [
+    { label: 'KOSGEB', href: 'https://www.kosgeb.gov.tr' },
+    { label: 'TÜBİTAK', href: 'https://tubitak.gov.tr' },
+    { label: 'Hibe Rehberi', section: 'kaynakca' },
+    { label: 'Sık Sorulanlar', section: 'sihirbaz', anchor: 'sss' },
+  ]],
 ];
 
 const CHAT_WELCOME = { id: 'welcome', sender: 'bot', text: 'Merhaba! 👋 Ben FortunoAI. Türkiye\'deki kadın girişimcilere hibe, teşvik ve finansal konularda rehberlik ediyorum. Sana nasıl yardımcı olabilirim?' };
@@ -162,7 +194,7 @@ function SkeletonCard({ dark }) {
 }
 
 // ─── ANIMASYONLU SAYAÇ ────────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = '', duration = 1800 }) {
+function AnimatedCounter({ target, suffix = '', duration = 900 }) {
   const [val, setVal] = useState(0);
   const ref = useRef(null);
   useEffect(() => {
@@ -298,10 +330,12 @@ export default function App({ user, onLogout }) {
   }, [isMenuOpen]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const goToSection = (id) => {
+  // anchor verilirse sayfa çizildikten sonra o bölüme kaydırılır (ör. footer → SSS)
+  const goToSection = (id, anchor) => {
     setActiveSection(id);
     setIsMenuOpen(false);
-    window.scrollTo({ top: 0 });
+    if (!anchor) { window.scrollTo({ top: 0 }); return; }
+    setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
 
   const toggleFav = useCallback((id) => {
@@ -543,13 +577,13 @@ export default function App({ user, onLogout }) {
 
             <div className="hero-stats mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { icon: <TurkishLira className="w-5 h-5" />, label: 'Toplam Hibe Havuzu', value: 5200000, suffix: ' TL+' },
-                { icon: <Users className="w-5 h-5" />, label: 'Desteklenen Program', value: 10, suffix: '+' },
-                { icon: <TrendingUp className="w-5 h-5" />, label: 'Kadın Girişimci', value: 47000, suffix: '+' },
+                { icon: <TurkishLira className="w-5 h-5" />, label: 'Doğrulanmış Destek Programı', value: HERO_ISTATISTIK.program },
+                { icon: <Users className="w-5 h-5" />, label: 'Kurum ve Banka', value: HERO_ISTATISTIK.kurum },
+                { icon: <TrendingUp className="w-5 h-5" />, label: 'Şu An Açık Başvuru', value: HERO_ISTATISTIK.acikBasvuru },
                 { icon: <Zap className="w-5 h-5" />, label: 'Eşleşme Süresi', value: 3, suffix: ' Adım' },
               ].map((stat, i) => (
                 <div key={i} className="rounded-2xl border border-slate-700 bg-slate-800/80 p-5 text-center">
-                  <div className="mb-3 flex justify-center text-[#1E293B]">{stat.icon}</div>
+                  <div className="mb-3 flex justify-center text-[#F3D5D8]">{stat.icon}</div>
                   <div className="text-3xl font-medium tracking-[-0.04em] text-white">
                     <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                   </div>
@@ -656,7 +690,7 @@ export default function App({ user, onLogout }) {
             </form>
 
             {/* FAQ Accordion */}
-            <div className={`mt-8 pt-6 border-t ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
+            <div id="sss" className={`mt-8 pt-6 border-t scroll-mt-24 ${dark ? 'border-slate-700' : 'border-slate-100'}`}>
               <h3 className="font-bold text-sm mb-3 text-[#1E293B] flex items-center gap-1">
                 <Sparkles className="w-4 h-4" /> Sık Sorulan Sorular
               </h3>
@@ -989,6 +1023,9 @@ export default function App({ user, onLogout }) {
       {/* ── GİZLİLİK & GÜVENLİK ──────────────────────────────────────────── */}
       {showGuvenlik && <GizlilikGuvenlik dark={dark} onHesapSilindi={onLogout} />}
 
+      {/* ── HAKKIMIZDA / İLETİŞİM / ŞARTLAR (içerikler hazırlanacak) ────────── */}
+      <BilgiSayfasi sayfa={activeSection} dark={dark} />
+
       {/* ── FOOTER ─────────────────────────────────────────────────────────────── */}
       <footer className="mt-16 bg-[#0c1a30] text-slate-200">
         <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
@@ -1008,16 +1045,18 @@ export default function App({ user, onLogout }) {
               </p>
             </div>
 
-            {[
-              ['Ürün', ['Destek Bul', 'İş Planı', 'Hesaplayıcı', 'Eğitim']],
-              ['Şirket', ['Hakkımızda', 'Ekibimiz', 'İletişim', 'Blog']],
-              ['Kaynaklar', ['KOSGEB', 'TÜBİTAK', 'Hibe Rehberi', 'Sık Sorulanlar']],
-            ].map(([title, links]) => (
+            {FOOTER_LINKLERI.map(([title, links]) => (
               <div key={title}>
                 <h4 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">{title}</h4>
                 <ul className="mt-4 space-y-3 text-sm text-slate-300">
-                  {links.map((link) => (
-                    <li key={link} className="transition hover:text-white">{link}</li>
+                  {links.map(({ label, section, anchor, href }) => (
+                    <li key={label}>
+                      {href ? (
+                        <a href={href} target="_blank" rel="noreferrer" className="transition hover:text-white">{label} ↗</a>
+                      ) : (
+                        <button onClick={() => goToSection(section, anchor)} className="text-left transition hover:text-white">{label}</button>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -1027,9 +1066,9 @@ export default function App({ user, onLogout }) {
           <div className="mt-10 flex flex-col gap-4 border-t border-slate-700/80 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
             <p>© 2026 Fortuno. Tüm hakları saklıdır.</p>
             <div className="flex items-center gap-4">
-              <span>Gizlilik</span>
-              <span>Şartlar</span>
-              <span>İletişim</span>
+              <button onClick={() => goToSection('guvenlik', 'gizlilik-politikasi')} className="transition hover:text-white">Gizlilik</button>
+              <button onClick={() => goToSection('sartlar')} className="transition hover:text-white">Şartlar</button>
+              <button onClick={() => goToSection('iletisim')} className="transition hover:text-white">İletişim</button>
             </div>
           </div>
         </div>

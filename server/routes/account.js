@@ -8,6 +8,7 @@ import { toProfile } from './profile.js';
 import { toApplication } from './applications.js';
 import { toCard } from './kanban.js';
 import { toPlan } from './plans.js';
+import { toEvent } from './events.js';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.get('/export', (req, res) => {
     applications: db.prepare('SELECT * FROM applications WHERE user_id = ? ORDER BY id').all(id).map(toApplication),
     kanban: db.prepare('SELECT * FROM kanban_cards WHERE user_id = ? ORDER BY position').all(id).map(toCard),
     businessPlans: db.prepare('SELECT * FROM business_plans WHERE user_id = ? ORDER BY id').all(id).map(toPlan),
+    myEvents: db.prepare('SELECT * FROM user_events WHERE user_id = ? ORDER BY tarih').all(id).map(toEvent),
     favorites: {
       program: favs.filter(f => f.kind === 'program').map(f => f.item_id),
       fuar: favs.filter(f => f.kind === 'fuar').map(f => f.item_id),

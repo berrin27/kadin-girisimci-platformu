@@ -3,7 +3,7 @@
 // src/data.js'teki programların yapısını ve eşleşme kapsamını kontrol eder.
 // Hata varsa 1 ile çıkar (haftalık güncelleme ajanı PR açmadan önce çalıştırır).
 
-import { supportData, basvuruTakvimi, SON_KONTROL } from '../src/data.js';
+import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, SON_KONTROL } from '../src/data.js';
 
 const SEKTOR = ['yerel_isletme', 'ev_emegi', 'teknoloji', 'e_ticaret', 'kooperatif', 'sosyal_girisim', 'kırsal'];
 const YAS = ['genc_uni', 'genc_girisimci', 'standart', 'olgun_girisimci'];
@@ -53,6 +53,26 @@ for (const t of basvuruTakvimi) {
   else if (t.baslangic > t.bitis) hata(`Takvim "${t.program}": başlangıç bitişten sonra`);
 }
 
+const ETKINLIK_TURLERI = ['Yarışma', 'Ödül', 'Hibe / Fon', 'Hızlandırma', 'Fuar', 'Eğitim'];
+const etkinlikIdleri = new Set();
+for (const e of etkinlikler) {
+  const ad = e.id || e.baslik || '(adsız etkinlik)';
+  for (const alan of ['id', 'baslik', 'duzenleyen', 'tur', 'ucret', 'bitis', 'konum', 'aciklama', 'link', 'kaynak']) {
+    if (e[alan] == null || e[alan] === '') hata(`Etkinlik ${ad}: "${alan}" alanı boş`);
+  }
+  if (etkinlikIdleri.has(e.id)) hata(`Etkinlik ${ad}: id tekrarlanıyor`);
+  etkinlikIdleri.add(e.id);
+  if (!ETKINLIK_TURLERI.includes(e.tur)) hata(`Etkinlik ${ad}: tur "${e.tur}" geçersiz`);
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (e.bitis && !iso.test(e.bitis)) hata(`Etkinlik ${ad}: bitis YYYY-AA-GG olmalı`);
+  if (e.baslangic != null && !iso.test(e.baslangic)) hata(`Etkinlik ${ad}: baslangic YYYY-AA-GG veya null olmalı`);
+  if (e.baslangic && e.bitis && e.baslangic > e.bitis) hata(`Etkinlik ${ad}: başlangıç bitişten sonra`);
+  for (const url of [e.link, e.kaynak]) if (url && !/^https:\/\//.test(url)) hata(`Etkinlik ${ad}: bağlantı https:// olmalı`);
+  const bugun = new Date().toISOString().slice(0, 10);
+  if (e.bitis && e.bitis < bugun) uyarilar.push(`Sona ermiş etkinlik (silinebilir): ${ad} — ${e.bitis}`);
+}
+for (const k of fuarKaynaklari) if (!/^https:\/\//.test(k.link || '')) hata(`Fuar kaynağı "${k.baslik}": bağlantı https:// olmalı`);
+
 // Eşleşme kapsamı: her sektör + yaş + aşama için en az bir program olmalı
 // (medeni durum "hepsi" kabul edilerek). Eksikler uyarıdır, hata değil —
 // sihirbaz bu durumda aşamayı gevşetip "yakın seçenek" gösterir.
@@ -62,7 +82,7 @@ for (const s of SEKTOR) for (const y of YAS) for (const a of ASAMA) {
   }
 }
 
-console.log(`${supportData.length} program, ${basvuruTakvimi.length} takvim kaydı, son kontrol: ${SON_KONTROL}`);
+console.log(`${supportData.length} program, ${etkinlikler.length} etkinlik, ${basvuruTakvimi.length} takvim kaydı, son kontrol: ${SON_KONTROL}`);
 if (uyarilar.length) console.log(`\n⚠️  ${uyarilar.length} uyarı:\n  ${uyarilar.slice(0, 30).join('\n  ')}`);
 if (hatalar.length) {
   console.error(`\n❌ ${hatalar.length} hata:\n  ${hatalar.join('\n  ')}`);

@@ -134,11 +134,11 @@ const CASH_SCENARIOS = [
 ];
 
 const SIM_STEPS = [
-  { id: 1, label: 'Profiling' },
-  { id: 2, label: 'Dashboard' },
-  { id: 3, label: 'Stres Testi' },
-  { id: 4, label: 'Reçete' },
-  { id: 5, label: 'Aksiyon' },
+  { id: 1, label: 'Bilgilerin' },
+  { id: 2, label: 'Genel Durum' },
+  { id: 3, label: 'Zor Senaryo' },
+  { id: 4, label: 'Öneriler' },
+  { id: 5, label: 'Yapılacaklar' },
 ];
 
 export default function EgitimPortali({ dark }) {
@@ -247,7 +247,7 @@ export default function EgitimPortali({ dark }) {
       `En kritik dönem: ${analysis.monthText}`,
       `Öngörülen açık: ${formatNumber(analysis.shortfall)} TL`,
       `Önerilen finansman: ${formatNumber(analysis.fundingNeed)} TL`,
-      `Aksiyon: ${analysis.recommendation}`,
+      `Öneri: ${analysis.recommendation}`,
     ].join('\n');
 
     const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
@@ -406,7 +406,7 @@ export default function EgitimPortali({ dark }) {
       <div className={`mt-12 rounded-3xl border shadow-xl overflow-hidden ${card}`}>
         <div className="px-6 py-5 border-b border-slate-200/20 bg-[#F8F3F4]">
           <div className="flex items-center gap-2 text-[#1E293B] font-black text-sm uppercase tracking-[0.14em]">
-            <Wallet className="w-4 h-4" /> Nakit Akışı ve Stres Testi Simülatörü
+            <Wallet className="w-4 h-4" /> Nakit Akışı Simülatörü
           </div>
           <h3 className={`mt-2 text-2xl font-black ${text}`}>Kasam ne zaman boşalacak? Açığımı nasıl kapatmalıyım?</h3>
         </div>
@@ -545,7 +545,7 @@ export default function EgitimPortali({ dark }) {
               <div className={`rounded-2xl border p-4 ${dark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-white'}`}>
                 <div className="flex justify-between text-[11px] uppercase tracking-[0.12em] mb-3 text-slate-500">
                   <span>Mevcut Durum</span>
-                  <span>Stres Testi</span>
+                  <span>Zor Senaryo</span>
                 </div>
                 <div className="flex items-end gap-3 h-56">
                   {analysis.baseSeries.map((value, index) => {
@@ -594,7 +594,7 @@ export default function EgitimPortali({ dark }) {
 
               <div className={`rounded-2xl border p-4 ${dark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-slate-50'}`}>
                 <div className="flex items-center gap-2 text-amber-500 font-black text-sm uppercase tracking-[0.12em]">
-                  <ShieldCheck className="w-4 h-4" /> Stres Testi Özeti
+                  <ShieldCheck className="w-4 h-4" /> Zor Senaryo Özeti
                 </div>
                 <p className={`mt-3 text-sm leading-relaxed ${dark ? 'text-slate-200' : 'text-slate-700'}`}>
                   {analysis.selectedScenario.label} senaryosunda en düşük bakiye {formatNumber(Math.min(...analysis.stressSeries))} TL seviyesine iner. Bu durumda {analysis.monthText} dönemi için likidite planlaması şarttır.
@@ -623,7 +623,7 @@ export default function EgitimPortali({ dark }) {
 
               <div className={`rounded-2xl border p-4 ${dark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-center gap-2 text-emerald-500 font-black text-xs uppercase tracking-[0.12em]">
-                  <Layers3 className="w-4 h-4" /> Aksiyon Reçetesi
+                  <Layers3 className="w-4 h-4" /> Önerilen Adımlar
                 </div>
                 <div className="mt-3 text-base font-bold text-emerald-500">{analysis.selectedScenario.label}</div>
                 <p className={`mt-2 text-sm ${dark ? 'text-slate-400' : 'text-slate-600'}`}>{analysis.recommendation}</p>

@@ -125,6 +125,22 @@ const MIGRATIONS = [
   );
   CREATE INDEX idx_plans_user ON business_plans(user_id, updated_at DESC);
   `,
+
+  // 4 — kullanıcının kendi eklediği fuar/etkinlikler (yalnızca kendisi görür)
+  `
+  CREATE TABLE user_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    baslik     TEXT NOT NULL,
+    tarih      TEXT NOT NULL,               -- YYYY-AA-GG
+    saat       TEXT NOT NULL DEFAULT '',    -- SS:DD (opsiyonel)
+    konum      TEXT NOT NULL DEFAULT '',
+    link       TEXT NOT NULL DEFAULT '',
+    notlar     TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_user_events ON user_events(user_id, tarih);
+  `,
 ];
 
 function migrate() {

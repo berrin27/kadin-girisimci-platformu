@@ -407,3 +407,84 @@ export const basvuruTakvimi = [
     { program: 'KOOP-DES 2026 Kooperatif Destekleri', kurum: 'Ticaret Bakanlığı', baslangic: '2026-04-13', bitis: '2026-05-15' },
     { program: 'KOSGEB Girişimci Destek Programı 2026-2. Dönem', kurum: 'KOSGEB', baslangic: '2026-04-20', bitis: '2026-05-08' },
 ];
+
+// ── Doğrulanmış Etkinlikler (Fuarlar & Etkinlikler sayfası) ──────────────────
+// Yalnızca resmi bağlantısı olan gerçek etkinlikler. `baslangic`/`bitis`
+// başvuru veya etkinlik tarihleridir (YYYY-AA-GG; başlangıç bilinmiyorsa null); durum (açık/yaklaşan/sona erdi)
+// sayfada otomatik hesaplanır ve sona erenler varsayılan olarak gizlenir.
+// tur: 'Yarışma' | 'Ödül' | 'Hibe / Fon' | 'Hızlandırma' | 'Fuar' | 'Eğitim'
+export const etkinlikler = [
+    {
+        id: "halkbank-ureten-kadinlar-2027",
+        baslik: "Halkbank Üreten Kadınlar Yarışması",
+        duzenleyen: "Halkbank",
+        tur: "Yarışma",
+        ucret: "Ücretsiz",
+        baslangic: "2026-08-24",
+        bitis: "2026-11-01",
+        konum: "Online başvuru",
+        aciklama: "Kadın girişimciler ve kadın kooperatifleri için 6 kategorili yarışma: Yılın Üreten Kadın Girişimcisi; İnovasyon, Teknoloji ve Yapay Zekâ; Yükselen Yıldız; Sürdürülebilirlik; Kadın Kooperatifi; Sosyal Girişimci. Dereceye girenlere nakdi ödül ve ayni destek; finalistlere Master Class marka eğitimi. Ödül töreni 26 Mart 2027.",
+        link: "https://www.halkbank.com.tr/tr/ureten-kadinlar/ureten-kadinlar-yarismasi/ureten-kadinlar-yarismasi-2027",
+        kaynak: "https://www.milliyet.com.tr/7647999",
+    },
+    {
+        id: "garanti-kadin-girisimcisi-2026",
+        baslik: "Türkiye'nin Kadın Girişimcisi Yarışması",
+        duzenleyen: "Garanti BBVA · KAGİDER · Ekonomist",
+        tur: "Yarışma",
+        ucret: "Ücretsiz",
+        baslangic: null, // başvuru açılış tarihi kaynakta yok; yalnızca son tarih doğrulandı
+        bitis: "2026-11-15",
+        konum: "Online başvuru",
+        aciklama: "Yarışmanın 20. dönemi. 5 kategoride toplam 3 milyon TL ödül: ana kategori 1 milyon TL, diğer dört kategori 500'er bin TL. Kazananlara KAGİDER üyeliği gibi ek imkanlar da sunuluyor.",
+        link: "https://www.garantibbvakadingirisimci.com",
+        kaynak: "https://www.garantibbva.com.tr/kurumsal-iletisim/turkiyenin-kadin-girisimci-yarismasinda-yirminci-yil-heyecani",
+    },
+    {
+        id: "ey-girisimci-kadin-liderler-2026",
+        baslik: "EY Girişimci Kadın Liderler Programı",
+        duzenleyen: "EY Türkiye",
+        tur: "Hızlandırma",
+        ucret: "Ücretsiz",
+        baslangic: "2026-09-09",
+        bitis: "2026-11-15",
+        konum: "Online başvuru",
+        aciklama: "Büyüme ve uluslararasılaşma hedefleyen kadın girişimcilere eğitim, birebir mentorluk, iş geliştirme ve EY'nin uluslararası girişimci ağına erişim. Şartlar: şirkette en az %25 hisse ve ana karar verici olmak, Türkiye merkezli, en az 3 yıllık ve son iki yılda yıllık 20 milyon TL üzeri cirolu şirket.",
+        link: "https://www.ey.com/tr_tr/ey-turkiye-girisimci-kadin-liderler-programi",
+        kaynak: "https://www.ey.com/tr_tr/newsroom/2026/9/ey-girisimci-kadin-liderler-programi-2026-basvurulari-acildi",
+    },
+    {
+        id: "eic-kadin-yenilikciler-2027",
+        baslik: "Avrupa Kadın Yenilikçiler Ödülü 2027",
+        duzenleyen: "Avrupa Komisyonu (EIC & EIT)",
+        tur: "Ödül",
+        ucret: "Ücretsiz",
+        baslangic: "2026-09-02",
+        bitis: "2026-12-01",
+        konum: "Online başvuru (İngilizce)",
+        aciklama: "Türkiye dahil Ufuk Avrupa ülkelerindeki yenilikçi şirketlerin kadın kurucularına ödül: EIC Kadın Yenilikçiler 100.000 € / 70.000 € / 50.000 €; 35 yaş altına Yükselen Yenilikçiler 50.000 € / 30.000 € / 20.000 €. Şirket 1 Ocak 2025'ten önce kurulmuş olmalı.",
+        link: "https://eic.ec.europa.eu/eic-prizes/european-prize-women-innovators-powered-eic-eit_en",
+        kaynak: "https://eic.ec.europa.eu/eic-prizes/european-prize-women-innovators-powered-eic-eit_en",
+    },
+    {
+        id: "women-techeu-2026",
+        baslik: "Women TechEU Derin Teknoloji Hibesi",
+        duzenleyen: "Avrupa Komisyonu (Ufuk Avrupa)",
+        tur: "Hibe / Fon",
+        ucret: "Ücretsiz",
+        baslangic: "2026-06-30",
+        bitis: "2027-07-13",
+        konum: "Online başvuru (İngilizce)",
+        aciklama: "Kadın kurucunun üst yönetici olduğu, 6 ay–5 yaş arası erken aşama derin teknoloji girişimlerine (yapay zekâ, biyoteknoloji, enerji, robotik vb.) 75.000 € hibe ve iş geliştirme hizmetleri. Başvurular haftalık değerlendirilir; bütçenin %40'ı Türkiye'nin de dahil olduğu ülkelere ayrılmıştır.",
+        link: "https://cascadefunding.sploro.eu/apply/program/women-techeu-eligibility-strand",
+        kaynak: "https://ufukavrupa.org.tr/tr/haberler/2026-women-techeu-cagrisi-ile-kadin-girisimcilere-yonelik-destekler-devam-ediyor-basvuru",
+    },
+];
+
+// Fuar sayfasındaki rehber bölümü: resmi fuar listeleri
+export const fuarKaynaklari = [
+    { baslik: '2025-2026 destek kapsamındaki yurt dışı fuarlar', kurum: 'Ticaret Bakanlığı', link: 'https://ticaret.gov.tr/ihracat/fuarlar/2025-2026-yillarinda-destek-kapsamina-alinan-yurtdisi-fuarlar' },
+    { baslik: '2026 destek kapsamındaki yurt içi fuarlar', kurum: 'Ticaret Bakanlığı', link: 'https://ticaret.gov.tr/ihracat/fuarlar/2026-yilinda-destek-kapsamina-alinan-sektorel-nitelikli-yurt-ici-fuarlar' },
+    { baslik: 'Yıllara göre fuar destek üst limitleri', kurum: 'Ticaret Bakanlığı', link: 'https://ticaret.gov.tr/ihracat/fuarlar/yillar-bazinda-fuar-destek-ust-limitleri' },
+    { baslik: 'Yükselen Kadınlar Girişimcilik Eğitim Tırı (il il geziyor)', kurum: 'Aile ve Sosyal Hizmetler Bakanlığı · Halkbank', link: 'https://kadingirisimci.gov.tr/' },
+];

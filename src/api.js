@@ -79,6 +79,11 @@ export const api = {
     save: (id, plan) => put(`/plans/${id}`, plan),
     remove: (id) => del(`/plans/${id}`),
   },
+  events: {
+    list: () => get('/events'),
+    create: (event) => post('/events', event),
+    remove: (id) => del(`/events/${id}`),
+  },
   news: {
     list: (kategori) => get(`/news${kategori ? `?kategori=${encodeURIComponent(kategori)}` : ''}`),
   },

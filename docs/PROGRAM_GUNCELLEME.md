@@ -13,7 +13,7 @@ güncel tutmak ve yeni programları **insan onayıyla** yayına almak.
 
 | Dosya | Ne var |
 |---|---|
-| `src/data.js` | **Tek veri kaynağı:** `supportData` (programlar), `basvuruTakvimi`, `SON_KONTROL` |
+| `src/data.js` | **Tek veri kaynağı:** `supportData` (programlar), `basvuruTakvimi`, `etkinlikler` (Fuarlar & Etkinlikler sayfası), `fuarKaynaklari`, `SON_KONTROL` |
 | `src/App.jsx` | `kaynakca` (Kaynakça kartları) ve `faqVerisi` (SSS) — tutar geçiyorsa data.js ile tutarlı olmalı |
 | `src/src/aiPromt.js` | Gemini sistem prompt'u ve örnek cevaplar (KOSGEB, TÜBİTAK tutarları) |
 | `server/chatbot.js` | Gemini erişilemezse kullanılan hazır cevaplar (KOSGEB, TÜBİTAK, vergi, şirket kuruluşu) |
@@ -65,6 +65,18 @@ gibi aramalar yap; bulduğun her iddiayı yukarıdaki resmi sayfalardan teyit et
    (açık/yaklaşıyor/tamamlandı) otomatik hesaplanır; 12 aydan eski kayıtları sil.
 6. **Değişiklik yaptıysan** `SON_KONTROL`'ü bu ayla güncelle (ör. `'Kasım 2026'`).
 7. **Doğrula:** `npm ci && npm run check:programs && npm run build` — hata varsa düzelt.
+
+## Etkinlikler (`etkinlikler`)
+
+Fuarlar & Etkinlikler sayfası yalnızca **gerçek ve resmi bağlantısı olan** etkinlikleri gösterir
+(kadın girişimcilere yönelik yarışma, ödül, hibe çağrısı, hızlandırma programı, fuar, eğitim).
+
+- Her kayıtta `link` (resmi başvuru/etkinlik sayfası) ve `kaynak` zorunludur.
+- `bitis`: son başvuru veya etkinlik tarihi. `baslangic`: yalnızca kaynakta yazıyorsa — **tahmin etme**, bilinmiyorsa `null`.
+- Son başvurusu geçmiş etkinlikleri sil (`npm run check:programs` bunları uyarı olarak listeler).
+- Yeni dönemi açılan yinelenen etkinlikleri (ör. yıllık yarışmalar) yeni tarihlerle güncelle.
+- Aday kaynaklar: Halkbank Üreten Kadınlar, KAGİDER, Garanti BBVA Kadın Girişimci, EY, EIC/Ufuk Avrupa
+  (ufukavrupa.org.tr), Ticaret Bakanlığı fuar listeleri, aile.gov.tr il müdürlüğü duyuruları.
 
 ## Pull request
 

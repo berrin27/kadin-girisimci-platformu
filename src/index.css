@@ -78,13 +78,21 @@ body {
 }
 
 .hero-subtitle {
-  animation: fadeUp 0.8s ease 0.5s forwards;
+  animation: fadeUp 0.6s ease 0.2s forwards;
   opacity: 0;
 }
 
 .hero-stats {
-  animation: fadeUp 0.8s ease 0.8s forwards;
+  animation: fadeUp 0.6s ease 0.3s forwards;
   opacity: 0;
+}
+
+/* Hareketi azaltmayı tercih eden kullanıcılarda giriş animasyonları kapalı */
+@media (prefers-reduced-motion: reduce) {
+  .hero-title, .hero-subtitle, .hero-stats, .card-animate {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ── CARD STAGGER ANIMATION ───────────────────────────── */

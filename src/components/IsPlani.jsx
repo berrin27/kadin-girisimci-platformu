@@ -187,7 +187,7 @@ export default function IsPlani({ dark }) {
 - Başlangıç maliyeti: ${startupCost.toLocaleString('tr-TR')} TL
 - Öz sermaye: ${equity.toLocaleString('tr-TR')} TL
 - Kredi ihtiyacı: ${loanAmount.toLocaleString('tr-TR')} TL
-- DSCR: ${dscr}
+- Taksit ödeme gücü (DSCR — faaliyet kârı / kredi taksiti): ${dscr}
 - Aylık net nakit akışı: ${netCash.toLocaleString('tr-TR')} TL
 - Borç oranı: %${debtRatio}
 - Yatırımın geri dönüşü için operasyonel verimlilik ve nakit kontrollü büyüme hedeflenir.`,
@@ -362,8 +362,8 @@ export default function IsPlani({ dark }) {
             <div class="summary-grid">
               <div class="item"><strong>Şablon</strong>${escapeHtml(templateLabel)}</div>
               <div class="item"><strong>Aylık Nakit</strong>${escapeHtml(netCash.toLocaleString('tr-TR'))} TL</div>
-              <div class="item"><strong>DSCR</strong>${escapeHtml(dscr)}</div>
-              <div class="item"><strong>Break-even</strong>${escapeHtml(String(breakEven))}</div>
+              <div class="item"><strong>Taksit ödeme gücü (DSCR)</strong>${escapeHtml(dscr)}</div>
+              <div class="item"><strong>Yatırımı geri kazanma</strong>${escapeHtml(String(breakEven))}</div>
             </div>
             <div class="plan-box">
               <pre>${escapeHtml(planSummary)}</pre>
@@ -470,7 +470,7 @@ export default function IsPlani({ dark }) {
 
       <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-6">
         <div className={`${cardClass} border rounded-2xl p-5 shadow-xl`}>
-          <h3 className="text-lg font-black mb-5">İşlem Verileri</h3>
+          <h3 className="text-lg font-black mb-5">İşletme Bilgileri</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">İş adı
               <input value={form.projectName} placeholder={ORNEK_FORM.projectName} onChange={e => handleField('projectName', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
@@ -484,7 +484,7 @@ export default function IsPlani({ dark }) {
             <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık gider (TL)
               <input type="number" value={form.monthlyExpense} placeholder={ORNEK_FORM.monthlyExpense} onChange={e => handleSayi('monthlyExpense', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık borç servisi (TL)
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık kredi taksiti (TL)
               <input type="number" value={form.monthlyDebtService} placeholder={ORNEK_FORM.monthlyDebtService} onChange={e => handleSayi('monthlyDebtService', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
             </label>
             <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Başlangıç maliyeti (TL)
@@ -502,7 +502,7 @@ export default function IsPlani({ dark }) {
             <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Pazar hedefi
               <textarea rows={3} value={form.market} placeholder={ORNEK_FORM.market} onChange={e => handleField('market', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
             </label>
-            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Büyüme / traksiyon açıklaması
+            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Büyüme hedefi / şimdiye kadarki ilerleme
               <textarea rows={3} value={form.traction} placeholder={ORNEK_FORM.traction} onChange={e => handleField('traction', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
             </label>
           </div>
@@ -516,15 +516,15 @@ export default function IsPlani({ dark }) {
               <div className="mt-2 text-xl font-black text-emerald-500">{netCash.toLocaleString('tr-TR')} TL</div>
             </div>
             <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Break-even</div>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`} title="Başlangıç maliyetinin, aylık kalan nakitle kaç ayda geri kazanılacağı">Yatırımı geri kazanma (break-even)</div>
               <div className="mt-2 text-xl font-black text-[#1E293B]">{breakEven}</div>
             </div>
             <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>DSCR</div>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`} title="Faaliyet kârının kredi taksitlerini kaç kez karşıladığı (DSCR). Bankalar genelde 1,25 ve üzerini görmek ister.">Taksit ödeme gücü (DSCR)</div>
               <div className="mt-2 text-xl font-black text-orange-500">{dscr}</div>
             </div>
             <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
-              <div className={`text-[10px] uppercase tracking-wide ${subClass}`}>Borç Oranı</div>
+              <div className={`text-[10px] uppercase tracking-wide ${subClass}`} title="Toplam finansmanın (öz sermaye + kredi) yüzde kaçının krediyle karşılandığı">Finansmanda kredi payı</div>
               <div className="mt-2 text-xl font-black text-cyan-500">%{debtRatio}</div>
             </div>
           </div>
