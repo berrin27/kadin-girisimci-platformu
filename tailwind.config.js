@@ -3,8 +3,6 @@ export default {
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
-        "./kadin-girisimci-platformu/index.html",
-        "./kadin-girisimci-platformu/src/**/*.{js,ts,jsx,tsx}"
     ],
     theme: {
         extend: {
