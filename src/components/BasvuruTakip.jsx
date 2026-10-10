@@ -25,40 +25,41 @@ const CARD_COLORS = ['#7c3aed', '#2563eb', '#db2777', '#059669', '#f97316', '#08
 const today = new Date();
 const addDays = (d) => { const dt = new Date(today); dt.setDate(dt.getDate() + d); return dt.toISOString().split('T')[0]; };
 
+// Yeni kullanıcıya panonun nasıl kullanıldığını gösteren örnek kartlar (gerçek programlar)
 const INITIAL_CARDS = [
   {
-    id: 'k1', title: 'KOSGEB Girişimci Destek Programı', institution: 'KOSGEB',
-    amount: '300.000 TL', column: 'arastirma', color: '#7c3aed',
+    id: 'k1', title: 'KOSGEB İş Kurma Desteği', institution: 'KOSGEB',
+    amount: '30.000 TL', column: 'arastirma', color: '#7c3aed',
     deadline: addDays(45), priority: 'yuksek', starred: true,
-    note: 'Online başvuru portalı açıldı, belgeler hazırlanıyor.',
+    note: 'Şahıs işletmesi kuruldu, ilk yıl içinde başvurulacak.',
     sonuc: null,
   },
   {
-    id: 'k2', title: 'TÜBİTAK 1512 BİGG Programı', institution: 'TÜBİTAK',
-    amount: '900.000 TL', column: 'hazirlik', color: '#2563eb',
+    id: 'k2', title: 'Halkbank Kadın Girişimci Kredisi', institution: 'Halkbank',
+    amount: '600.000 TL', column: 'hazirlik', color: '#2563eb',
     deadline: addDays(20), priority: 'yuksek', starred: true,
     note: 'İş planı taslağı %70 tamamlandı.',
     sonuc: null,
   },
   {
-    id: 'k3', title: 'Sabancı Vakfı Hibe Programı', institution: 'Sabancı Vakfı',
-    amount: '50.000 TL', column: 'basvuruldu', color: '#db2777',
+    id: 'k3', title: 'KOOP-DES Kooperatif Desteği', institution: 'Ticaret Bakanlığı',
+    amount: '750.000 TL', column: 'basvuruldu', color: '#db2777',
     deadline: addDays(-5), priority: 'orta', starred: false,
-    note: 'Başvuru yapıldı, onay bekleniyor.',
+    note: 'Başvuru İl Müdürlüğüne teslim edildi, onay bekleniyor.',
     sonuc: null,
   },
   {
-    id: 'k4', title: 'Ticaret Bakanlığı E-İhracat', institution: 'Ticaret Bak.',
-    amount: '2.500.000 TL', column: 'beklemede', color: '#059669',
+    id: 'k4', title: 'Ticaret Bakanlığı E-İhracat Desteği', institution: 'Ticaret Bakanlığı',
+    amount: 'Giderlerin %50-75\'i', column: 'beklemede', color: '#059669',
     deadline: addDays(60), priority: 'orta', starred: false,
-    note: 'Fiziksel değerlendirme aşamasında.',
+    note: 'Pazaryeri faturaları değerlendirmede.',
     sonuc: null,
   },
   {
-    id: 'k5', title: 'Garanti BBVA Kadın Girişimci', institution: 'Garanti BBVA',
+    id: 'k5', title: 'Kırsal Kalkınma Yatırım Programı', institution: 'Tarım ve Orman Bakanlığı',
     amount: '150.000 TL', column: 'sonuc', color: '#f97316',
     deadline: addDays(-30), priority: 'dusuk', starred: false,
-    note: 'Kabul edildi! Sözleşme imzalandı.',
+    note: 'Kabul edildi! Hibe sözleşmesi imzalandı.',
     sonuc: 'kabul',
   },
 ];

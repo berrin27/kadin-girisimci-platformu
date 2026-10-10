@@ -7,7 +7,7 @@ import ProfilDuzenle from './components/ProfilDuzenle';
 import BasvuruFormu from './components/BasvuruFormu';
 import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
-import { supportData } from './data';
+import { supportData, basvuruTakvimi, SON_KONTROL } from './data';
 import { api } from './api';
 import {
   Sparkles, TurkishLira, ArrowRight, CheckCircle2, MessageSquare, X,
@@ -47,7 +47,7 @@ const calculateProgramMatchScore = ({ item, medeniDurum, yakin }) => {
   let score = 70;
   score += Math.round(15 * (SEKTOR_TAGS.length - sektorSayisi) / (SEKTOR_TAGS.length - 1)); // sektöre özellik
   if (medeniDurum !== 'hepsi' && medeniSayisi < MEDENI_TAGS.length) score += 5;            // duruma özel program
-  if (item.type.toLowerCase().includes('hibe')) score += 10;                               // geri ödemesiz
+  if (item.destekTuru === 'hibe') score += 10;                                             // geri ödemesiz
   if (yakin) score -= 20;
   return Math.max(0, Math.min(100, score));
 };
@@ -71,32 +71,42 @@ const buildMatchCandidates = ({ sektor, profil, asama, medeniDurum }) => {
 
 // ─── KAYNAKÇA ────────────────────────────────────────────────────────────────
 const kaynakca = [
-  { kurum: 'KOSGEB', grad: 'linear-gradient(135deg,#2563eb,#1d4ed8)', aciklama: 'Küçük ve Orta Ölçekli İşletmeleri Geliştirme ve Destekleme İdaresi — girişimcilik, Ar-Ge ve KOBİ destekleri', link: 'https://www.kosgeb.gov.tr', etiket: 'Devlet Kurumu' },
-  { kurum: 'TÜBİTAK 1512 BİGG', grad: 'linear-gradient(135deg,#7c3aed,#6d28d9)', aciklama: 'Teknoloji tabanlı girişimlere %100 hibe ile 150.000 TL\'ye kadar destek — üniversite öğrencileri ve mezunları öncelikli', link: 'https://www.tubitak.gov.tr/tr/destekler/sanayi/ulusal-destek-programlari/icerik-1512', etiket: 'Ar-Ge Hibesi' },
-  { kurum: 'TKDK — IPARD', grad: 'linear-gradient(135deg,#059669,#047857)', aciklama: 'AB destekli kırsal kalkınma hibeleri — tarım, hayvancılık ve agro-turizm projelerine %50\'ye kadar hibe', link: 'https://www.tkdk.gov.tr', etiket: 'AB Fonu' },
-  { kurum: 'Sabancı Vakfı', grad: 'linear-gradient(135deg,#db2777,#be185d)', aciklama: 'Kadın girişimcilere ve sosyal etki projelerine özel hibe programları — mentorluk ve ağ desteği dahil', link: 'https://www.sabancivakfi.org', etiket: 'Vakıf' },
-  { kurum: 'Garanti BBVA Girişim', grad: 'linear-gradient(135deg,#f97316,#ea580c)', aciklama: 'Erken aşama startup\'lara yatırım ve mentorluk — teknoloji ve fintech odaklı girişimler öncelikli', link: 'https://www.garantibbvagirisim.com', etiket: 'Özel Fon' },
-  { kurum: 'TKOB', grad: 'linear-gradient(135deg,#e11d48,#be123c)', aciklama: 'Türkiye Kadın Girişimciler Derneği — eğitim, mentorluk, network ve hibe programları', link: 'https://www.tkob.org.tr', etiket: 'STK' },
+  { kurum: 'KOSGEB', grad: 'linear-gradient(135deg,#2563eb,#1d4ed8)', aciklama: 'Girişimci Destek Programı: İş Kurma Desteği (geri ödemesiz, kadınlara +10.000 TL) ve İş Geliştirme Desteği (kadınlara 1.650.000 TL\'ye kadar, faizsiz geri ödemeli).', link: 'https://www.kosgeb.gov.tr/site/tr/genel/destekdetay/1231/girisimci-destek-programi', etiket: 'Devlet Kurumu' },
+  { kurum: 'Kadın Girişimci Portalı', grad: 'linear-gradient(135deg,#db2777,#be185d)', aciklama: 'Aile ve Sosyal Hizmetler Bakanlığı\'nın, kamu kurumları ve bankaların kadın girişimci desteklerini tek noktada topladığı resmi portal.', link: 'https://kadingirisimci.gov.tr/destek-ve-tesvikler/', etiket: 'Resmi Portal' },
+  { kurum: 'TÜBİTAK BiGG', grad: 'linear-gradient(135deg,#7c3aed,#6d28d9)', aciklama: 'Üniversite öğrencisi ve mezunlarının teknoloji girişimlerine, kurulacak şirketin %3 hissesi karşılığında 1.350.000 TL yatırım (BiGG Yatırım / 1812).', link: 'https://tubitak.gov.tr/tr/duyuru', etiket: 'Yatırım' },
+  { kurum: 'Tarım ve Orman Bakanlığı', grad: 'linear-gradient(135deg,#65a30d,#4d7c0f)', aciklama: 'Kırsal Kalkınma Yatırım Programı: tarımsal işleme, sera, arıcılık ve akıllı tarım projelerine %50-70 hibe; kadınlara %60 ve bütçenin en az %20\'si kadın ve gençlere.', link: 'https://kirsalkalkinma.tarimorman.gov.tr', etiket: 'Hibe' },
+  { kurum: 'TKDK — IPARD III', grad: 'linear-gradient(135deg,#059669,#047857)', aciklama: 'AB destekli kırsal kalkınma hibeleri: kırsal turizm, el sanatları, yerel ürün işleme ve tarımsal yatırımlara %60-70 hibe; kadınlara sıralamada ek puan.', link: 'https://www.tkdk.gov.tr', etiket: 'AB Fonu' },
+  { kurum: 'Halkbank Üreten Kadınlar', grad: 'linear-gradient(135deg,#0891b2,#0e7490)', aciklama: 'Kadın girişimci, sıfır faizli esnaf, kadın kooperatifi ve kadın ihracatçı kredileri; Üreten Kadınlar Akademisi eğitimleri.', link: 'https://www.halkbank.com.tr/tr/ureten-kadinlar/kadin-girisimci-kredileri/kadin-girisimci-kredisi.html', etiket: 'Kamu Bankası' },
 ];
 
 // ─── BAŞVURU TAKVİMİ ─────────────────────────────────────────────────────────
-// badgeStyle: inline style objesi (Tailwind v4 dinamik class yerine)
-const basvuruTakvimi = [
-  { ay: 'Ağustos 2025', program: 'KOSGEB Girişimci Desteği – 3. Dönem', durum: 'yaklaşıyor', badgeStyle: { color: '#92400e', background: '#fffbeb', borderColor: '#fcd34d' }, kurum: 'KOSGEB' },
-  { ay: 'Eylül 2025', program: 'TÜBİTAK BİGG – Sonbahar Çağrısı', durum: 'yaklaşıyor', badgeStyle: { color: '#5b21b6', background: '#f5f3ff', borderColor: '#c4b5fd' }, kurum: 'TÜBİTAK' },
-  { ay: 'Ekim 2025', program: 'Sabancı Vakfı Hibe Programı', durum: 'yaklaşıyor', badgeStyle: { color: '#9d174d', background: '#fdf2f8', borderColor: '#fbcfe8' }, kurum: 'Sabancı Vakfı' },
-  { ay: 'Kasım 2025', program: 'TKDK IPARD – Kış Başvuru Dönemi', durum: 'yaklaşıyor', badgeStyle: { color: '#065f46', background: '#ecfdf5', borderColor: '#6ee7b7' }, kurum: 'TKDK' },
-  { ay: 'Ocak 2026', program: 'Ticaret Bakanlığı E-İhracat Desteği', durum: 'planlanıyor', badgeStyle: { color: '#1e40af', background: '#eff6ff', borderColor: '#bfdbfe' }, kurum: 'Ticaret Bakanlığı' },
-  { ay: 'Şubat 2026', program: 'Ashoka Türkiye Sosyal Girişim Çağrısı', durum: 'planlanıyor', badgeStyle: { color: '#3730a3', background: '#eef2ff', borderColor: '#c7d2fe' }, kurum: 'Ashoka' },
-];
+// Tarihler data.js'te; durum bugünün tarihine göre hesaplanır, böylece takvim eskimez.
+const TAKVIM_DURUM = {
+  acik:       { label: '🟢 Başvurular açık', cls: 'bg-emerald-100 text-emerald-700' },
+  yaklasiyor: { label: '⏰ Yaklaşıyor',      cls: 'bg-amber-100 text-amber-700' },
+  kapandi:    { label: '✓ Tamamlandı',       cls: 'bg-slate-200 text-slate-600' },
+};
+
+const takvimDurumu = ({ baslangic, bitis }, bugun = new Date().toISOString().slice(0, 10)) => {
+  if (bugun < baslangic) return 'yaklasiyor';
+  if (bugun <= bitis) return 'acik';
+  return 'kapandi';
+};
+
+const tarihAraligi = ({ baslangic, bitis }) => {
+  const fmt = (d, opts) => new Date(`${d}T12:00:00`).toLocaleDateString('tr-TR', opts);
+  return baslangic === bitis
+    ? fmt(baslangic, { day: 'numeric', month: 'long', year: 'numeric' })
+    : `${fmt(baslangic, { day: 'numeric', month: 'long' })} – ${fmt(bitis, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+};
 
 // ─── FAQ VERİSİ ───────────────────────────────────────────────────────────────
 const faqVerisi = [
-  { soru: 'KOSGEB\'e kimler başvurabilir?', cevap: 'KOSGEB\'e Türkiye\'de kurulu, 250 kişiden az istihdam eden ve yıllık net satış hasılatı 500 milyon TL\'yi aşmayan tüm KOBİ\'ler başvurabilir. Kadın girişimciler birçok programda ek puan avantajına sahiptir.' },
-  { soru: 'TÜBİTAK BİGG için mutlaka şirket kurmam gerekiyor mu?', cevap: 'Ön başvuruda şirket gerekmez; ancak kazandığınızda destekten yararlanabilmek için şirket kurmanız istenir. TÜBİTAK bu süreçte size destek sağlar.' },
-  { soru: 'Aynı anda birden fazla hibeden yararlanabilir miyim?', cevap: 'Evet! KOSGEB, TÜBİTAK ve vakıf destekleri çoğunlukla birbirini tamamlar. Ancak aynı gider kalemi için iki farklı destekten yararlanamayacağınızı unutmayın. Bir danışman ile portföyünüzü planlamak önerilir.' },
-  { soru: 'Hibe mi, kredi mi tercih etmeliyim?', cevap: 'Mümkünse önce hibeler — geri ödemesiz oldukları için risksiz. Ancak hibe almak zaman alabilir. Kredi, hızlı başlangıç için idealdir; özellikle 6 ay ödemesiz Halkbank Genç Girişimci Kredisi başlangıç için çok uygun.' },
-  { soru: 'Kaç günde başvuru sonuçlanır?', cevap: 'KOSGEB değerlendirmeleri ortalama 45-90 gün sürer. TÜBİTAK BİGG paneli ise yılda 2-3 kez toplanır. Sabancı Vakfı gibi vakıf programları 60-120 gün içinde sonuçlanır.' },
+  { soru: 'KOSGEB\'den geri ödemesiz destek alabilir miyim?', cevap: 'Evet, İş Kurma Desteği geri ödemesizdir: kuruluşunun ilk yılındaki şahıs işletmelerine 10.000 TL, sermaye şirketlerine 20.000 TL; kadın girişimcilere +10.000 TL ilave. Daha büyük tutarlı İş Geliştirme Desteği (kadınlara 1.650.000 TL\'ye kadar) ise faizsiz ama geri ödemelidir ve yalnızca imalat, yazılım/bilişim ve Ar-Ge sektörlerine açıktır.' },
+  { soru: 'TÜBİTAK BiGG için şirket kurmuş olmam gerekir mi?', cevap: 'Hayır, tam tersi: başvuru tarihinde herhangi bir şirkette ortaklığınız olmamalı. Hızlandırma programını geçip yatırım almaya hak kazanırsanız şirket kurulur ve TÜBİTAK BiGG Fonu %3 hisse karşılığında yatırım yapar. Bu bir hibe değil, yatırımdır.' },
+  { soru: 'Aynı anda birden fazla destekten yararlanabilir miyim?', cevap: 'Çoğu zaman evet; örneğin bir hibe ile bir banka kredisini birlikte kullanabilirsiniz. Ancak aynı gider kalemi için iki kamu desteği alınamaz ve bazı destekler birbirini dışlar (ör. KOSGEB İş Geliştirme Desteği ile Kredi Faiz Desteği aynı anda kullanılamaz). Başvurmadan önce program şartlarını okuyun.' },
+  { soru: 'Hibe mi, kredi mi tercih etmeliyim?', cevap: 'Hibeler geri ödemesizdir ama çağrı dönemlerinde açılır ve rekabetçidir. Krediler hemen başvurulabilir; örneğin Halkbank Kadın Girişimci Kredisi 36 ay vadeli ve ilk 6 ayı anapara ödemesizdir. Çoğu girişimci ikisini birlikte planlar.' },
+  { soru: 'Bilgiler ne kadar güncel?', cevap: `Program tutarları ve tarihleri ${SON_KONTROL} itibarıyla resmi kaynaklardan kontrol edildi. Tutarlar her yıl değişebilir; başvurudan önce programın resmi sayfasını mutlaka kontrol edin.` },
 ];
 
 // ─── CONFETTI ─────────────────────────────────────────────────────────────────
@@ -1129,7 +1139,8 @@ export default function App({ user, onLogout }) {
                           <span className="text-xs font-black text-emerald-500">{item.combinedScore}/100</span>
                         </div>
                         <h4 className={`font-extrabold text-base mb-2 group-hover:text-[#1E293B] transition ${dark ? 'text-white' : 'text-[#1E293B]'}`}>{item.title}</h4>
-                        <p className={`text-xs line-clamp-3 mb-4 leading-relaxed ${subtext}`}>{item.description}</p>
+                        <p className={`text-xs line-clamp-3 mb-3 leading-relaxed ${subtext}`}>{item.description}</p>
+                        <p className={`text-[11px] font-semibold mb-4 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>📅 {item.basvuruDurumu}</p>
                       </div>
                       <div>
                         <div className={`${dark ? 'bg-emerald-900/30 border-emerald-700/40' : 'bg-emerald-50 border-emerald-200/60'} border p-2.5 rounded-lg mb-3 flex items-center justify-between`}>
@@ -1152,6 +1163,14 @@ export default function App({ user, onLogout }) {
                         >
                           🚀 Hadi Başvur!
                         </button>
+                        <a
+                          href={item.kaynak}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`mt-2 block text-center text-[10px] underline-offset-2 hover:underline ${subtext}`}
+                        >
+                          Kaynak · {SON_KONTROL}'da kontrol edildi
+                        </a>
                       </div>
                     </div>
                   ))}
@@ -1235,32 +1254,26 @@ export default function App({ user, onLogout }) {
           <div className={`${card} rounded-2xl shadow-xl border p-6 mb-10`}>
             <h3 className="font-black text-xl mb-6 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[#1E293B]" />
-              Başvuru Takvimi — 2025/2026
+              Başvuru Takvimi
             </h3>
+            <p className={`text-xs mb-5 -mt-3 ${subtext}`}>Yeni dönem tarihleri açıklandıkça güncellenir. Sürekli açık programlar (banka kredileri vb.) takvimde yer almaz.</p>
             <div className="space-y-3">
-              {basvuruTakvimi.map((item, i) => (
+              {basvuruTakvimi.map((item, i) => { const durum = TAKVIM_DURUM[takvimDurumu(item)]; return (
                 <div key={i} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border ${dark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span
-                      className="text-xs font-black px-3 py-1 rounded-full shrink-0"
-                      style={{
-                        color: item.badgeStyle.color,
-                        background: item.badgeStyle.background,
-                        border: `1px solid ${item.badgeStyle.borderColor}`,
-                      }}
-                    >
-                      {item.ay}
+                    <span className={`text-xs font-black px-3 py-1 rounded-full shrink-0 border ${dark ? 'border-slate-600 text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      {tarihAraligi(item)}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-bold text-sm truncate">{item.program}</p>
+                      <p className="font-bold text-sm">{item.program}</p>
                       <p className={`text-xs ${subtext}`}>{item.kurum}</p>
                     </div>
                   </div>
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${item.durum === 'yaklaşıyor' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {item.durum === 'yaklaşıyor' ? '⏰ Yaklaşıyor' : '📅 Planlanıyor'}
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${durum.cls}`}>
+                    {durum.label}
                   </span>
                 </div>
-              ))}
+              ); })}
             </div>
           </div>
 
@@ -1291,7 +1304,7 @@ export default function App({ user, onLogout }) {
             </div>
             <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Hibe Hesaplayıcı</h2>
             <p className={`max-w-xl mx-auto text-sm ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
-              3 adımda girişiminize uygun toplam hibe potansiyelinizi öğrenin.
+              3 adımda girişiminize uygun hibe ve kredi tutarlarını öğrenin.
             </p>
           </div>
           <HibeHesaplayici dark={dark} />

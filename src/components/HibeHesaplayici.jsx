@@ -2,16 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { supportData } from '../data';
 import { Calculator, ArrowRight, ArrowLeft, Sparkles, RotateCcw, ExternalLink } from 'lucide-react';
 
-// ── Sektör → hibe verileri ────────────────────────────────────────────────────
-const SEKTOR_HIBE = {
-  ev_emegi:      { max: 30000,   ids: ['tisva-mikrokredi', 'halkbank-kadin'] },
-  yerel_isletme: { max: 350000,  ids: ['kosgeb-girisimci', 'halkbank-genc', 'halkbank-kadin'] },
-  teknoloji:     { max: 900000,  ids: ['tubitak-bigg', 'arya-women', 'halkbank-genc'] },
-  e_ticaret:     { max: 2500000, ids: ['ticaret-eihracat', 'arya-women', 'halkbank-genc'] },
-  kooperatif:    { max: 400000,  ids: ['ticaret-koopdes'] },
-  sosyal_girisim:{ max: 150000,  ids: ['ashoka-imece'] },
-  kırsal:        { max: 500000,  ids: ['tkdk-ipard'] },
-};
+// ── Seçenekler (Destek Sihirbazı ile aynı) ───────────────────────────────────
+const PROFIL_OPTS = [
+  ['genc_uni', '🎓 18-25 Yaş'],
+  ['genc_girisimci', '💼 26-35 Yaş'],
+  ['standart', '🌟 36-50 Yaş'],
+  ['olgun_girisimci', '👑 50+ Yaş'],
+];
+
+const ASAMA_OPTS = [
+  ['fikir', '💡 Fikir Aşaması (Şirket kurulmadı)'],
+  ['yeni_kurulmus', '🌱 Yeni Kurulmuş (Son 1 yıl)'],
+  ['buyume', '📈 Büyüme Döneminde (1-3 yıl)'],
+  ['kriz_donemi', '🔄 Yeniden Yapılanma'],
+  ['kokenlesik', '🏆 Köklü İşletme (3+ yıl)'],
+];
+
+const TUM_MEDENI = ['bekar', 'evli', 'dul', 'bosanmis'];
+const HIBE_TURLERI = ['hibe'];
+const FINANSMAN_TURLERI = ['kredi', 'geri_odemeli', 'yatirim'];
+
+// Seçime uyan programlar; medeni duruma özel programlar (ör. dul kadın yardımı)
+// hesaplayıcı medeni durum sormadığı için hariç tutulur.
+const uygunProgramlar = ({ sektor, profil, asama }) => supportData.filter(p =>
+  p.tags.includes(sektor) && p.tags.includes(profil) && p.tags.includes(asama)
+  && TUM_MEDENI.every(m => p.tags.includes(m)));
+
+const enYuksek = (programs, turler, alan) => programs
+  .filter(p => turler.includes(p.destekTuru) && p[alan])
+  .reduce((best, p) => (!best || p[alan] > best[alan] ? p : best), null);
 
 // ── Animasyonlu sayaç ─────────────────────────────────────────────────────────
 function AnimatedNumber({ value }) {
@@ -52,31 +71,28 @@ export default function HibeHesaplayici({ dark }) {
   const [sektor, setSektor] = useState('');
   const [profil, setProfil] = useState('');
   const [asama, setAsama] = useState('');
-  const [ekip, setEkip] = useState(1);
   const [aylikGelir, setAylikGelir] = useState(0);
   const [result, setResult] = useState(null);
 
   const card   = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-100';
   const text   = dark ? 'text-slate-100' : 'text-[#0f172a]';
   const sub    = dark ? 'text-slate-400' : 'text-slate-500';
-  const track  = dark ? 'bg-slate-700' : 'bg-slate-200';
 
+  // Tutarlar data.js'teki resmi üst limitlerden gelir; destekler genelde
+  // birbirine eklenmediği için toplam değil, tek programdaki en yüksek tutar gösterilir.
   const calculate = () => {
-    const data = SEKTOR_HIBE[sektor] || { max: 0, ids: [] };
-    const programs = supportData.filter(p => data.ids.includes(p.id));
-    let mult = 1;
-    if (profil === 'genc_girisimci') mult *= 1.15;
-    if (asama === 'fikir') mult *= 0.88;
-    if (ekip >= 3) mult *= 1.1;
-    const total = Math.round(Math.min(data.max * mult, data.max * 1.15));
-    const coveragePct = aylikGelir > 0 ? Math.min((total / (aylikGelir * 12)) * 100, 999) : null;
-    setResult({ total, programs, coveragePct });
+    const programs = uygunProgramlar({ sektor, profil, asama });
+    const hibe = enYuksek(programs, HIBE_TURLERI, 'hibeUstLimit');
+    const finansman = enYuksek(programs, FINANSMAN_TURLERI, 'finansmanUstLimit');
+    const total = hibe?.hibeUstLimit || 0;
+    const coveragePct = total && aylikGelir > 0 ? Math.min((total / (aylikGelir * 12)) * 100, 999) : null;
+    setResult({ total, hibe, finansman, programs, coveragePct });
     setStep(3);
   };
 
   const reset = () => {
     setStep(1); setSektor(''); setProfil(''); setAsama('');
-    setEkip(1); setAylikGelir(0); setResult(null);
+    setAylikGelir(0); setResult(null);
   };
 
   return (
@@ -89,7 +105,7 @@ export default function HibeHesaplayici({ dark }) {
           </div>
           <div>
             <h2 className="text-[#1F2D3D] font-black text-xl">Hibe Hesaplayıcı</h2>
-            <p className="text-[#3E5369] text-sm">Tahmini toplam hibe potansiyelinizi hesaplayın</p>
+            <p className="text-[#3E5369] text-sm">Profilinize uygun destek tutarlarını görün</p>
           </div>
         </div>
         {/* Progress bar */}
@@ -132,14 +148,14 @@ export default function HibeHesaplayici({ dark }) {
 
             <div className="grid grid-cols-1 gap-2">
               <p className={`text-xs font-bold uppercase tracking-wider ${sub}`}>Profil</p>
-              {[['genc_girisimci', '🎓 Genç Girişimci (18-35 / Üni)'], ['standart', '👩 35 Yaş Üstü Kadın Girişimci']].map(([v, l]) => (
+              {PROFIL_OPTS.map(([v, l]) => (
                 <SelectBtn key={v} selected={profil === v} onClick={() => setProfil(v)} dark={dark}>{l}</SelectBtn>
               ))}
             </div>
 
             <div className="grid grid-cols-1 gap-2">
               <p className={`text-xs font-bold uppercase tracking-wider ${sub}`}>Aşama</p>
-              {[['fikir', '💡 Fikir Aşaması (Şirket kurulmadı)'], ['yeni_kurulmus', '🏢 Yeni Kurulmuş (Son 1 yıl)']].map(([v, l]) => (
+              {ASAMA_OPTS.map(([v, l]) => (
                 <SelectBtn key={v} selected={asama === v} onClick={() => setAsama(v)} dark={dark}>{l}</SelectBtn>
               ))}
             </div>
@@ -158,19 +174,6 @@ export default function HibeHesaplayici({ dark }) {
         {step === 2 && (
           <div className="space-y-7 animate-[fadeUp_0.4s_ease]">
             <h3 className={`font-bold text-base ${text}`}>Finansal bilgileriniz</h3>
-
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <p className={`text-sm font-bold ${dark ? 'text-slate-300' : 'text-slate-700'}`}>Ekip Büyüklüğü</p>
-                <span className="text-[#5A7F9B] font-black text-sm">{ekip} kişi{ekip >= 3 ? ' 🎯 +Bonus' : ''}</span>
-              </div>
-              <input type="range" min="1" max="10" value={ekip}
-                onChange={e => setEkip(Number(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-purple-600"
-                style={{ background: `linear-gradient(to right, #7c3aed ${((ekip-1)/9)*100}%, ${dark ? '#334155' : '#e2e8f0'} ${((ekip-1)/9)*100}%)` }}
-              />
-              <div className={`flex justify-between text-xs mt-1 ${sub}`}><span>Solo</span><span>10+ kişi</span></div>
-            </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
@@ -207,17 +210,37 @@ export default function HibeHesaplayici({ dark }) {
           <div className="space-y-5 animate-[fadeUp_0.4s_ease]">
             {/* Büyük rakam */}
             <div className="bg-gradient-to-br from-[#A8D5F2] to-[#F6D7E2] rounded-2xl p-6 text-center text-[#1F2D3D]">
-              <p className="text-[#3E5369] text-xs font-semibold uppercase tracking-wider mb-2">Tahmini Hibe Potansiyeliniz</p>
-              <p className="text-5xl font-black tracking-tight">
-                <AnimatedNumber value={result.total} />
-                <span className="text-3xl ml-1">₺</span>
-              </p>
-              {result.coveragePct !== null && (
-                <p className="text-[#3E5369] text-xs mt-3">
-                  ≈ Yıllık gelirinizin <strong className="text-[#1F2D3D]">%{Math.round(result.coveragePct)}'ini</strong> karşılar
+              <p className="text-[#3E5369] text-xs font-semibold uppercase tracking-wider mb-2">Geri Ödemesiz Destek</p>
+              {result.hibe ? (
+                <>
+                  <p className="text-5xl font-black tracking-tight">
+                    <AnimatedNumber value={result.total} />
+                    <span className="text-3xl ml-1">₺</span>
+                  </p>
+                  <p className="text-[#3E5369] text-xs mt-2">'ye kadar · {result.hibe.title}</p>
+                  {result.coveragePct !== null && (
+                    <p className="text-[#3E5369] text-xs mt-2">
+                      ≈ Yıllık gelirinizin <strong className="text-[#1F2D3D]">%{Math.round(result.coveragePct)}'i</strong>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm font-semibold mt-1">
+                  Bu profil için sabit tutarlı bir hibe yok. Aşağıdaki programların bir kısmı oran bazlı destek veriyor.
                 </p>
               )}
             </div>
+
+            {result.finansman && (
+              <div className={`p-4 rounded-xl border text-sm ${dark ? 'border-slate-700 bg-slate-800/50 text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${sub}`}>Kredi / Geri Ödemeli Finansman</p>
+                <p><strong className={text}>{result.finansman.finansmanUstLimit.toLocaleString('tr-TR')} ₺</strong>'ye kadar · {result.finansman.title}</p>
+              </div>
+            )}
+
+            <p className={`text-[11px] ${sub}`}>
+              Tutarlar tek bir programdan alınabilecek en yüksek resmi üst limittir; destekler genelde birbirine eklenmez ve aynı gider için iki kamu desteği alınamaz. Başvurmadan önce programın şartlarını kontrol edin.
+            </p>
 
             {/* Eşleşen programlar */}
             <div>

@@ -12,14 +12,14 @@ const EGITIMLER = [
     turIcon: <Monitor className="w-4 h-4" />,
     turRenk: '#2563eb',
     link: 'https://lms.kosgeb.gov.tr',
-    ozet: 'KOSGEB\'in 300.000 TL kuruluş hibesini alabilmek için zorunlu olan resmi eğitim platformu. Geleneksel ve İleri düzey iki modülden oluşur.',
+    ozet: 'KOSGEB\'in ücretsiz ve sertifikalı resmi girişimcilik eğitim platformu. Bazı destek ve kredilerde (ör. Halkbank 35 yaş altı sıfır faizli esnaf kredisi) bu eğitimin sertifikası şart koşulur.',
     grad: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
-    rozet: 'Zorunlu & Ücretsiz',
+    rozet: 'Resmi & Ücretsiz',
     rozetRenk: '#1d4ed8',
     moduller: [
       {
         ad: 'Geleneksel Girişimci Eğitimi',
-        aciklama: 'İş kurma süreçleri, yönetim ve pazarlama temelleri. KOSGEB\'in 300.000 TL\'lik kuruluş hibesini almak için bu eğitimi tamamlamak zorunludur.',
+        aciklama: 'İş kurma süreçleri, yönetim ve pazarlama temelleri. Sertifikası bazı kredi ve desteklerde başvuru şartıdır.',
         sure: '~40 saat',
         sertifika: true,
       },
@@ -122,7 +122,7 @@ const istatistikler = [
   { deger: '4', label: 'Resmi Program', ikon: '🎓' },
   { deger: '8', label: 'Eğitim Modülü', ikon: '📚' },
   { deger: '%100', label: 'Ücretsiz', ikon: '💜' },
-  { deger: '2M TL', label: 'Hibe Kapısı', ikon: '🚀' },
+  { deger: '2M TL', label: 'KOSGEB Destek Limiti', ikon: '🚀' },
 ];
 
 const CASH_SCENARIOS = [
@@ -295,9 +295,9 @@ export default function EgitimPortali({ dark }) {
       {/* ── Önemli Not ────────────────────────────────────────────── */}
       <div className={`mb-8 p-4 rounded-2xl border-l-4 border-blue-500 ${dark ? 'bg-blue-900/20 border-blue-500/50' : 'bg-blue-50 border-blue-500'}`}>
         <p className={`text-sm font-semibold ${dark ? 'text-blue-300' : 'text-blue-800'}`}>
-          💡 <strong>Önemli:</strong> KOSGEB'in 300.000 TL geri ödemesiz hibe desteğine başvurmak için
-          önce KOSGEB Geleneksel Girişimci Eğitimi'ni tamamlamak <strong>zorunludur</strong>.
-          Aşağıdan doğrudan platforma ulaşabilirsiniz.
+          💡 <strong>İpucu:</strong> KOSGEB'in ücretsiz girişimcilik eğitimini başvurudan önce tamamlayın.
+          Bazı kredi ve desteklerde (ör. Halkbank'ın 35 yaş altı kadınlara 300.000 TL sıfır faizli esnaf kredisi)
+          bu eğitimin sertifikası <strong>şart</strong> koşulur. Aşağıdan doğrudan platforma ulaşabilirsiniz.
         </p>
       </div>
 
@@ -684,8 +684,8 @@ export default function EgitimPortali({ dark }) {
           <div className="text-4xl mb-3">🎓</div>
           <h3 className="text-2xl font-black mb-2">Öğren, Başvur, Kazan!</h3>
           <p className="text-slate-200 text-sm max-w-xl mx-auto mb-5">
-            KOSGEB eğitimini tamamlayan kadın girişimciler otomatik olarak 300.000 TL
-            hibe başvurusuna hak kazanıyor. İlk adım eğitim, ikinci adım hibe!
+            Ücretsiz KOSGEB girişimcilik eğitimi, birçok destek ve kredi başvurusunda elinizi güçlendirir.
+            İlk adım eğitim, ikinci adım doğru desteğe başvuru!
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a

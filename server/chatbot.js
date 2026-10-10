@@ -60,7 +60,7 @@ export const getFallbackResponse = (input, history = []) => {
 • Toplam Açılış Maliyeti: ~2.000 - 3.000 TL
 • Kurulum Süresi: 1-2 iş günü içinde vergi levhanız çıkar!
 
-💡 **Kadın Girişimci Harika Teşviki:** 29 yaş altındaysanız veya Genç Girişimci Desteği'nden yararlanırsanız **1 yıl boyunca Bağ-Kur priminizi (aylık ~7.000 TL) devlet öder** ve 3 yıl boyunca 75.000 TL'ye kadar gelir vergisinden muaf olursunuz! 💜`;
+💡 **Genç Girişimci Avantajı:** İşe başladığın tarihte 29 yaşını doldurmadıysan, 3 yıl boyunca kazancının gelir vergisi tarifesinin 2. dilimine kadar olan kısmı (2026'da yaklaşık 400.000 TL) vergiden istisna! ⚠️ Eskiden verilen 1 yıllık Bağ-Kur prim desteği ise 1 Ocak 2026'dan itibaren kaldırıldı. 💜`;
   }
 
   // 2. Karma Soru: Hem şirket kurup hem hibe alma sırası (Şirket + Hibe / Önce hangisi?)
@@ -70,8 +70,8 @@ export const getFallbackResponse = (input, history = []) => {
 ⚠️ **Doğru Sıralama Adımları:**
 1. **Girişimcilik Sertifikası:** İlk iş e-Devlet üzerinden KOSGEB online Girişimcilik Eğitimi'ni ücretsiz tamamla.
 2. **Hibe Şartlarını İncele:** Bazı programlarda (Örn: TÜBİTAK BİGG) şirketi kurmadan ÖNCE projeyle başvurmak zorundasın.
-3. **Şirket Kurulumu:** KOSGEB Geleneksel/İleri Girişimci desteğinde eğitimi bitirdikten sonra şahıs veya limited şirketini kurabilirsin.
-4. **Fatura ve Ödeme:** Şirket kurulduktan sonraki alacağın makine, teçhizat ve kuruluş faturalarını KOSGEB'e sunarak hibeni alırsın.
+3. **Şirket Kurulumu:** KOSGEB İş Kurma Desteği, kuruluşunun ilk yılındaki işletmelere verilir; yani önce şahıs veya limited şirketini kurarsın, sonra ilk yıl içinde başvurursun.
+4. **Destek:** İş Kurma Desteği geri ödemesizdir (şahıs işletmesine 10.000 TL, şirkete 20.000 TL, kadınlara +10.000 TL ilave) ve personel desteğiyle devam eder.
 
 Senin iş fikrin ne üzerine? Hangi aşamadasın, ona göre tam takvimi çıkaralım! 🎯`;
   }
@@ -81,10 +81,9 @@ Senin iş fikrin ne üzerine? Hangi aşamadasın, ona göre tam takvimi çıkara
     return `Limited Şirket (LTD) kurmak için gereken şartlar ve maliyetler şöyledir 🏢:
 
 1️⃣ **Gerekli Şartlar & Belgeler:**
-• Asgari Sermaye: En az 10.000 TL (Yasa gereği)
+• Asgari Sermaye: En az 50.000 TL (1 Ocak 2024'ten beri; anonim şirkette 250.000 TL)
 • MERSİS sistemi üzerinden şirket ana sözleşmesinin hazırlanması
 • Kurucuların kimlik ve ikametgah belgeleri
-• Bankada sermaye blokaj hesabı açılması (en az %25'i yatırılır)
 • Ticaret Odası kaydı ve tescil işlemi
 
 2️⃣ **Maliyet ve Süre:**
@@ -104,39 +103,29 @@ Hangi sektörde faaliyet göstereceksin? Yatırımcı almayı hedefliyorsan Limi
 3. **KOBİ Beyannamesi:** Şirket bilgilerini doldurup onaylat.
 4. **Destek Başvurusu:** Girişimci Destek Programı başvuru formunu doldurup iş planını yükle.
 
-Kadın girişimci olduğun için hibe puanına **+%10 ek avantaj** yansıyacak! Başvuru esnasında takıldığın bir aşama var mı?`;
+Kadın girişimci olduğun için İş Kurma Desteği'ne **+10.000 TL**, İş Geliştirme Desteği'nin üst limitine **+150.000 TL** ilave edilir! Başvuru esnasında takıldığın bir aşama var mı?`;
     }
     const kosgebCevaplar = [
-      AI_DEFAULT_RESPONSES.kosgeb || 'KOSGEB, Türkiye\'deki en kapsamlı girişim destek kuruluşu! 💜 2026 yılı güncel tutarlarıyla:\n\n• Geleneksel Girişimci: 10.000 TL kuruluş desteği + performans ve personel desteği.\n• İleri Girişimci (İmalat/Yazılım): 300.000 TL\'ye varan makine, teçhizat ve yazılım hibesi.\n\nHangi sektörde iş kurmayı planlıyorsun? NACE koduna göre uygunluğunu kontrol edelim!',
-      'KOSGEB başvurusu için en önemli kural: e-Devlet üzerindeki online Girişimcilik Eğitimi sertifikasını şirket açılışından ÖNCE veya açılıştan sonraki 3 yıl içinde tamamlamış olmaktır. Şirket türün ne olacak?',
+      AI_DEFAULT_RESPONSES.kosgeb,
+      'KOSGEB Girişimci Destek Programı\'nda işletme yaşı belirleyici: İş Kurma Desteği için işletmen 1 yaşından küçük, İş Geliştirme Desteği için 0-3 yaş arasında olmalı. İşletmen ne zaman kuruldu, ya da kurmayı ne zaman planlıyorsun?',
     ];
     return kosgebCevaplar[Math.floor(Math.random() * kosgebCevaplar.length)];
   }
 
   // 5. TÜBİTAK 1512 BİGG Detay Soruları:
   if (q.includes('tubitak') || q.includes('tübitak') || q.includes('bigg') || q.includes('ar-ge') || q.includes('teknoloji') || q.includes('yazılım')) {
-    return AI_DEFAULT_RESPONSES.tubitak || `TÜBİTAK 1512 BİGG (Bireysel Genç Girişim) Programı teknoloji girişimcileri için %100 hibe sunar 🔬:
-
-1️⃣ **Kimler Başvurabilir?**
-• Üniversite lisans son sınıf, yüksek lisans veya doktora öğrencisi/mezunu olanlar.
-• Daha önce TÜBİTAK BİGG hibesi almamış olmak.
-
-2️⃣ **Destek Miktarı (2026):**
-• **900.000 TL %100 Hibe / Tohum Yatırım Desteği**
-• Şirketleşme, patent ve prototip geliştirme masraflarının tamamı karşılanır.
-
-Teknoloji, yapay zeka, biyoteknoloji veya yeşil dönüşüm odaklı bir fikrin varsa hemen uygulayıcı kuruluşlara başvurabilirsin!`;
+    return AI_DEFAULT_RESPONSES.tubitak;
   }
 
   // 6. Maliyet, Fiyat, Vergi, Bağkur Teşviki:
   if (q.includes('maliyet') || q.includes('fiyat') || q.includes('ücret') || q.includes('vergi') || q.includes('bağkur') || q.includes('muhasebe') || q.includes('kaç para') || q.includes('ne kadar')) {
     return `Kadın Girişimciler İçin Şirket Maliyetleri ve Vergi Teşvikleri 💰:
 
-✨ **1. Genç Kadın Girişimci Bağ-Kur Teşviki:**
-İlk defa mükellef olan kadın girişimcilerin 1 yıl boyunca aylık Bağ-Kur primlerini (aylık ~7.000 TL) devlet karşılar.
+✨ **1. Genç Girişimci Kazanç İstisnası:**
+İlk kez mükellef olan ve işe başlarken 29 yaşını doldurmamış girişimcilerin 3 yıl boyunca kazancının, gelir vergisi tarifesinin 2. dilimine kadar olan kısmı (2026'da yaklaşık 400.000 TL) vergiden istisnadır.
 
-✨ **2. Gelir Vergisi Muafiyeti:**
-3 vergilendirme dönemi boyunca elde edilen kazancın 75.000 TL'ye kadar olan kısmı gelir vergisinden muaftır.
+✨ **2. Bağ-Kur Prim Desteği Kaldırıldı:**
+Genç girişimcilere verilen 1 yıllık Bağ-Kur prim desteği 1 Ocak 2026'dan itibaren sona erdi (7566 sayılı Kanun); primlerini kendin ödemen gerekiyor.
 
 ✨ **3. Aylık Sabit Giderler:**
 • Mali Müşavir: ~1.000 - 2.000 TL/ay
@@ -163,11 +152,12 @@ Finansal tablonu hazırlamamı ister misin?`;
   if (q.includes('hibe') || q.includes('destek') || q.includes('fon') || q.includes('vakıf') || q.includes('sabancı')) {
     return `Kadın girişimcilere yönelik öne çıkan güncel hibe ve fon kaynakları 🌟:
 
-1. **KOSGEB:** Girişimcilik ve KOBİ geliştirme hibeleri (10.000 - 300.000 TL)
-2. **TÜBİTAK 1512 BİGG:** Teknoloji ve Ar-Ge projelerine 900.000 TL %100 hibe
-3. **Sabancı Vakfı:** Sosyal etki odaklı projelere hibe ve mentorluk
-4. **TKDK (IPARD III):** Kırsal alan, tarım, gıda ve turizm projelerine %70 hibe
-5. **Ticaret Bakanlığı:** E-ihracat ve kadın kooperatifleri destekleri
+1. **KOSGEB:** İş Kurma Desteği (geri ödemesiz, kadınlara 30.000 TL'ye kadar) ve İş Geliştirme Desteği (kadınlara 1.650.000 TL'ye kadar, faizsiz geri ödemeli)
+2. **TÜBİTAK BiGG Yatırım:** Öğrenci/mezunların teknoloji girişimlerine %3 hisse karşılığı 1.350.000 TL yatırım (hibe değil)
+3. **Tarım ve Orman Bakanlığı:** Kırsal Kalkınma Yatırım Programı'nda kadınlara %60 hibe
+4. **TKDK (IPARD III):** Kırsal turizm, el sanatları ve gıda işleme projelerine %60-70 hibe
+5. **Ticaret Bakanlığı:** KOOP-DES ile kadın kooperatiflerine %75'e varan hibe, e-ihracat ve fuar destekleri
+6. **Halkbank:** Kadın girişimcilere 1.000.000 TL'ye kadar, 6 ay anapara ödemesiz kredi
 
 Hangi sektördesin? Sana nokta atışı en uygun programı eşleştireyim!`;
   }
@@ -178,14 +168,14 @@ Hangi sektördesin? Sana nokta atışı en uygun programı eşleştireyim!`;
       return `Şirket kurma konusunda detaya inelim! 🏢
 
 • **Şahıs Şirketi:** 1-2 günde kurulur, düşük maliyetlidir (~2.000 TL), tek kişilik işler için idealdir.
-• **Limited Şirket:** En az 10.000 TL sermaye gerektirir, kurumsal saygınlığı yüksektir, ortaklı işler için uygundur.
+• **Limited Şirket:** En az 50.000 TL sermaye gerektirir, kurumsal saygınlığı yüksektir, ortaklı işler için uygundur.
 
 Senin planın tek başına başlamak mı yoksa ortaklı bir yapı mı kurgulamak? Şahıs şirketi evraklarını veya Limited şirket adımlarını detaylandırabilirim.`;
     }
     return `Şirket kurmak gözünü korkutmasın! 🏢 
 
 • **Şahıs Şirketi:** Noter imza beyannamesi ve ikametgah ile 1-2 günde kurulur (Maliyet: ~2.000-3.000 TL).
-• **Limited Şirket:** 10.000 TL sermaye ve Ticaret Odası tescili ile 3-5 günde kurulur (Maliyet: ~8.000-12.000 TL).
+• **Limited Şirket:** En az 50.000 TL sermaye ve Ticaret Odası tescili ile kurulur.
 
 Hangi şirket türü aklına yatıyor? Gerekli belgeleri veya başvuru adımlarını paylaşabilirim.`;
   }
@@ -209,7 +199,7 @@ Bugün hangi konuyu birlikte netleştirelim? 💜`;
   const genelYanitlar = [
     `Harika bir konudan bahsettin! 💡 Sana en doğru ve uygulanabilir rehberliği sunabilmem için: Girişiminin hangi aşamada olduğunu (Fikir mi, yeni kuruldu mu, büyüyor mu?) ve sektörünü paylaşır mısın?`,
     `Çok haklısın, bu detay girişiminin geleceği için kilit önem taşıyor! 🚀 Sektörünü ve tam olarak neye ihtiyaç duyduğunu (Hibe mi, şirket kurulumu mu, finansal bütçe mi?) belirtirsen adım adım planlayalım.`,
-    `Harika bir soru! Türkiye'de kadın girişimcilere özel KOSGEB, TÜBİTAK, Ticaret Bakanlığı ve Sabancı Vakfı gibi bir çok fon bulunuyor. Konuyu daha detaylı ele almamı ister misin?`,
+    `Harika bir soru! Türkiye'de kadın girişimcilere yönelik KOSGEB, TÜBİTAK, Ticaret ve Tarım Bakanlığı ile Halkbank gibi birçok destek bulunuyor. Konuyu daha detaylı ele almamı ister misin?`,
   ];
   return genelYanitlar[Math.floor(Math.random() * genelYanitlar.length)];
 };
