@@ -9,12 +9,13 @@ import GuncelDuyurular from './components/GuncelDuyurular';
 import GizlilikGuvenlik from './components/GizlilikGuvenlik';
 import IsPlani from './components/IsPlani';
 import BilgiSayfasi from './components/BilgiSayfasi';
-import { supportData, basvuruTakvimi, etkinlikler, SON_KONTROL } from './data';
+import { supportData, basvuruTakvimi, etkinlikler, ulusalIstatistikler, SON_KONTROL } from './data';
 import { api } from './api';
 import {
-  Sparkles, TurkishLira, ArrowRight, CheckCircle2, MessageSquare, X,
+  Sparkles, ArrowRight, CheckCircle2, MessageSquare, X,
   Building2, ExternalLink, Send, Loader2, BookOpen, Globe, Award,
-  Heart, Sun, Moon, ChevronDown, Calendar, Zap, Users, TrendingUp, LogOut, Menu
+  Heart, Sun, Moon, ChevronDown, Calendar, LogOut, Menu,
+  BadgeCheck, Gift, HandCoins, Hourglass, Banknote, Landmark, Ship, Handshake
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -33,13 +34,22 @@ const NAV_ITEMS = [
 // Ana sayfa istatistikleri — uydurma rakam yerine sitedeki doğrulanmış veriden hesaplanır
 const HERO_ISTATISTIK = (() => {
   const bugun = new Date().toISOString().slice(0, 10);
+  const hibeler = supportData.filter(p => p.destekTuru === 'hibe');
+  const enYuksekHibe = hibeler.reduce((a, p) => ((p.hibeUstLimit || 0) > (a?.hibeUstLimit || 0) ? p : a), null);
+  const enYakin = etkinlikler
+    .filter(e => (!e.baslangic || e.baslangic <= bugun) && bugun <= e.bitis)
+    .sort((a, b) => a.bitis.localeCompare(b.bitis))[0];
   return {
     program: supportData.length,
     kurum: new Set(supportData.map(p => p.institution)).size,
-    acikBasvuru: etkinlikler.filter(e => (!e.baslangic || e.baslangic <= bugun) && bugun <= e.bitis).length
-      + basvuruTakvimi.filter(t => t.baslangic <= bugun && bugun <= t.bitis).length,
+    hibe: hibeler.length,
+    enYuksekHibe,
+    enYakin,
+    enYakinGun: enYakin ? Math.max(0, Math.ceil((new Date(`${enYakin.bitis}T23:59:59`) - new Date()) / 86_400_000)) : 0,
   };
 })();
+
+const ISTATISTIK_IKONLARI = { Banknote, Landmark, Ship, Handshake };
 
 // Footer bağlantıları: section → uygulama içi sayfa, href → resmi dış site
 const FOOTER_LINKLERI = [
@@ -194,7 +204,7 @@ function SkeletonCard({ dark }) {
 }
 
 // ─── ANIMASYONLU SAYAÇ ────────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = '', duration = 900 }) {
+function AnimatedCounter({ target, suffix = '', prefix = '', decimals = 0, duration = 900 }) {
   const [val, setVal] = useState(0);
   const ref = useRef(null);
   useEffect(() => {
@@ -206,14 +216,15 @@ function AnimatedCounter({ target, suffix = '', duration = 900 }) {
         const timer = setInterval(() => {
           start += step;
           if (start >= target) { setVal(target); clearInterval(timer); }
-          else setVal(Math.floor(start));
+          else setVal(decimals ? start : Math.floor(start));
         }, 16);
       }
     }, { threshold: 0.3 });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [target, duration]);
-  return <span ref={ref} className="stat-num">{val.toLocaleString('tr-TR')}{suffix}</span>;
+  }, [target, duration, decimals]);
+  const metin = val.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return <span ref={ref} className="stat-num">{prefix}{metin}{suffix}</span>;
 }
 
 // ─── HIZLI SORULAR ────────────────────────────────────────────────────────────
@@ -575,23 +586,58 @@ export default function App({ user, onLogout }) {
               </div>
             </div>
 
-            <div className="hero-stats mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { icon: <TurkishLira className="w-5 h-5" />, label: 'Doğrulanmış Destek Programı', value: HERO_ISTATISTIK.program },
-                { icon: <Users className="w-5 h-5" />, label: 'Kurum ve Banka', value: HERO_ISTATISTIK.kurum },
-                { icon: <TrendingUp className="w-5 h-5" />, label: 'Şu An Açık Başvuru', value: HERO_ISTATISTIK.acikBasvuru },
-                { icon: <Zap className="w-5 h-5" />, label: 'Eşleşme Süresi', value: 3, suffix: ' Adım' },
-              ].map((stat, i) => (
-                <div key={i} className="rounded-2xl border border-slate-700 bg-slate-800/80 p-5 text-center">
-                  <div className="mb-3 flex justify-center text-[#F3D5D8]">{stat.icon}</div>
-                  <div className="text-3xl font-medium tracking-[-0.04em] text-white">
-                    <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <div className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-300">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
+            {/* ── Fortuno'da: sitedeki doğrulanmış veriden ── */}
+            <div className="hero-stats mt-10">
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[#F3D5D8]">Fortuno'da</p>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {[
+                  { Ikon: BadgeCheck, value: HERO_ISTATISTIK.program, label: 'Doğrulanmış destek programı', alt: `${HERO_ISTATISTIK.kurum} kurum ve bankadan` },
+                  { Ikon: Gift, value: HERO_ISTATISTIK.hibe, label: 'Geri ödemesiz destek', alt: 'hibe ve gider desteği' },
+                  HERO_ISTATISTIK.enYuksekHibe && { Ikon: HandCoins, value: HERO_ISTATISTIK.enYuksekHibe.hibeUstLimit / 1e6, suffix: ' milyon ₺', label: 'Tek programda en yüksek hibe', alt: HERO_ISTATISTIK.enYuksekHibe.title, section: 'sihirbaz' },
+                  HERO_ISTATISTIK.enYakin && { Ikon: Hourglass, value: HERO_ISTATISTIK.enYakinGun, suffix: ' gün', label: 'En yakın son başvuruya', alt: HERO_ISTATISTIK.enYakin.baslik, section: 'fuar' },
+                ].filter(Boolean).map(({ Ikon, value, suffix, label, alt, section }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={section ? () => goToSection(section) : undefined}
+                    className={`rounded-2xl border border-slate-700 bg-slate-800/80 p-3 sm:p-5 text-center transition ${section ? 'hover:border-[#F3D5D8]/60 hover:bg-slate-800 cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#F3D5D8]/15 text-[#F3D5D8]">
+                      <Ikon className="h-5 w-5" />
+                    </div>
+                    <div className="text-xl sm:text-3xl font-medium tracking-[-0.04em] text-white">
+                      <AnimatedCounter target={value} suffix={suffix} />
+                    </div>
+                    <div className="mt-2 text-[10px] sm:text-xs font-medium uppercase tracking-[0.1em] sm:tracking-[0.14em] text-slate-300">{label}</div>
+                    <div className="mt-1 text-[11px] text-slate-400 line-clamp-1">{alt}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Türkiye'de kadın girişimciliği: resmi kaynaklı rakamlar ── */}
+            <div className="hero-stats mt-8">
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[#A8D5F2]">Türkiye'de kadın girişimciliği</p>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {ulusalIstatistikler.map(st => {
+                  const Ikon = ISTATISTIK_IKONLARI[st.ikon] || Landmark;
+                  return (
+                    <div key={st.id} className="rounded-2xl border border-slate-700/70 bg-slate-900/40 p-3 sm:p-5 text-center">
+                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#A8D5F2]/15 text-[#A8D5F2]">
+                        <Ikon className="h-5 w-5" />
+                      </div>
+                      <div className="text-xl sm:text-2xl font-medium tracking-[-0.03em] text-white">
+                        <AnimatedCounter target={st.deger} decimals={st.ondalik} prefix={st.onEk} suffix={st.sonEk} />
+                      </div>
+                      <div className="mt-2 text-[11px] sm:text-xs font-semibold text-slate-200">{st.baslik}</div>
+                      <div className="mt-1 text-[11px] text-slate-400">{st.aciklama}</div>
+                      <a href={st.kaynak} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[10px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline">
+                        Kaynak: {st.kaynakAd} ↗
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </header>

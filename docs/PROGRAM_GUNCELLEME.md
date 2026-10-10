@@ -78,6 +78,13 @@ Fuarlar & Etkinlikler sayfası yalnızca **gerçek ve resmi bağlantısı olan**
 - Aday kaynaklar: Halkbank Üreten Kadınlar, KAGİDER, Garanti BBVA Kadın Girişimci, EY, EIC/Ufuk Avrupa
   (ufukavrupa.org.tr), Ticaret Bakanlığı fuar listeleri, aile.gov.tr il müdürlüğü duyuruları.
 
+## Ana sayfa istatistikleri (`ulusalIstatistikler`)
+
+Ana sayfadaki "Türkiye'de kadın girişimciliği" kutuları resmi kaynaklı rakamlardır
+(TBB kadın girişimci kredileri, KOSGEB destek kararları, Ticaret Bakanlığı ihracat verileri).
+Kurumlar daha yeni bir rakam açıkladıysa `deger`, `aciklama` ve `kaynak`'ı güncelle; kaynağı
+olmayan veya tahmini rakam ekleme. "Fortuno'da" satırındaki sayılar veriden otomatik hesaplanır.
+
 ## Pull request
 
 - Dal adı: `program-guncelleme/YYYY-AA-GG`

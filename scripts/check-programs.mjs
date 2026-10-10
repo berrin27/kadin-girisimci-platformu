@@ -3,7 +3,7 @@
 // src/data.js'teki programların yapısını ve eşleşme kapsamını kontrol eder.
 // Hata varsa 1 ile çıkar (haftalık güncelleme ajanı PR açmadan önce çalıştırır).
 
-import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, SON_KONTROL } from '../src/data.js';
+import { supportData, basvuruTakvimi, etkinlikler, fuarKaynaklari, ulusalIstatistikler, SON_KONTROL } from '../src/data.js';
 
 const SEKTOR = ['yerel_isletme', 'ev_emegi', 'teknoloji', 'e_ticaret', 'kooperatif', 'sosyal_girisim', 'kırsal'];
 const YAS = ['genc_uni', 'genc_girisimci', 'standart', 'olgun_girisimci'];
@@ -72,6 +72,15 @@ for (const e of etkinlikler) {
   if (e.bitis && e.bitis < bugun) uyarilar.push(`Sona ermiş etkinlik (silinebilir): ${ad} — ${e.bitis}`);
 }
 for (const k of fuarKaynaklari) if (!/^https:\/\//.test(k.link || '')) hata(`Fuar kaynağı "${k.baslik}": bağlantı https:// olmalı`);
+
+const IKONLAR = ['Banknote', 'Landmark', 'Ship', 'Handshake']; // App.jsx → ISTATISTIK_IKONLARI
+for (const st of ulusalIstatistikler) {
+  const ad = st.id || st.baslik;
+  for (const alan of ['id', 'baslik', 'aciklama', 'kaynakAd', 'kaynak']) if (!st[alan]) hata(`İstatistik ${ad}: "${alan}" boş`);
+  if (typeof st.deger !== 'number' || !(st.deger > 0)) hata(`İstatistik ${ad}: deger pozitif sayı olmalı`);
+  if (!IKONLAR.includes(st.ikon)) hata(`İstatistik ${ad}: ikon "${st.ikon}" App.jsx'te tanımlı değil`);
+  if (!/^https:\/\//.test(st.kaynak || '')) hata(`İstatistik ${ad}: kaynak https:// olmalı`);
+}
 
 // Eşleşme kapsamı: her sektör + yaş + aşama için en az bir program olmalı
 // (medeni durum "hepsi" kabul edilerek). Eksikler uyarıdır, hata değil —

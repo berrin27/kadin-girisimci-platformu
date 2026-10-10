@@ -488,3 +488,45 @@ export const fuarKaynaklari = [
     { baslik: 'Yıllara göre fuar destek üst limitleri', kurum: 'Ticaret Bakanlığı', link: 'https://ticaret.gov.tr/ihracat/fuarlar/yillar-bazinda-fuar-destek-ust-limitleri' },
     { baslik: 'Yükselen Kadınlar Girişimcilik Eğitim Tırı (il il geziyor)', kurum: 'Aile ve Sosyal Hizmetler Bakanlığı · Halkbank', link: 'https://kadingirisimci.gov.tr/' },
 ];
+
+// ── Ana sayfa: Türkiye'de kadın girişimciliği (resmi kaynaklı rakamlar) ───────
+// deger sayısaldır; ondalik basamak, onEk ('%') ve sonEk (' milyar ₺') ile gösterilir.
+// ikon: lucide-react ikon adı (App.jsx'teki ISTATISTIK_IKONLARI eşlemesinde olmalı)
+export const ulusalIstatistikler = [
+    {
+        id: "kadin-kredi-ceyrek",
+        deger: 98, ondalik: 0, onEk: "", sonEk: " milyar ₺",
+        baslik: "Kadın girişimcilere kullandırılan kredi",
+        aciklama: "Nisan–Haziran 2026'da 58.412 kadın girişimciye",
+        ikon: "Banknote",
+        kaynakAd: "Türkiye Bankalar Birliği",
+        kaynak: "https://www.alomaliye.com/2026/09/03/kadin-girisimcilere-98-milyar-tl-kredi/",
+    },
+    {
+        id: "kosgeb-girisimci-destek",
+        deger: 5.6, ondalik: 1, onEk: "", sonEk: " milyar ₺",
+        baslik: "KOSGEB girişimci destek kararı",
+        aciklama: "2024'ten bu yana 3.899 projeye",
+        ikon: "Landmark",
+        kaynakAd: "KOSGEB",
+        kaynak: "https://www.kosgeb.gov.tr/site/tr/genel/detay/9374/girisimci-destek-programi-is-gelistirme-cagrisi-2026-yili-2-donem-basvurulari-basladi",
+    },
+    {
+        id: "kadin-ihracat-payi",
+        deger: 23.5, ondalik: 1, onEk: "%", sonEk: "",
+        baslik: "Türkiye ihracatında kadınların payı",
+        aciklama: "2025 itibarıyla (2013'te %20,5)",
+        ikon: "Ship",
+        kaynakAd: "Ticaret Bakanlığı",
+        kaynak: "https://ticaret.gov.tr/haberler/ticaret-bakani-omer-bolat-kadem-koopro-programinin-kapanis-toreninde-konustu",
+    },
+    {
+        id: "kadin-kooperatif-ihracat",
+        deger: 96, ondalik: 0, onEk: "", sonEk: " milyon $",
+        baslik: "Kadın kooperatiflerinin ihracatı",
+        aciklama: "2025'te (2019'da 61 milyon $)",
+        ikon: "Handshake",
+        kaynakAd: "Ticaret Bakanlığı",
+        kaynak: "https://ticaret.gov.tr/haberler/ticaret-bakani-omer-bolat-kadem-koopro-programinin-kapanis-toreninde-konustu",
+    },
+];
