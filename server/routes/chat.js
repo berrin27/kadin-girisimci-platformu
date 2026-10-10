@@ -12,8 +12,13 @@ import { SYSTEM_PROMPT, getFallbackResponse } from '../chatbot.js';
 const router = Router();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const GEMINI_TIMEOUT_MS = 20_000;
+// Ana model yoğun/yanıtsızsa sıradaki modele geçilir; hepsi başarısızsa hazır yanıt.
+// (En yeni modeller yoğunlukta sık sık 503 veya çok uzun gecikme veriyor.)
+const GEMINI_MODELS = [
+  process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+  process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite',
+].filter((m, i, all) => m && all.indexOf(m) === i);
+const GEMINI_TIMEOUT_MS = 12_000; // model başına
 const HISTORY_FOR_AI = 20;   // modele gönderilen son mesaj sayısı
 const HISTORY_FOR_UI = 40;   // arayüze dönen son mesaj sayısı
 
@@ -47,22 +52,42 @@ const saveMessage = (userId, sender, text) => {
   return db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(lastInsertRowid);
 };
 
+async function callModel(model, contents) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  try {
+    const request = ai.models.generateContent({
+      model,
+      contents,
+      config: { systemInstruction: SYSTEM_PROMPT, abortSignal: controller.signal },
+    });
+    // abortSignal desteklenmese bile zaman aşımı garanti olsun
+    const timeout = new Promise((_, reject) => controller.signal.addEventListener(
+      'abort', () => reject(new Error('gemini_timeout')), { once: true }));
+    const response = await Promise.race([request, timeout]);
+    const text = response.text?.trim();
+    if (!text) throw new Error('gemini_empty');
+    return text;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function askGemini(history, message) {
   const contents = [
     ...history.map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
     { role: 'user', parts: [{ text: message }] },
   ];
-  const request = ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents,
-    config: { systemInstruction: SYSTEM_PROMPT },
-  });
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('gemini_timeout')), GEMINI_TIMEOUT_MS));
-  const response = await Promise.race([request, timeout]);
-  const text = response.text?.trim();
-  if (!text) throw new Error('gemini_empty');
-  return text;
+  let lastError;
+  for (const model of GEMINI_MODELS) {
+    try {
+      return { text: await callModel(model, contents), model };
+    } catch (err) {
+      lastError = err;
+      console.warn(`[chat] ${model} başarısız (${String(err.message).slice(0, 120)})`);
+    }
+  }
+  throw lastError;
 }
 
 router.get('/', (req, res) => {
@@ -78,15 +103,15 @@ router.post('/', chatLimiter, async (req, res) => {
   const userRow = saveMessage(req.userId, 'user', message);
 
   let reply;
-  let source = 'ai';
-  try {
-    if (!ai) throw new Error('no_key');
-    reply = await askGemini(history, message);
-  } catch (err) {
-    if (err.message !== 'no_key') console.warn('[chat] Gemini hatası, hazır yanıta geçiliyor:', err.message);
-    reply = getFallbackResponse(message, history);
-    source = 'fallback';
+  let source = 'fallback';
+  if (ai) {
+    try {
+      ({ text: reply, model: source } = await askGemini(history, message));
+    } catch {
+      console.warn('[chat] Tüm Gemini modelleri başarısız, hazır yanıta geçiliyor.');
+    }
   }
+  if (!reply) reply = getFallbackResponse(message, history);
 
   const botRow = saveMessage(req.userId, 'bot', reply);
   res.json({ userMessage: toMessage(userRow), botMessage: toMessage(botRow), source });

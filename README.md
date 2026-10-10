@@ -19,7 +19,8 @@ npm run dev            # frontend (5173) + API (3001) birlikte başlar
 | Değişken | Açıklama |
 |---|---|
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey)'dan alınan key. Boşsa sohbet hazır yanıtlarla çalışır. |
-| `GEMINI_MODEL` | Opsiyonel, varsayılan `gemini-2.5-flash` |
+| `GEMINI_MODEL` | Opsiyonel, varsayılan `gemini-3.6-flash` |
+| `GEMINI_FALLBACK_MODEL` | Ana model yoğun/yanıtsızsa kullanılır, varsayılan `gemini-3.5-flash-lite` |
 | `JWT_SECRET` | Oturum çerezlerini imzalar. Production'da zorunlu. |
 
 > ⚠️ `.env` dosyası git'e eklenmez — gerçek key'leri asla commit etme ve gizli değerlere `VITE_` öneki koyma (Vite bunları tarayıcıya gömer).
