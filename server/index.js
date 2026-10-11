@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import './db.js';
+import { db } from './db.js';
 import { requireAuth } from './auth.js';
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profile.js';
@@ -78,7 +78,20 @@ app.use((err, req, res, _next) => {
   res.status(status).json({ error: status >= 500 ? 'Sunucu hatası, lütfen tekrar deneyin.' : err.message });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[api] Fortuno API http://localhost:${PORT} adresinde çalışıyor`);
   startNewsRefresher();
 });
+
+// Yeni yayında platform eski sunucuya SIGTERM gönderir: yeni istek almayı bırak,
+// süren istekleri bitir, veritabanını düzgünce kapatıp çık.
+for (const sinyal of ['SIGTERM', 'SIGINT']) {
+  process.once(sinyal, () => {
+    console.log(`[api] ${sinyal} alındı, kapanıyor…`);
+    server.close(() => {
+      db.close();
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 8000).unref(); // takılan bağlantı olursa beklemeden çık
+  });
+}
