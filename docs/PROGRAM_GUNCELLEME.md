@@ -15,7 +15,7 @@ güncel tutmak ve yeni programları **insan onayıyla** yayına almak.
 |---|---|
 | `src/data.js` | **Tek veri kaynağı:** `supportData` (programlar), `basvuruTakvimi`, `etkinlikler` (Fuarlar & Etkinlikler sayfası), `fuarKaynaklari`, `SON_KONTROL` |
 | `src/App.jsx` | `kaynakca` (Kaynakça kartları) ve `faqVerisi` (SSS) — tutar geçiyorsa data.js ile tutarlı olmalı |
-| `src/src/aiPromt.js` | Gemini sistem prompt'u ve örnek cevaplar (KOSGEB, TÜBİTAK tutarları) |
+| `server/aiPrompt.js` | Gemini sistem prompt'u ve örnek cevaplar (KOSGEB, TÜBİTAK tutarları) |
 | `server/chatbot.js` | Gemini erişilemezse kullanılan hazır cevaplar (KOSGEB, TÜBİTAK, vergi, şirket kuruluşu) |
 | `src/components/EgitimPortali.jsx` | Eğitim sayfasındaki KOSGEB notları |
 | `src/components/BasvuruTakip.jsx` | `INITIAL_CARDS` — yeni kullanıcıya gösterilen örnek kartlar |

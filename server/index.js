@@ -28,6 +28,17 @@ const PORT = Number(process.env.PORT) || 3001;
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // reverse proxy arkasında doğru IP (rate limit için)
+// Temel güvenlik başlıkları: siteyi başka sayfaya gömmeyi (clickjacking),
+// MIME tahminini ve dış sitelere tam adres sızdırmayı engeller.
+app.use((req, res, next) => {
+  res.set({
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  });
+  if (process.env.NODE_ENV === 'production') res.set('Strict-Transport-Security', 'max-age=15552000');
+  next();
+});
 app.use(express.json({ limit: '200kb' }));
 app.use(cookieParser());
 

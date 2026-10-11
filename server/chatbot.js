@@ -2,7 +2,7 @@
 // Sistem prompt'u ve Gemini erişilemediğinde kullanılan kural tabanlı yanıtlar.
 // (App.jsx'ten sunucuya taşındı — API key artık tarayıcıya gitmiyor.)
 
-import { FORTUNO_AI_SYSTEM_PROMPT } from '../src/src/aiPromt.js';
+import { FORTUNO_AI_SYSTEM_PROMPT } from './aiPrompt.js';
 
 const AI_DEFAULT_RESPONSES = FORTUNO_AI_SYSTEM_PROMPT?.defaultResponses ?? {};
 
