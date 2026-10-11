@@ -127,12 +127,12 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
   const update = (field, val) => setProfil(prev => ({ ...prev, [field]: val }));
 
   // ── Stil ───────────────────────────────────────────────────────────────────
-  const card  = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
-  const text  = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const card  = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text  = dark ? 'text-slate-100' : 'text-slate-900';
   const sub   = dark ? 'text-slate-400' : 'text-slate-500';
   const input = dark
-    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:ring-[#A8D5F2] focus:border-[#A8D5F2]'
-    : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:ring-[#A8D5F2] focus:border-[#A8D5F2]';
+    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:ring-bronz-200 focus:border-bronz-200'
+    : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:ring-bronz-200 focus:border-bronz-200';
 
   // ── Progress ring color ────────────────────────────────────────────────────
   const ringColor = oran === 100 ? '#10b981' : oran >= 50 ? '#f59e0b' : '#ef4444';
@@ -144,7 +144,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
 
       {/* ── Başlık ─────────────────────────────────────────────────── */}
       <div className="text-center mb-10">
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4 ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-[#EAF4FB] text-[#2B5472]'}`}>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4 ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-bronz-50 text-bronz-700'}`}>
           <User className="w-4 h-4" /> Girişimci Profilim
         </div>
         <h2 className={`text-4xl font-black mb-3 ${text}`}>
@@ -213,7 +213,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
         <div className="text-center mb-8">
           <button
             onClick={() => setEditMode(true)}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition ${dark ? 'bg-[#A8D5F2] hover:bg-[#9BC0E0] text-[#1F2D3D]' : 'bg-[#EAF4FB] hover:bg-[#DDEEF8] text-[#2B5472]'}`}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition ${dark ? 'bg-bronz-200 hover:bg-bronz-300 text-slate-900' : 'bg-bronz-50 hover:bg-bronz-100 text-bronz-700'}`}
           >
             <Edit3 className="w-4 h-4" /> Profili Düzenle
           </button>
@@ -221,7 +221,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
       ) : (
         <div className={`${card} border rounded-2xl shadow-lg p-6 md:p-8 mb-8`}>
           <h3 className={`text-lg font-black mb-6 flex items-center gap-2 ${text}`}>
-            <Edit3 className="w-5 h-5 text-[#7DA5C2]" /> Kişisel Bilgiler
+            <Edit3 className="w-5 h-5 text-bronz-500" /> Kişisel Bilgiler
           </h3>
 
           <div className="grid md:grid-cols-2 gap-5">
@@ -339,7 +339,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
           <div className="mt-6 flex items-center gap-4">
             <button
               onClick={handleSave}
-              className="bg-[#1E293B] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition flex items-center gap-2"
+              className="bg-bronz-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               {kaydedildi ? 'Kaydedildi! ✓' : 'Profili Kaydet'}
@@ -367,11 +367,11 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
       {/* ── Profil Tamamsa → Sihirbaza Yönlendir ──────────────────── */}
       {oran === 100 && (
         <div className="rounded-2xl overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #A8D5F2, #F7DDE7)' }}>
+          style={{ background: 'linear-gradient(135deg, #E5C9A6, #E4EADC)' }}>
           <div className="p-8 text-center text-white">
             <div className="text-4xl mb-3">🎉</div>
             <h3 className="text-2xl font-black mb-2">Profilin Hazır!</h3>
-            <p className="text-[#3E5369] text-sm max-w-xl mx-auto mb-5">
+            <p className="text-bronz-800 text-sm max-w-xl mx-auto mb-5">
               Artık Destek Sihirbazı senin profiline göre en uygun programları otomatik filtreleyebilir.
               Beğendiğin programları "Takibime ekle" ile Başvurularım'a ekleyip adım adım ilerletebilirsin.
             </p>
@@ -381,7 +381,7 @@ export default function ProfilDuzenle({ dark, onProfilChange }) {
                 const event = new CustomEvent('fortuno-navigate', { detail: 'sihirbaz' });
                 window.dispatchEvent(event);
               }}
-              className="bg-white text-[#2B5472] font-black px-8 py-3 rounded-xl hover:bg-[#F3F9FD] transition shadow-lg text-sm flex items-center gap-2 mx-auto"
+              className="bg-white text-bronz-700 font-black px-8 py-3 rounded-xl hover:bg-bronz-50 transition shadow-lg text-sm flex items-center gap-2 mx-auto"
             >
               <Sparkles className="w-4 h-4" />
               Destek Sihirbazına Git

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { bugunYerel } from '../tarih';
+import { kurumLogosu } from '../kurumLogolari';
 import {
   Search,
   CalendarDays,
@@ -25,13 +26,13 @@ const FUAR_PROGRAMLARI = ['ticaret-fuar', 'halkbank-kadin-ihracatci', 'ticaret-e
   .filter(Boolean);
 
 const TUR_STIL = {
-  'Yarışma':     { cover: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #f472b6 100%)', accent: '#db2777' },
-  'Ödül':        { cover: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 45%, #ec4899 100%)', accent: '#8b5cf6' },
-  'Hibe / Fon':  { cover: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #1d4ed8 100%)', accent: '#2563eb' },
-  'Hızlandırma': { cover: 'linear-gradient(135deg, #14b8a6 0%, #0f766e 60%, #115e59 100%)', accent: '#0f766e' },
-  'Fuar':        { cover: 'linear-gradient(135deg, #f59e0b 0%, #f97316 55%, #ea580c 100%)', accent: '#f97316' },
-  'Eğitim':      { cover: 'linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #15803d 100%)', accent: '#16a34a' },
-  'Benim etkinliğim': { cover: 'linear-gradient(135deg, #475569 0%, #334155 60%, #1e293b 100%)', accent: '#475569' },
+  'Yarışma':     { cover: 'linear-gradient(135deg, #846b93 0%, #a08aac 50%, #bdaac0 100%)', accent: '#846b93' },
+  'Ödül':        { cover: 'linear-gradient(135deg, #5e6087 0%, #74769c 50%, #846b93 100%)', accent: '#5e6087' },
+  'Hibe / Fon':  { cover: 'linear-gradient(135deg, #181a33 0%, #2c2e4d 50%, #5e6087 100%)', accent: '#2c2e4d' },
+  'Hızlandırma': { cover: 'linear-gradient(135deg, #2c2e4d 0%, #574563 55%, #846b93 100%)', accent: '#574563' },
+  'Fuar':        { cover: 'linear-gradient(135deg, #6c5679 0%, #a08aac 55%, #bdaac0 100%)', accent: '#6c5679' },
+  'Eğitim':      { cover: 'linear-gradient(135deg, #4b4d6e 0%, #8f91b0 55%, #abadc5 100%)', accent: '#4b4d6e' },
+  'Benim etkinliğim': { cover: 'linear-gradient(135deg, #433d51 0%, #5e566a 60%, #7a7184 100%)', accent: '#433d51' },
 };
 const TURLER = Object.keys(TUR_STIL);
 
@@ -80,17 +81,25 @@ export default function FuarDestekleri({ dark }) {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [formHata, setFormHata] = useState('');
 
+  // Açık pencere ESC ile kapanır
+  useEffect(() => {
+    if (!selectedEvent && !formAcik) return;
+    const esc = (e) => { if (e.key === 'Escape') { setSelectedEvent(null); setFormAcik(false); } };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [selectedEvent, formAcik]);
+
   useEffect(() => {
     api.favorites.list('fuar').then(({ ids }) => setFavoriteIds(ids)).catch(() => {});
     api.events.list().then(({ events }) => setBenimkiler(events)).catch(() => {});
   }, []);
 
-  const pageBg = dark ? 'bg-[#0d1117]' : 'bg-[#f8fafc]';
-  const surface = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
+  const pageBg = 'bg-transparent';
+  const surface = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
   const softText = dark ? 'text-slate-300' : 'text-slate-600';
   const text = dark ? 'text-white' : 'text-slate-900';
   const subText = dark ? 'text-slate-400' : 'text-slate-600';
-  const fieldCls = `w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#F3D5D8] ${dark ? 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500' : 'border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400'}`;
+  const fieldCls = `w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-bronz-200 ${dark ? 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500' : 'border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400'}`;
 
   const tumEtkinlikler = useMemo(
     () => [...etkinlikler.map(resmiEtkinlik), ...benimkiler.map(benimEtkinligim)],
@@ -165,7 +174,7 @@ export default function FuarDestekleri({ dark }) {
       <header className="mb-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-[#EAF4FB] text-[#2B5472]'}`}>
+            <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${dark ? 'bg-sky-500/10 text-sky-300' : 'bg-bronz-50 text-bronz-700'}`}>
               <Sparkles className="w-4 h-4" />
               Fırsatlar
             </div>
@@ -181,14 +190,14 @@ export default function FuarDestekleri({ dark }) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${showFavoritesOnly ? 'border-[#F3D5D8] bg-[#F3D5D8] text-[#4A1525]' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${showFavoritesOnly ? 'border-defne-200 bg-defne-100 text-defne-800' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
             >
               <Bookmark className="w-4 h-4" />
               {showFavoritesOnly ? 'Takibim: Açık' : 'Takip Ettiklerim'}
             </button>
             <button
               onClick={() => { setFormAcik(true); setFormHata(''); }}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#1E293B] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-bronz-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
             >
               <Plus className="w-4 h-4" />
               Kendi etkinliğimi ekle
@@ -235,7 +244,7 @@ export default function FuarDestekleri({ dark }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Etkinlik, kurum veya başlık ara..."
-              className={`w-full rounded-xl border py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#9FC7E8] focus:ring-2 focus:ring-[#D9EDF9]/60 ${dark ? 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400'}`}
+              className={`w-full rounded-xl border py-3 pl-11 pr-4 text-sm outline-none transition focus:border-bronz-300 focus:ring-2 focus:ring-bronz-100/60 ${dark ? 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400'}`}
             />
           </div>
 
@@ -270,14 +279,14 @@ export default function FuarDestekleri({ dark }) {
             <div className={`inline-flex items-center rounded-xl border p-1 ${dark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
               <button
                 onClick={() => setView('grid')}
-                className={`rounded-lg p-2 transition ${view === 'grid' ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'text-slate-300' : 'text-slate-600'}`}
+                className={`rounded-lg p-2 transition ${view === 'grid' ? 'bg-defne-100 text-defne-800' : dark ? 'text-slate-300' : 'text-slate-600'}`}
                 aria-label="Grid görünümü"
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`rounded-lg p-2 transition ${view === 'list' ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'text-slate-300' : 'text-slate-600'}`}
+                className={`rounded-lg p-2 transition ${view === 'list' ? 'bg-defne-100 text-defne-800' : dark ? 'text-slate-300' : 'text-slate-600'}`}
                 aria-label="Liste görünümü"
               >
                 <List className="h-4 w-4" />
@@ -304,21 +313,28 @@ export default function FuarDestekleri({ dark }) {
                 style={{ background: event.cover }}
               >
                 <div className="absolute inset-0 bg-black/10" />
+                {!event.benim && kurumLogosu(event.duzenleyen) && (
+                  <div className="absolute inset-x-0 top-11 flex justify-center">
+                    <div className="flex h-14 max-w-[60%] items-center justify-center rounded-xl bg-white/95 px-4 py-2 shadow-md">
+                      <img src={kurumLogosu(event.duzenleyen)} alt={event.duzenleyen} loading="lazy" className="h-9 w-auto max-w-full object-contain" />
+                    </div>
+                  </div>
+                )}
                 <div className="absolute left-4 top-4 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
                   {event.ucret}
                 </div>
-                <div className="absolute right-4 top-4 rounded-full bg-slate-950/40 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                <div className="absolute right-4 top-4 rounded-full bg-bronz-900/40 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
                   {event.tur}
                 </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/60 to-transparent p-4 text-white">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-slate-200">{DURUM_ETIKET[event.durum]}</div>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-bronz-900/70 to-transparent p-4 text-white">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/80">{DURUM_ETIKET[event.durum]}</div>
                   <div className="mt-1 text-xs font-semibold">{kalanEtiket(event)}</div>
                 </div>
               </div>
 
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-center gap-2 text-xs font-medium">
-                  <CalendarDays className="h-4 w-4 text-[#7DA5C2]" />
+                  <CalendarDays className="h-4 w-4 text-bronz-500" />
                   <span className={subText}>{tarihSatiri(event)}</span>
                 </div>
 
@@ -348,7 +364,7 @@ export default function FuarDestekleri({ dark }) {
                     <button
                       type="button"
                       onClick={() => toggleFavorite(event.favId)}
-                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${favoriteIds.includes(event.favId) ? 'border-[#F3D5D8] bg-[#F3D5D8] text-[#4A1525]' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${favoriteIds.includes(event.favId) ? 'border-defne-200 bg-defne-100 text-defne-800' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
                     >
                       <Bookmark className={`h-3.5 w-3.5 ${favoriteIds.includes(event.favId) ? 'fill-current' : ''}`} />
                       {favoriteIds.includes(event.favId) ? 'Takipten Çıkar' : 'Takip Et'}
@@ -358,7 +374,7 @@ export default function FuarDestekleri({ dark }) {
                   <button
                     type="button"
                     onClick={() => setSelectedEvent(event)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1E293B] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-95"
+                    className="inline-flex items-center gap-2 rounded-xl bg-bronz-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-95"
                   >
                     Detayları Gör
                     <ArrowRight className="h-3.5 w-3.5" />
@@ -372,7 +388,7 @@ export default function FuarDestekleri({ dark }) {
 
       <div className={`mt-8 flex flex-wrap items-center justify-between gap-2 rounded-2xl border px-4 py-3 ${surface}`}>
         <div className="flex items-center gap-2 text-sm">
-          <MapPin className="h-4 w-4 text-[#7DA5C2]" />
+          <MapPin className="h-4 w-4 text-bronz-500" />
           <span className={subText}>{filteredEvents.length} etkinlik gösteriliyor</span>
         </div>
         <span className={`text-xs ${subText}`}>Etkinlikler {SON_KONTROL}'da resmi kaynaklardan kontrol edildi.</span>
@@ -404,7 +420,7 @@ export default function FuarDestekleri({ dark }) {
 
             <div className="p-6">
               <div className="mb-4 flex items-center gap-3 text-sm">
-                <CalendarDays className="h-4 w-4 text-[#7DA5C2]" />
+                <CalendarDays className="h-4 w-4 text-bronz-500" />
                 <span className={subText}>
                   {selectedEvent.benim ? tarihYaz(selectedEvent.tarih, selectedEvent.saat)
                     : selectedEvent.baslangic ? `${tarihYaz(selectedEvent.baslangic)} – ${tarihYaz(selectedEvent.bitis)}`
@@ -435,7 +451,7 @@ export default function FuarDestekleri({ dark }) {
                   <button
                     type="button"
                     onClick={() => toggleFavorite(selectedEvent.favId)}
-                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${favoriteIds.includes(selectedEvent.favId) ? 'border-[#F3D5D8] bg-[#F3D5D8] text-[#4A1525]' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${favoriteIds.includes(selectedEvent.favId) ? 'border-defne-200 bg-defne-100 text-defne-800' : dark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
                   >
                     <Bookmark className={`h-4 w-4 ${favoriteIds.includes(selectedEvent.favId) ? 'fill-current' : ''}`} />
                     {favoriteIds.includes(selectedEvent.favId) ? 'Takipten Çıkar' : 'Takip Et'}
@@ -444,7 +460,7 @@ export default function FuarDestekleri({ dark }) {
 
                 {selectedEvent.link && (
                   <a href={selectedEvent.link} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">
+                    className="inline-flex items-center gap-2 rounded-xl bg-bronz-600 px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">
                     {selectedEvent.benim ? 'Bağlantıya git' : 'Resmi sayfaya git'} <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
@@ -504,7 +520,7 @@ export default function FuarDestekleri({ dark }) {
             {formHata && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formHata}</p>}
 
             <button type="submit" disabled={kaydediliyor}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E293B] py-3 text-sm font-bold text-white disabled:opacity-60">
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-bronz-600 py-3 text-sm font-bold text-white disabled:opacity-60">
               {kaydediliyor && <Loader2 className="h-4 w-4 animate-spin" />} Takvimime ekle
             </button>
           </form>

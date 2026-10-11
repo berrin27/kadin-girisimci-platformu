@@ -10,9 +10,9 @@ import { api, KANBAN_GUNCELLENDI } from '../api';
 // Başvurular kurumların resmi sayfalarından yapılır; bu pano kullanıcının
 // kendi ilerlemesini takip etmesi içindir. Kartları kullanıcı kendisi taşır.
 const COLUMNS = [
-  { id: 'arastirma',  label: 'Planlıyorum', emoji: '📝', color: '#3b82f6', bg: '#eff6ff', aciklama: 'İlgilendiğin, hazırlandığın programlar' },
-  { id: 'basvuruldu', label: 'Başvurdum',   emoji: '📤', color: '#8b5cf6', bg: '#f5f3ff', aciklama: 'Başvurusu yapıldı, sonuç bekleniyor' },
-  { id: 'sonuc',      label: 'Sonuç',       emoji: '✅', color: '#22c55e', bg: '#f0fdf4', aciklama: 'Kabul ya da ret cevabı geldi' },
+  { id: 'arastirma',  label: 'Planlıyorum', emoji: '📝', color: 'var(--color-defne-500)', bg: 'var(--color-defne-50)', aciklama: 'İlgilendiğin, hazırlandığın programlar' },
+  { id: 'basvuruldu', label: 'Başvurdum',   emoji: '📤', color: 'var(--color-bronz-900)', bg: 'var(--color-bronz-50)', aciklama: 'Başvurusu yapıldı, sonuç bekleniyor' },
+  { id: 'sonuc',      label: 'Sonuç',       emoji: '✅', color: 'var(--color-emerald-600)', bg: 'var(--color-emerald-50)', aciklama: 'Kabul ya da ret cevabı geldi' },
 ];
 const BASVURU_SONRASI = ['basvuruldu', 'sonuc'];
 const bugunISO = bugunYerel;
@@ -56,6 +56,14 @@ export default function BasvuruTakip({ dark }) {
   const [filterPriority, setFilterPriority] = useState('all');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(BOS_FORM);
+
+  // "Kendim ekle" penceresi ESC ile kapanır
+  useEffect(() => {
+    if (!showModal) return;
+    const esc = (e) => { if (e.key === 'Escape') setShowModal(false); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [showModal]);
 
   // Kayıtlar sırayla gönderilir — hızlı sürükle-bırakta eski durum yenisini ezmesin.
   const save = (updated) => {
@@ -139,11 +147,11 @@ export default function BasvuruTakip({ dark }) {
   }, [cards]);
 
   // ── Theme
-  const cardBase = dark ? 'bg-[#1e2840] border-slate-700' : 'bg-white border-slate-100';
-  const colBg    = dark ? 'bg-slate-900/50 border-slate-700/60' : 'bg-slate-50/80 border-slate-200';
-  const text     = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const cardBase = dark ? 'bg-slate-800 border-slate-700' : 'bg-krem-50 border-krem-200 shadow-sm';
+  const colBg    = dark ? 'bg-slate-900/50 border-slate-700/60' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text     = dark ? 'text-slate-100' : 'text-slate-900';
   const sub      = dark ? 'text-slate-400' : 'text-slate-500';
-  const inputCls = `w-full p-3 border rounded-xl text-sm font-medium focus:outline-none focus:ring-2 transition ${dark ? 'bg-slate-800 border-slate-600 text-white focus:ring-[#F3D5D8] placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-[#F3D5D8]'}`;
+  const inputCls = `w-full p-3 border rounded-xl text-sm font-medium focus:outline-none focus:ring-2 transition ${dark ? 'bg-slate-800 border-slate-600 text-white focus:ring-bronz-200 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-bronz-200'}`;
 
   if (!yuklendi) {
     return (
@@ -168,7 +176,7 @@ export default function BasvuruTakip({ dark }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-2xl bg-[#1E293B] flex items-center justify-center shadow-lg shadow-slate-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-defne-600 flex items-center justify-center shadow-lg shadow-defne-900/20">
               <Kanban className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -190,7 +198,7 @@ export default function BasvuruTakip({ dark }) {
                 onClick={() => setView(v.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all ${
                   view === v.id
-                    ? 'bg-[#1E293B] text-white shadow-sm'
+                    ? 'bg-defne-600 text-white shadow-sm'
                     : dark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -200,7 +208,7 @@ export default function BasvuruTakip({ dark }) {
           </div>
           <button
             onClick={openAdd}
-            className="bg-[#1E293B] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm shadow-lg shadow-slate-500/20 hover:opacity-90 transition hover:scale-105 active:scale-95"
+            className="bg-defne-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm shadow-lg shadow-defne-900/20 hover:opacity-90 transition hover:scale-105 active:scale-95"
           >
             <Plus className="w-4 h-4" /> Kendim ekle
           </button>
@@ -225,7 +233,7 @@ export default function BasvuruTakip({ dark }) {
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('fortuno-navigate', { detail: 'sihirbaz' }))}
-              className="rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              className="rounded-xl bg-defne-600 px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
             >
               Destek Bul'dan program ekle
             </button>
@@ -238,10 +246,10 @@ export default function BasvuruTakip({ dark }) {
       {/* ── İSTATİSTİK KARTLARI ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Takip ettiğin', value: stats.total, sub: 'program', icon: <Target className="w-5 h-5" />, grad: 'from-slate-600 to-slate-800', glow: 'shadow-slate-500/20' },
-          { label: 'Başvurduğun', value: stats.applied, sub: `${stats.accepted} tanesi kabul edildi`, icon: <TrendingUp className="w-5 h-5" />, grad: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/25' },
-          { label: 'Sonuç bekleyen', value: stats.pending, sub: 'başvuru', icon: <Clock className="w-5 h-5" />, grad: 'from-orange-500 to-amber-600', glow: 'shadow-orange-500/25' },
-          { label: 'Son günü yaklaşan', value: stats.urgent, sub: '14 gün içinde, henüz başvurulmadı', icon: <Flame className="w-5 h-5" />, grad: 'from-red-500 to-rose-600', glow: 'shadow-red-500/25' },
+          { label: 'Takip ettiğin', value: stats.total, sub: 'program', icon: <Target className="w-5 h-5" />, grad: 'from-bronz-800 to-bronz-900', glow: 'shadow-defne-900/20' },
+          { label: 'Başvurduğun', value: stats.applied, sub: `${stats.accepted} tanesi kabul edildi`, icon: <TrendingUp className="w-5 h-5" />, grad: 'from-bronz-500 to-bronz-700', glow: 'shadow-bronz-500/20' },
+          { label: 'Sonuç bekleyen', value: stats.pending, sub: 'başvuru', icon: <Clock className="w-5 h-5" />, grad: 'from-defne-400 to-defne-600', glow: 'shadow-defne-500/20' },
+          { label: 'Son günü yaklaşan', value: stats.urgent, sub: '14 gün içinde, henüz başvurulmadı', icon: <Flame className="w-5 h-5" />, grad: 'from-defne-600 to-bronz-800', glow: 'shadow-defne-600/20' },
         ].map((s, i) => (
           <div key={i} className={`${cardBase} border rounded-2xl p-4 shadow-lg ${s.glow} relative overflow-hidden`}>
             <div className={`absolute top-0 right-0 w-20 h-20 rounded-full bg-gradient-to-br ${s.grad} opacity-10 -translate-y-6 translate-x-6`} />
@@ -274,7 +282,7 @@ export default function BasvuruTakip({ dark }) {
               onClick={() => setFilterPriority(p)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 filterPriority === p
-                  ? 'bg-[#1E293B] text-white shadow-sm'
+                  ? 'bg-defne-600 text-white shadow-sm'
                   : dark ? 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -298,7 +306,7 @@ export default function BasvuruTakip({ dark }) {
                 onDragOver={e => onDragOver(e, col.id)}
                 onDrop={e => onDrop(e, col.id)}
                 className={`flex-shrink-0 w-72 md:w-auto md:flex-1 rounded-2xl border transition-all duration-200 ${colBg}
-                  ${isDragTarget ? 'ring-2 ring-[#1E293B] ring-offset-2 scale-[1.01] shadow-xl' : ''}`}
+                  ${isDragTarget ? 'ring-2 ring-bronz-600 ring-offset-2 scale-[1.01] shadow-xl' : ''}`}
               >
                 {/* Column header */}
                 <div className={`px-3 pt-3 pb-2 border-b ${dark ? 'border-slate-700/60' : 'border-slate-200'}`}>
@@ -334,7 +342,7 @@ export default function BasvuruTakip({ dark }) {
                         `}
                       >
                         {/* Color top bar */}
-                        <div className="w-full h-0.5 rounded-full mb-2.5" style={{ background: c.color }} />
+                        <div className="w-full h-0.5 rounded-full mb-2.5" style={{ background: col.color }} />
 
                         <div className="flex items-start justify-between gap-1 mb-1.5">
                           <p className={`font-bold text-xs leading-snug flex-1 ${text}`}>{c.title}</p>
@@ -431,7 +439,7 @@ export default function BasvuruTakip({ dark }) {
                     <div
                       className={`flex flex-col items-center justify-center h-24 text-xs font-medium rounded-xl border-2 border-dashed transition gap-1
                         ${isDragTarget
-                          ? 'border-[#1E293B] text-[#1E293B] bg-[#F3D5D8]/40'
+                          ? 'border-defne-600 text-slate-900 bg-defne-100/40'
                           : dark ? 'border-slate-700 text-slate-600' : 'border-slate-200 text-slate-300'}`}
                     >
                       <span className="text-lg">{col.emoji}</span>
@@ -470,11 +478,11 @@ export default function BasvuruTakip({ dark }) {
               return (
                 <div
                   key={c.id}
-                  className={`grid grid-cols-12 px-4 py-3 items-center hover:${dark ? 'bg-slate-800/40' : 'bg-[#F8F3F4]'} transition group cursor-pointer`}
+                  className={`grid grid-cols-12 px-4 py-3 items-center hover:${dark ? 'bg-slate-800/40' : 'bg-defne-50'} transition group cursor-pointer`}
                   onClick={() => openEdit(c)}
                 >
                   <div className="col-span-5 flex items-center gap-2.5">
-                    <div className="w-1 h-8 rounded-full shrink-0" style={{ background: c.color }} />
+                    <div className="w-1 h-8 rounded-full shrink-0" style={{ background: col.color }} />
                     <div className="min-w-0">
                       <p className={`font-bold text-sm truncate ${text}`}>{c.title}</p>
                       <p className={`text-[10px] ${sub}`}>{c.institution}</p>
@@ -518,7 +526,7 @@ export default function BasvuruTakip({ dark }) {
           {/* Durum dağılımı */}
           <div className={`${cardBase} border rounded-2xl p-5 shadow-lg`}>
             <h3 className={`font-black text-sm mb-4 flex items-center gap-2 ${text}`}>
-              <BarChart3 className="w-4 h-4 text-[#1E293B]" /> Durum Dağılımı
+              <BarChart3 className="w-4 h-4 text-slate-900" /> Durum Dağılımı
             </h3>
             <div className="space-y-3">
               {COLUMNS.map(col => {
@@ -598,7 +606,7 @@ export default function BasvuruTakip({ dark }) {
                 const dl  = daysLeft(c.deadline);
                 return (
                   <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border ${dark ? 'border-slate-700 bg-slate-800/50' : 'border-amber-100 bg-amber-50/60'}`}>
-                    <div className="w-1 h-10 rounded-full" style={{ background: c.color }} />
+                    <div className="w-1 h-10 rounded-full" style={{ background: col.color }} />
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-bold truncate ${text}`}>{c.title}</p>
                       <p className={`text-[10px] ${sub}`}>{col?.emoji} {col?.label} • {c.amount}</p>
@@ -626,11 +634,11 @@ export default function BasvuruTakip({ dark }) {
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className={`${dark ? 'bg-[#1e2840] border-slate-700' : 'bg-white border-slate-200'} border rounded-2xl shadow-2xl w-full max-w-lg p-6`}
+          <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border rounded-2xl shadow-2xl w-full max-w-lg p-6`}
             style={{ animation: 'fadeUp 0.25s ease' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#1E293B] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-defne-600 flex items-center justify-center">
                   {editCard ? <ChevronRight className="w-4 h-4 text-white" /> : <Plus className="w-4 h-4 text-white" />}
                 </div>
                 <h3 className={`font-black text-lg ${text}`}>{editCard ? 'Kartı düzenle' : 'Takibime program ekle'}</h3>
@@ -721,7 +729,7 @@ export default function BasvuruTakip({ dark }) {
                 <button
                   onClick={submitForm}
                   disabled={!form.title.trim()}
-                  className="flex-1 bg-[#1E293B] text-white p-3 rounded-xl font-bold text-sm disabled:opacity-40 hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-slate-500/20"
+                  className="flex-1 bg-defne-600 text-white p-3 rounded-xl font-bold text-sm disabled:opacity-40 hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-defne-900/20"
                 >
                   <Check className="w-4 h-4" /> {editCard ? 'Güncelle' : 'Ekle'}
                 </button>

@@ -38,12 +38,12 @@ export default function NakitAkisi({ dark }) {
     stockTurnover: 45,
   });
 
-  const card = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
-  const text = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const card = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text = dark ? 'text-slate-100' : 'text-slate-900';
   const sub  = dark ? 'text-slate-400' : 'text-slate-500';
   const inputClass = dark
-    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[#F3D5D8]'
-    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-[#F3D5D8]';
+    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 focus:ring-bronz-200'
+    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-bronz-200';
 
   const selectedScenario = useMemo(
     () => CASH_SCENARIOS.find(item => item.id === scenario) || CASH_SCENARIOS[4],
@@ -154,8 +154,8 @@ export default function NakitAkisi({ dark }) {
 
       {/* ── Gelişmiş Nakit Akışı Simülatörü ───────────────────────────────────── */}
       <div className={`rounded-3xl border shadow-xl overflow-hidden ${card}`}>
-        <div className="px-6 py-5 border-b border-slate-200/20 bg-[#F8F3F4]">
-          <div className="flex items-center gap-2 text-[#1E293B] font-black text-sm uppercase tracking-[0.14em]">
+        <div className={`px-6 py-5 border-b border-slate-200/20 ${dark ? "bg-slate-800" : "bg-defne-50"}`}>
+          <div className={`flex items-center gap-2 ${dark ? "text-slate-300" : "text-slate-900"} font-black text-sm uppercase tracking-[0.14em]`}>
             <Wallet className="w-4 h-4" /> Nakit Akışı Simülatörü
           </div>
           <h3 className={`mt-2 text-2xl font-black ${text}`}>Kasam ne zaman boşalacak? Açığımı nasıl kapatmalıyım?</h3>
@@ -167,7 +167,7 @@ export default function NakitAkisi({ dark }) {
               <button
                 key={step.id}
                 onClick={() => setSimStep(step.id)}
-                className={`px-3 py-2 rounded-full border text-xs font-black transition ${simStep === step.id ? 'bg-[#1E293B] text-white border-transparent' : dark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'}`}
+                className={`px-3 py-2 rounded-full border text-xs font-black transition ${simStep === step.id ? 'bg-bronz-600 text-white border-transparent' : dark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'}`}
               >
                 {step.id}. {step.label}
               </button>
@@ -334,7 +334,7 @@ export default function NakitAkisi({ dark }) {
                   <button
                     key={item.id}
                     onClick={() => setScenario(item.id)}
-                    className={`rounded-2xl border p-4 text-left transition ${scenario === item.id ? 'border-[#1E293B] bg-[#F3D5D8]/15' : dark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-white'}`}
+                    className={`rounded-2xl border p-4 text-left transition ${scenario === item.id ? 'border-bronz-600 bg-defne-100/15' : dark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-white'}`}
                   >
                     <div className="text-sm font-black mb-1">{item.label}</div>
                     <div className={`text-[11px] ${dark ? 'text-slate-400' : 'text-slate-500'}`}>{item.impactText}</div>
@@ -384,7 +384,7 @@ export default function NakitAkisi({ dark }) {
           {simStep === 5 && (
             <div className="space-y-5">
               <div className={`rounded-2xl border p-5 ${dark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-slate-50'}`}>
-                <div className="flex items-center gap-2 mb-2 text-[#1E293B] font-black text-sm uppercase tracking-[0.12em]">
+                <div className="flex items-center gap-2 mb-2 text-slate-900 font-black text-sm uppercase tracking-[0.12em]">
                   <Sparkles className="w-4 h-4" /> Eylem Havuzu
                 </div>
                 <p className={`text-base leading-relaxed ${dark ? 'text-slate-200' : 'text-slate-700'}`}>
@@ -395,12 +395,12 @@ export default function NakitAkisi({ dark }) {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleDownloadReport}
-                  className="inline-flex items-center gap-2 bg-[#1E293B] text-white px-5 py-3 rounded-xl font-black shadow-lg"
+                  className="inline-flex items-center gap-2 bg-bronz-600 text-white px-5 py-3 rounded-xl font-black shadow-lg"
                 >
                   <Download className="w-4 h-4" /> Nakit Risk Raporu İndir
                 </button>
                 <button
-                  className="inline-flex items-center gap-2 bg-slate-700 text-white px-5 py-3 rounded-xl font-black"
+                  className="inline-flex items-center gap-2 bg-bronz-800 text-white px-5 py-3 rounded-xl font-black"
                 >
                   <ArrowRight className="w-4 h-4" /> Bu Kredi İçin Başvuru Dosyası Oluştur
                 </button>
@@ -412,14 +412,14 @@ export default function NakitAkisi({ dark }) {
             <button
               onClick={handlePrevStep}
               disabled={simStep === 1}
-              className={`px-4 py-2 rounded-xl font-bold ${simStep === 1 ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-slate-700 text-white'}`}
+              className={`px-4 py-2 rounded-xl font-bold ${simStep === 1 ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-bronz-800 text-white'}`}
             >
               Geri
             </button>
             <button
               onClick={handleNextStep}
               disabled={simStep === 5}
-              className="bg-[#1E293B] text-white px-5 py-2.5 rounded-xl font-bold"
+              className="bg-bronz-600 text-white px-5 py-2.5 rounded-xl font-bold"
             >
               {simStep === 5 ? 'Tamamlandı' : 'Sonraki Adım'}
             </button>

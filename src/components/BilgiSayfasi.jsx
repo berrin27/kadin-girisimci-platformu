@@ -15,9 +15,9 @@ export default function BilgiSayfasi({ sayfa, dark }) {
 
   return (
     <main className="max-w-3xl mx-auto px-4 mt-12 pb-24">
-      <div className={`rounded-3xl border p-10 text-center shadow-xl ${dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-[#EAE3D9]'}`}>
+      <div className={`rounded-3xl border p-10 text-center shadow-xl ${dark ? 'bg-slate-900 border-slate-700' : 'bg-white border-krem-200'}`}>
         <div className="text-5xl mb-4">{bilgi.ikon}</div>
-        <h2 className={`text-3xl font-black mb-2 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>{bilgi.baslik}</h2>
+        <h2 className={`text-3xl font-black mb-2 ${dark ? 'text-white' : 'text-slate-900'}`}>{bilgi.baslik}</h2>
         <p className={`mb-8 ${dark ? 'text-slate-400' : 'text-slate-500'}`}>{bilgi.aciklama}</p>
         <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${dark ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-50 text-amber-700'}`}>
           <Construction className="w-4 h-4" /> Bu sayfa hazırlanıyor, çok yakında burada olacak.

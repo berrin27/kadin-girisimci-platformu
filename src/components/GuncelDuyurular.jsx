@@ -65,8 +65,8 @@ export default function GuncelDuyurular({ dark }) {
   };
 
   // ── Stiller ────────────────────────────────────────────────────────────────
-  const card = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
-  const text = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const card = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text = dark ? 'text-slate-100' : 'text-slate-900';
   const sub  = dark ? 'text-slate-400' : 'text-slate-500';
 
   return (
@@ -117,7 +117,7 @@ export default function GuncelDuyurular({ dark }) {
       <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setAktifFiltre('hepsi')}
-          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${aktifFiltre === 'hepsi' ? 'bg-[#1E293B] text-white' : dark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${aktifFiltre === 'hepsi' ? 'bg-bronz-600 text-white' : dark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
         >
           📰 Tümü
         </button>
@@ -151,7 +151,7 @@ export default function GuncelDuyurular({ dark }) {
           <p className={`text-sm ${sub}`}>{hata || 'Haber kaynakları birkaç dakika içinde taranacak, lütfen biraz sonra tekrar deneyin.'}</p>
           <button
             onClick={handleYenile}
-            className="mt-4 bg-[#1E293B] text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition text-sm"
+            className="mt-4 bg-bronz-600 text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition text-sm"
           >
             Tekrar Dene
           </button>
@@ -187,7 +187,7 @@ export default function GuncelDuyurular({ dark }) {
                         </span>
                       )}
                     </div>
-                    <h3 className={`font-bold text-sm leading-snug mb-1 group-hover:text-[#1E293B] transition ${text}`}>
+                    <h3 className={`font-bold text-sm leading-snug mb-1 group-hover:text-slate-900 transition ${text}`}>
                       {haber.baslik}
                     </h3>
                     {haber.kaynakAd && (

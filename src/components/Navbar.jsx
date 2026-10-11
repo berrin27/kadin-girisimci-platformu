@@ -68,29 +68,27 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
 
   const sekmeCls = (secili) => `whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition ${
     secili
-      ? 'bg-[#F3D5D8] text-[#4A1525]'
-      : dark ? 'text-slate-200 hover:bg-[#2A3544] hover:text-white' : 'text-[#1E293B] hover:bg-[#F7F0F1]'
+      ? 'bg-defne-100 text-defne-800'
+      : dark ? 'text-slate-200 hover:bg-slate-700 hover:text-white' : 'text-krem-50 hover:bg-bronz-800'
   }`;
-  const panelCls = `absolute top-full mt-2 rounded-2xl border p-2 shadow-xl ${dark ? 'border-slate-700 bg-[#1c2333]' : 'border-slate-200 bg-white'}`;
+  const panelCls = `absolute top-full mt-2 rounded-2xl border p-2 shadow-xl ${dark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`;
   const panelOgeCls = (secili) => `block w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${
-    secili ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'text-slate-200 hover:bg-[#2A3544]' : 'text-[#1E293B] hover:bg-[#F7F0F1]'
+    secili ? 'bg-defne-100 text-defne-800' : dark ? 'text-slate-200 hover:bg-slate-700' : 'text-slate-900 hover:bg-defne-50'
   }`;
-  const yuvarlakBtn = `rounded-full p-2.5 transition ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#F3D5D8] text-[#4A1525] hover:bg-[#eed0d5]'}`;
+  const yuvarlakBtn = `rounded-full p-2.5 transition ${dark ? 'bg-slate-700 text-white' : 'bg-bronz-800 text-white hover:bg-bronz-700'}`;
   const mobilOgeCls = (secili) => `rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
-    secili ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'bg-[#1E293B] text-slate-200 hover:bg-[#2A3544]' : 'bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F7F0F1]'
+    secili ? 'bg-defne-100 text-defne-800' : dark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-krem-100 text-slate-900 hover:bg-defne-50'
   }`;
-  const grupBaslik = `mt-4 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-slate-400' : 'text-slate-500'}`;
+  const grupBaslik = `mt-4 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-slate-400' : 'text-bronz-100'}`;
 
   return (
-    <nav className={`sticky top-0 z-40 border-b ${dark ? 'bg-slate-900/90 text-white border-slate-700/80 backdrop-blur-md' : 'bg-white/90 text-slate-900 border-slate-200/80 backdrop-blur-md'}`}>
+    <nav className={`sticky top-0 z-40 border-b ${dark ? 'bg-slate-900/90 text-white border-slate-700/80 backdrop-blur-md' : 'bg-bronz-900 text-white border-bronz-800 shadow-soft'}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 py-3 lg:px-6">
         <button type="button" onClick={() => git('sihirbaz')} className="flex items-center gap-3 text-left" aria-label="Ana sayfa">
-          <div className="rounded-xl bg-gradient-to-br from-[#A8D5F2] to-[#F7DDE7] p-2 shadow-soft">
-            <FortunoLogo />
-          </div>
+          <FortunoLogo size={44} />
           <div>
-            <div className="text-lg font-black tracking-[0.18em] text-[#2B5472] dark:text-[#B9D9EF]">FORTUNO</div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Women Tech AI</div>
+            <div className="text-lg font-black tracking-[0.18em] text-white">FORTUNO</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronz-100">Women Tech AI</div>
           </div>
         </button>
 
@@ -111,7 +109,7 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
                   {oge.children.map(c => (
                     <button key={c.id} type="button" onClick={() => git(c.id)} className={panelOgeCls(activeSection === c.id)}>
                       <span className="block font-semibold">{c.label}</span>
-                      <span className={`block text-xs ${activeSection === c.id ? 'text-[#4A1525]/80' : dark ? 'text-slate-400' : 'text-slate-500'}`}>{c.aciklama}</span>
+                      <span className={`block text-xs ${activeSection === c.id ? 'text-defne-800/80' : dark ? 'text-slate-400' : 'text-slate-500'}`}>{c.aciklama}</span>
                     </button>
                   ))}
                 </div>
@@ -131,7 +129,7 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
               type="button"
               onClick={() => git('favoriler')}
               aria-label={`Favorilerim (${favoriSayisi})`}
-              className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold sm:flex ${activeSection === 'favoriler' ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}
+              className={`hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold sm:flex ${activeSection === 'favoriler' ? 'bg-defne-100 text-defne-800' : dark ? 'bg-slate-700 text-slate-200' : 'bg-defne-100 text-defne-800'}`}
             >
               <Heart className="h-3.5 w-3.5 fill-current" />
               {favoriSayisi}
@@ -150,7 +148,7 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
               onClick={() => setHesapAcik(a => !a)}
               aria-expanded={hesapAcik}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ${
-                HESAP_MENU.some(h => h.id === activeSection) ? 'bg-[#F3D5D8] text-[#4A1525]' : dark ? 'bg-[#2A3544] text-white' : 'bg-[#1E293B] text-white hover:opacity-90'
+                HESAP_MENU.some(h => h.id === activeSection) ? 'bg-defne-100 text-defne-800' : dark ? 'bg-slate-700 text-white' : 'bg-bronz-600 text-white hover:bg-bronz-500'
               }`}
             >
               <UserRound className="h-4 w-4" /> Hesabım <ChevronDown className={`h-3.5 w-3.5 transition ${hesapAcik ? 'rotate-180' : ''}`} />
@@ -175,7 +173,7 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
             id="mobile-menu-btn"
             type="button"
             onClick={() => setMobilAcik(o => !o)}
-            className={`rounded-full p-2.5 transition lg:hidden ${dark ? 'bg-[#2A3544] text-white' : 'bg-[#1E293B] text-white'}`}
+            className={`rounded-full p-2.5 transition lg:hidden ${dark ? 'bg-slate-700 text-white' : 'bg-bronz-600 text-white'}`}
             aria-label={mobilAcik ? 'Menüyü kapat' : 'Menüyü aç'}
             aria-expanded={mobilAcik}
             aria-controls="mobile-menu"
@@ -187,7 +185,7 @@ export default function Navbar({ activeSection, onNavigate, favoriSayisi, dark, 
 
       {/* ── Mobil Menü ── */}
       {mobilAcik && (
-        <div id="mobile-menu" className={`lg:hidden border-t px-4 pb-4 pt-1 ${dark ? 'border-slate-700/80' : 'border-slate-200/80'}`}>
+        <div id="mobile-menu" className={`lg:hidden border-t px-4 pb-4 pt-1 ${dark ? 'border-slate-700/80' : 'border-bronz-800'}`}>
           <div className="grid grid-cols-2 gap-2 pt-3">
             {NAV_MENU.filter(o => !o.children).map(o => (
               <button key={o.id} type="button" onClick={() => git(o.id)} className={mobilOgeCls(ogeSecili(o, activeSection))}>{o.label}</button>

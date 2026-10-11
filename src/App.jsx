@@ -13,6 +13,7 @@ import Navbar from './components/Navbar';
 import HatirlatmaBandi from './components/HatirlatmaBandi';
 import DestekSorulari, { SecimOzeti } from './components/DestekSorulari';
 import FortunoLogo from './components/FortunoLogo';
+import { KurumKapak } from './components/KurumLogo';
 import { supportData, basvuruTakvimi, etkinlikler, ulusalIstatistikler, SON_KONTROL } from './data';
 import { api } from './api';
 import {
@@ -147,7 +148,7 @@ const faqVerisi = [
 // ─── CONFETTI ─────────────────────────────────────────────────────────────────
 // Pieces are stable (generated once) to avoid Math.random() in render
 const CONFETTI_PIECES = Array.from({ length: 48 }, (_, i) => {
-  const colors = ['#6d28d9', '#ec4899', '#22c55e', '#f59e0b', '#06b6d4', '#f43f5e'];
+  const colors = ['#181a33', '#5e6087', '#846b93', '#bdaac0', '#e8dfe0', '#a08aac'];
   return {
     left: Math.random() * 100,
     delay: Math.random() * 1.2,
@@ -269,6 +270,14 @@ export default function App({ user, onLogout }) {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isLoading]);
+
+  // Sohbet paneli ESC ile kapanır
+  useEffect(() => {
+    if (!isChatOpen) return;
+    const esc = (e) => { if (e.key === 'Escape') setIsChatOpen(false); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [isChatOpen]);
 
   // Profil doluysa sihirbazın YALNIZCA boş alanlarını doldurur; kullanıcının
   // sihirbazda yaptığı seçimler ezilmez, sihirbazdaki değişiklik de profili değiştirmez.
@@ -422,13 +431,13 @@ export default function App({ user, onLogout }) {
   const yakinEslesme = filteredResults[0]?.yakin || false;
 
   // Renk sınıfları (dark mode)
-  const bg = 'bg-[#F5F5DC]';
-  const card = dark ? 'bg-[#1E293B] border border-[#374151] text-white' : 'bg-[#FFFFFF] border border-[#EAE3D9] text-[#1E293B] shadow-[0_10px_30px_rgba(30,41,59,0.06)]';
-  const text = dark ? 'text-white' : 'text-[#1E293B]';
-  const subtext = dark ? 'text-slate-300' : 'text-[#5B6473]';
+  const bg = dark ? 'bg-slate-950' : 'bg-krem-100';
+  const card = dark ? 'bg-slate-800 border border-slate-700 text-white' : 'yuzey bg-yuzey border-white/10 shadow-soft border text-slate-900';
+  const text = dark ? 'text-white' : 'text-slate-900';
+  const subtext = dark ? 'text-slate-300' : 'text-slate-600';
   const inputCls = dark
-    ? 'bg-[#1E293B] border-[#4B5563] text-white focus:ring-[#F3D5D8]'
-    : 'bg-[#FAF7F2] border-[#EAE3D9] text-[#1E293B] focus:ring-[#F3D5D8]';
+    ? 'bg-slate-800 border-slate-600 text-white focus:ring-bronz-200'
+    : 'bg-krem-100 border-krem-200 text-slate-900 focus:ring-bronz-200';
 
   // ── Sections ─────────────────────────────────────────────────────────────
   const showSihirbaz    = activeSection === 'sihirbaz';
@@ -462,15 +471,15 @@ export default function App({ user, onLogout }) {
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       {showSihirbaz && (
         <header className="px-4 pb-10 pt-12">
-          <div className="mx-auto max-w-6xl rounded-[32px] border border-[#EAE3D9] bg-[#1E2E3E] px-6 py-10 shadow-[0_12px_30px_rgba(30,41,59,0.04)] md:px-10 md:py-14 dark:border-[#374151] dark:bg-[#1E293B]">
+          <div className="mx-auto max-w-6xl rounded-[32px] border border-krem-200 bg-bronz-600 px-6 py-10 shadow-[0_12px_30px_rgba(87,59,35,0.04)] md:px-10 md:py-14 dark:border-slate-700 dark:bg-slate-800">
             <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#EAF4FB] px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#2B5472]">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-bronz-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-bronz-700">
                 <Sparkles className="h-3.5 w-3.5" />
                 Girişimci destek platformu
               </div>
               <h1 className="hero-title text-4xl font-medium tracking-[-0.04em] text-white md:text-5xl lg:text-6xl">
                 Girişimci kadınlar için
-                <span className="mt-2 block bg-[#DCE7F2] bg-clip-text font-semibold text-transparent">
+                <span className="mt-2 block bg-bronz-100 bg-clip-text font-semibold text-transparent">
                   akıllı finans ve hibe eşleştirme
                 </span>
               </h1>
@@ -481,13 +490,13 @@ export default function App({ user, onLogout }) {
               <div className="hero-stats mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <button
                   onClick={() => goToSection('sihirbaz', 'destek-sorulari')}
-                  className="rounded-full border border-[#EAE3D9] bg-[#F3D5D8] px-6 py-3 text-sm font-bold text-[#4A1525] shadow-[0_12px_24px_rgba(244,196,203,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#eed0d5]"
+                  className="rounded-full border border-krem-200 bg-krem-50 px-6 py-3 text-sm font-bold text-bronz-800 shadow-[0_12px_24px_rgba(42,51,37,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-bronz-50"
                 >
                   Destek Bul
                 </button>
                 <button
                   onClick={() => setActiveSection('fuar')}
-                  className="rounded-full border border-[#EAE3D9] bg-[#F3D5D8] px-6 py-3 text-sm font-bold text-[#4A1525] shadow-[0_12px_24px_rgba(244,196,203,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#eed0d5]"
+                  className="rounded-full border border-krem-200 bg-krem-50 px-6 py-3 text-sm font-bold text-bronz-800 shadow-[0_12px_24px_rgba(42,51,37,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-bronz-50"
                 >
                   Son fırsatları gör
                 </button>
@@ -496,7 +505,7 @@ export default function App({ user, onLogout }) {
 
             {/* ── Fortuno'da: sitedeki doğrulanmış veriden ── */}
             <div className="hero-stats mt-10">
-              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[#F3D5D8]">Fortuno'da</p>
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-bronz-200">Fortuno'da</p>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 {[
                   { Ikon: BadgeCheck, value: HERO_ISTATISTIK.program, label: 'Doğrulanmış destek programı', alt: `${HERO_ISTATISTIK.kurum} kurum ve bankadan` },
@@ -508,16 +517,16 @@ export default function App({ user, onLogout }) {
                     key={label}
                     type="button"
                     onClick={section ? () => goToSection(section) : undefined}
-                    className={`rounded-2xl border border-slate-700 bg-slate-800/80 p-3 sm:p-5 text-center transition ${section ? 'hover:border-[#F3D5D8]/60 hover:bg-slate-800 cursor-pointer' : 'cursor-default'}`}
+                    className={`rounded-2xl border border-white/15 bg-bronz-900/30 p-3 sm:p-5 text-center transition ${section ? 'hover:border-defne-200/60 hover:bg-bronz-900/50 cursor-pointer' : 'cursor-default'}`}
                   >
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#F3D5D8]/15 text-[#F3D5D8]">
+                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-defne-100/15 text-defne-200">
                       <Ikon className="h-5 w-5" />
                     </div>
                     <div className="text-xl sm:text-3xl font-medium tracking-[-0.04em] text-white">
                       <AnimatedCounter target={value} suffix={suffix} />
                     </div>
-                    <div className="mt-2 text-[10px] sm:text-xs font-medium uppercase tracking-[0.1em] sm:tracking-[0.14em] text-slate-300">{label}</div>
-                    <div className="mt-1 text-[11px] text-slate-400 line-clamp-1">{alt}</div>
+                    <div className="mt-2 text-[10px] sm:text-xs font-medium uppercase tracking-[0.1em] sm:tracking-[0.14em] text-defne-100">{label}</div>
+                    <div className="mt-1 text-[11px] text-defne-200 line-clamp-1">{alt}</div>
                   </button>
                 ))}
               </div>
@@ -525,21 +534,21 @@ export default function App({ user, onLogout }) {
 
             {/* ── Türkiye'de kadın girişimciliği: resmi kaynaklı rakamlar ── */}
             <div className="hero-stats mt-8">
-              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[#A8D5F2]">Türkiye'de kadın girişimciliği</p>
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-bronz-200">Türkiye'de kadın girişimciliği</p>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 {ulusalIstatistikler.map(st => {
                   const Ikon = ISTATISTIK_IKONLARI[st.ikon] || Landmark;
                   return (
-                    <div key={st.id} className="rounded-2xl border border-slate-700/70 bg-slate-900/40 p-3 sm:p-5 text-center">
-                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#A8D5F2]/15 text-[#A8D5F2]">
+                    <div key={st.id} className="rounded-2xl border border-white/10 bg-bronz-900/20 p-3 sm:p-5 text-center">
+                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-bronz-200/15 text-bronz-200">
                         <Ikon className="h-5 w-5" />
                       </div>
                       <div className="text-xl sm:text-2xl font-medium tracking-[-0.03em] text-white">
                         <AnimatedCounter target={st.deger} decimals={st.ondalik} prefix={st.onEk} suffix={st.sonEk} />
                       </div>
-                      <div className="mt-2 text-[11px] sm:text-xs font-semibold text-slate-200">{st.baslik}</div>
-                      <div className="mt-1 text-[11px] text-slate-400">{st.aciklama}</div>
-                      <a href={st.kaynak} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[10px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline">
+                      <div className="mt-2 text-[11px] sm:text-xs font-semibold text-defne-50">{st.baslik}</div>
+                      <div className="mt-1 text-[11px] text-defne-200">{st.aciklama}</div>
+                      <a href={st.kaynak} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[10px] text-defne-200 underline-offset-2 hover:text-white hover:underline">
                         Kaynak: {st.kaynakAd} ↗
                       </a>
                     </div>
@@ -598,7 +607,7 @@ export default function App({ user, onLogout }) {
                   {[
                     destekOzeti.hibe && { baslik: 'Geri ödemesiz destek', deger: `${destekOzeti.hibe.hibeUstLimit.toLocaleString('tr-TR')} ₺'ye kadar`, alt: destekOzeti.hibe.title, renk: 'text-emerald-600' },
                     destekOzeti.finansman && { baslik: 'Kredi / geri ödemeli finansman', deger: `${destekOzeti.finansman.finansmanUstLimit.toLocaleString('tr-TR')} ₺'ye kadar`, alt: destekOzeti.finansman.title, renk: dark ? 'text-sky-300' : 'text-sky-700' },
-                    { baslik: 'Eşleşen program', deger: `${filteredResults.length} program`, alt: `${destekOzeti.geriOdemesizSayisi} tanesi geri ödemesiz`, renk: dark ? 'text-white' : 'text-[#1E293B]' },
+                    { baslik: 'Eşleşen program', deger: `${filteredResults.length} program`, alt: `${destekOzeti.geriOdemesizSayisi} tanesi geri ödemesiz`, renk: dark ? 'text-white' : 'text-slate-900' },
                   ].filter(Boolean).map(k => (
                     <div key={k.baslik} className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4`}>
                       <div className={`text-[11px] font-bold uppercase tracking-wider ${subtext}`}>{k.baslik}</div>
@@ -619,7 +628,7 @@ export default function App({ user, onLogout }) {
                       id={`filter-${k.replace(/\s/g, '-')}`}
                       onClick={() => setKurumFilter(k)}
                       className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${kurumFilter === k
-                          ? 'bg-[#1E293B] text-white border-[#1E293B]'
+                          ? 'bg-bronz-600 text-white border-bronz-600'
                           : dark
                             ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -652,8 +661,9 @@ export default function App({ user, onLogout }) {
                       style={{ animationDelay: `${idx * 80}ms` }}
                     >
                       <div>
+                        <KurumKapak ad={item.institution} dark={dark} />
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="text-xs font-bold text-[#1E293B] bg-[#F3D5D8] px-2.5 py-1 rounded-md">{item.institution}</span>
+                          <span className="text-xs font-bold text-slate-900 bg-defne-100 px-2.5 py-1 rounded-md">{item.institution}</span>
                           <div className="flex items-center gap-1.5">
                             <span className={`text-xs font-semibold ${dark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-white border-slate-200 text-slate-500'} border px-2 py-0.5 rounded-md`}>{item.type}</span>
                             {/* Favori butonu */}
@@ -664,7 +674,7 @@ export default function App({ user, onLogout }) {
                               className={`p-1 rounded-lg transition ${heartPoppingId === item.id ? 'heart-pop' : ''}`}
                             >
                               <Heart
-                                className={`w-4 h-4 transition ${favorites.includes(item.id) ? 'text-[#4A1525] fill-[#4A1525]' : 'text-slate-400 hover:text-[#4A1525]'}`}
+                                className={`w-4 h-4 transition ${favorites.includes(item.id) ? 'text-defne-800 fill-defne-800' : 'text-slate-400 hover:text-defne-800'}`}
                               />
                             </button>
                           </div>
@@ -673,14 +683,14 @@ export default function App({ user, onLogout }) {
                           <span className={`text-[11px] font-bold uppercase tracking-wider ${subtext}`}>Eşleşme</span>
                           <span className="text-xs font-black text-emerald-500">{item.combinedScore}/100</span>
                         </div>
-                        <h4 className={`font-extrabold text-base mb-2 group-hover:text-[#1E293B] transition ${dark ? 'text-white' : 'text-[#1E293B]'}`}>{item.title}</h4>
+                        <h4 className={`font-extrabold text-base mb-2 group-hover:text-slate-900 transition ${dark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h4>
                         <p className={`text-xs line-clamp-3 mb-3 leading-relaxed ${subtext}`}>{item.description}</p>
                         <p className={`text-[11px] font-semibold mb-4 ${dark ? 'text-slate-300' : 'text-slate-600'}`}>📅 {item.basvuruDurumu}</p>
                       </div>
                       <div>
                         <div className={`${dark ? 'bg-emerald-900/30 border-emerald-700/40' : 'bg-emerald-50 border-emerald-200/60'} border p-2.5 rounded-lg mb-3 flex items-center justify-between`}>
                           <span className={`text-[11px] font-bold uppercase tracking-wider ${dark ? 'text-emerald-400' : 'text-emerald-800'}`}>Destek Limiti:</span>
-                          <span className="text-base font-black text-[#22c55e] text-right">
+                          <span className="text-base font-black text-emerald-600 text-right">
                             {item.amount}
                           </span>
                         </div>
@@ -692,7 +702,7 @@ export default function App({ user, onLogout }) {
                             // takipteyse sonra "başvurunu tamamladın mı?" diye sorulsun
                             if (takiptekiler.includes(`p-${item.id}`)) api.kanban.resmiSayfaAcildi(`p-${item.id}`).catch(() => {});
                           }}
-                          className="w-full text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-[#1E293B] text-white hover:opacity-90 shadow-md"
+                          className="w-full text-xs font-black py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition bg-bronz-600 text-white hover:opacity-90 shadow-md"
                         >
                           Resmi sayfada başvur <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -735,7 +745,7 @@ export default function App({ user, onLogout }) {
           <div className={`${card} p-6 rounded-2xl border`}>
             {/* FAQ Accordion */}
             <div id="sss" className="scroll-mt-24">
-              <h3 className="font-bold text-sm mb-3 text-[#1E293B] flex items-center gap-1">
+              <h3 className={`font-bold text-sm mb-3 ${dark ? "text-white" : "text-slate-900"} flex items-center gap-1`}>
                 <Sparkles className="w-4 h-4" /> Sık Sorulan Sorular
               </h3>
               <div className="space-y-2">
@@ -768,10 +778,10 @@ export default function App({ user, onLogout }) {
         /* ── FAVORİLER ──────────────────────────────────────────────────────── */
         <main className="max-w-6xl mx-auto px-4 mt-12 pb-24">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-[#F3D5D8] text-[#4A1525] px-4 py-2 rounded-full text-sm font-bold mb-4">
-              <Heart className="w-4 h-4 fill-[#4A1525]" /> Favori Programlarınız
+            <div className="inline-flex items-center gap-2 bg-defne-100 text-defne-800 px-4 py-2 rounded-full text-sm font-bold mb-4">
+              <Heart className="w-4 h-4 fill-defne-800" /> Favori Programlarınız
             </div>
-            <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Kaydettiğiniz Destekler</h2>
+            <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-slate-900'}`}>Kaydettiğiniz Destekler</h2>
           </div>
           {favorites.length === 0 ? (
             <p className={`text-center ${subtext}`}>Henüz favori programınız yok. Sonuçlarda kalp ikonuna tıklayarak ekleyebilirsiniz.</p>
@@ -780,10 +790,11 @@ export default function App({ user, onLogout }) {
               {supportData.filter(s => favorites.includes(s.id)).map((item, idx) => (
                 <div key={item.id} className={`card-animate ${card} border p-5 rounded-xl shadow-lg flex flex-col justify-between`} style={{ animationDelay: `${idx * 80}ms` }}>
                   <div>
+                    <KurumKapak ad={item.institution} dark={dark} />
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-bold text-[#1E293B] bg-[#F3D5D8] px-2.5 py-1 rounded-md">{item.institution}</span>
+                      <span className="text-xs font-bold text-slate-900 bg-defne-100 px-2.5 py-1 rounded-md">{item.institution}</span>
                       <button onClick={() => toggleFav(item.id)} className="p-1">
-                        <Heart className="w-4 h-4 text-[#4A1525] fill-[#4A1525]" />
+                        <Heart className="w-4 h-4 text-defne-800 fill-defne-800" />
                       </button>
                     </div>
                     <h4 className="font-extrabold text-base mb-2">{item.title}</h4>
@@ -791,7 +802,7 @@ export default function App({ user, onLogout }) {
                   </div>
                   <div className="bg-emerald-50 border border-emerald-200/60 p-2.5 rounded-lg flex items-center justify-between">
                     <span className="text-[11px] font-bold text-emerald-800 uppercase">Destek Limiti:</span>
-                    <span className="text-base font-black text-[#22c55e] text-right">
+                    <span className="text-base font-black text-emerald-600 text-right">
                       {item.amount}
                     </span>
                   </div>
@@ -805,10 +816,10 @@ export default function App({ user, onLogout }) {
         /* ── KAYNAKÇA ───────────────────────────────────────────────────────────── */
         <main className="max-w-6xl mx-auto px-4 mt-12 pb-24">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-[#F3D5D8] text-[#4A1525] px-4 py-2 rounded-full text-sm font-bold mb-4">
+            <div className="inline-flex items-center gap-2 bg-defne-100 text-defne-800 px-4 py-2 rounded-full text-sm font-bold mb-4">
               <BookOpen className="w-4 h-4" /> Güncel & Doğrulanmış Kaynaklar
             </div>
-            <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Resmi Hibe ve Destek Kaynakları</h2>
+            <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-slate-900'}`}>Resmi Hibe ve Destek Kaynakları</h2>
             <p className={`max-w-xl mx-auto ${subtext}`}>
               Türkiye'deki kadın girişimciler için resmi hibe, teşvik ve destek programlarının kaynakları.
             </p>
@@ -837,7 +848,7 @@ export default function App({ user, onLogout }) {
           {/* ── BAŞVURU TAKVİMİ ───────────────────────────────────────────── */}
           <div className={`${card} rounded-2xl shadow-xl border p-6 mb-10`}>
             <h3 className="font-black text-xl mb-6 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-[#1E293B]" />
+              <Calendar className="w-5 h-5 text-slate-900" />
               Başvuru Takvimi
             </h3>
             <p className={`text-xs mb-5 -mt-3 ${subtext}`}>Yeni dönem tarihleri açıklandıkça güncellenir. Sürekli açık programlar (banka kredileri vb.) takvimde yer almaz.</p>
@@ -862,12 +873,12 @@ export default function App({ user, onLogout }) {
           </div>
 
           {/* Alt bilgi */}
-          <div className="bg-[#1E293B] rounded-2xl p-8 text-white text-center shadow-xl">
+          <div className="bg-bronz-600 rounded-2xl p-8 text-white text-center shadow-xl">
             <Award className="w-10 h-10 mx-auto mb-3 opacity-90" />
             <h3 className="text-2xl font-black mb-2">Hangi Destek Size Uygun?</h3>
             <p className="text-slate-200 mb-5 max-w-lg mx-auto">Kafanız karıştıysa endişelenmeyin! FortunoAI sizi 3 basit soruyla en uygun programa yönlendirir.</p>
             <button id="goto-sihirbaz-btn" onClick={() => goToSection('sihirbaz', 'destek-sorulari')}
-              className="bg-[#F3D5D8] text-[#4A1525] font-black px-8 py-3 rounded-xl hover:bg-[#eed0d5] transition shadow-lg">
+              className="bg-defne-100 text-defne-800 font-black px-8 py-3 rounded-xl hover:bg-defne-200 transition shadow-lg">
               Destek Sihirbazını Başlat →
             </button>
           </div>
@@ -899,7 +910,7 @@ export default function App({ user, onLogout }) {
           <div className={`inline-flex rounded-2xl border p-1 ${dark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`} role="tablist" aria-label="Fırsatlar">
             {[['fuar', 'Başvurusu Açık'], ['guncel', 'Haberler']].map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={activeSection === id} onClick={() => goToSection(id)}
-                className={`rounded-xl px-5 py-2 text-sm font-bold transition ${activeSection === id ? 'bg-[#1E293B] text-white' : dark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+                className={`rounded-xl px-5 py-2 text-sm font-bold transition ${activeSection === id ? 'bg-bronz-600 text-white' : dark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
                 {label}
               </button>
             ))}
@@ -921,28 +932,26 @@ export default function App({ user, onLogout }) {
       <BilgiSayfasi sayfa={activeSection} dark={dark} />
 
       {/* ── FOOTER ─────────────────────────────────────────────────────────────── */}
-      <footer className="mt-16 bg-[#0c1a30] text-slate-200">
+      <footer className="mt-16 bg-bronz-900 text-krem-100">
         <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#1E293B] p-2 shadow-[0_8px_20px_rgba(30,41,59,0.15)]">
-                  <FortunoLogo />
-                </div>
+                <FortunoLogo size={44} />
                 <div>
-                  <div className="text-lg font-black tracking-[0.18em] text-blue-300">FORTUNO</div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Women Tech AI</div>
+                  <div className="text-lg font-black tracking-[0.18em] text-bronz-200">FORTUNO</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronz-200">Women Tech AI</div>
                 </div>
               </div>
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-300">
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-krem-200">
                 Kadın girişimciler için daha şeffaf, daha akıllı ve daha insan odaklı bir destek deneyimi sunuyoruz.
               </p>
             </div>
 
             {FOOTER_LINKLERI.map(([title, links]) => (
               <div key={title}>
-                <h4 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">{title}</h4>
-                <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                <h4 className="text-sm font-bold uppercase tracking-[0.18em] text-bronz-200">{title}</h4>
+                <ul className="mt-4 space-y-3 text-sm text-krem-200">
                   {links.map(({ label, section, anchor, href }) => (
                     <li key={label}>
                       {href ? (
@@ -957,7 +966,7 @@ export default function App({ user, onLogout }) {
             ))}
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 border-t border-slate-700/80 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
+          <div className="mt-10 flex flex-col gap-4 border-t border-bronz-800 pt-6 text-sm text-bronz-200 md:flex-row md:items-center md:justify-between">
             <p>© 2026 Fortuno. Tüm hakları saklıdır.</p>
             <div className="flex items-center gap-4">
               <button onClick={() => goToSection('guvenlik', 'gizlilik-politikasi')} className="transition hover:text-white">Gizlilik</button>
@@ -973,9 +982,9 @@ export default function App({ user, onLogout }) {
         {isChatOpen && (
           <div className={`w-[340px] md:w-[380px] h-[520px] rounded-2xl shadow-2xl border mb-4 flex flex-col overflow-hidden ${dark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200/80'}`}>
             {/* Chat header */}
-            <div className="bg-[#0f172a] p-4 text-white flex justify-between items-center">
+            <div className="bg-bronz-900 p-4 text-white flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-[#F3D5D8] rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-defne-100 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -1008,7 +1017,7 @@ export default function App({ user, onLogout }) {
                   key={i}
                   id={`quick-q-${i}`}
                   onClick={() => sendQuickQuestion(q)}
-                  className={`shrink-0 text-[10px] font-bold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${dark ? 'bg-[#2A3544] border-[#4B5563] text-[#F3D5D8] hover:bg-[#374151]' : 'bg-[#F3D5D8] border-[#EAD3D7] text-[#4A1525] hover:bg-[#eed0d5]'}`}
+                  className={`shrink-0 text-[10px] font-bold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${dark ? 'bg-slate-700 border-slate-600 text-defne-200 hover:bg-slate-700' : 'bg-defne-100 border-defne-200 text-defne-800 hover:bg-defne-200'}`}
                 >
                   {q}
                 </button>
@@ -1020,7 +1029,7 @@ export default function App({ user, onLogout }) {
               {chatMessages.map(msg => (
                 <div key={msg.id} className={`chat-bubble flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] rounded-2xl p-3 text-xs font-medium leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                      ? 'bg-[#1E293B] text-white rounded-tr-none'
+                      ? 'bg-bronz-600 text-white rounded-tr-none'
                       : dark
                         ? 'bg-slate-800 text-slate-200 shadow-sm border border-slate-700 rounded-tl-none'
                         : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-tl-none'
@@ -1055,7 +1064,7 @@ export default function App({ user, onLogout }) {
                 id="chat-send-btn"
                 type="submit"
                 disabled={isLoading || !chatInput.trim()}
-                className="bg-[#0f172a] text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-bronz-900 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-bronz-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
@@ -1066,7 +1075,7 @@ export default function App({ user, onLogout }) {
         <button
           id="open-chat-btn"
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="bg-[#1E293B] text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center justify-center"
+          className="bg-bronz-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center justify-center"
         >
           {isChatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
         </button>

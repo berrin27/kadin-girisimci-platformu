@@ -74,8 +74,8 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
   };
 
   // ── Stiller ────────────────────────────────────────────────────────────────
-  const card = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
-  const text = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const card = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text = dark ? 'text-slate-100' : 'text-slate-900';
   const sub  = dark ? 'text-slate-400' : 'text-slate-500';
   const detayBg = dark ? 'bg-slate-800/70 border-slate-700' : 'bg-slate-50 border-slate-200';
 
@@ -120,7 +120,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
         <div className="space-y-3">
           {[
             {
-              ikon: <Key className="w-5 h-5 text-[#1E293B]" />,
+              ikon: <Key className="w-5 h-5 text-slate-900" />,
               baslik: 'Şifreleriniz Okunamaz',
               aciklama: 'Şifreniz hiçbir zaman açık haliyle saklanmaz; rastgele tuz (salt) eklenerek scrypt algoritmasıyla geri döndürülemez şekilde hash\'lenir. Biz dahil kimse şifrenizi göremez.',
             },
@@ -218,7 +218,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
           {/* Verileri İndir */}
           <button
             onClick={handleIndir}
-            className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition bg-bronz-600 hover:bg-bronz-700 text-white"
           >
             <Download className="w-4 h-4" />
             {indirildi ? 'İndirildi! ✓' : 'Verilerimi İndir (JSON)'}
@@ -284,7 +284,7 @@ export default function GizlilikGuvenlik({ dark, onHesapSilindi }) {
       {/* ── Gizlilik Politikası ────────────────────────────────────── */}
       <div id="gizlilik-politikasi" className={`${card} border rounded-2xl shadow-lg p-6 scroll-mt-24`}>
         <h3 className={`text-lg font-black mb-4 flex items-center gap-2 ${text}`}>
-          <FileText className="w-5 h-5 text-[#1E293B]" /> Gizlilik Politikası
+          <FileText className="w-5 h-5 text-slate-900" /> Gizlilik Politikası
         </h3>
         <div className={`prose prose-sm max-w-none ${dark ? 'prose-invert' : ''}`}>
           <div className={`space-y-3 text-xs leading-relaxed ${sub}`}>

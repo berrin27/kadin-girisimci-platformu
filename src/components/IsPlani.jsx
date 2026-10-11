@@ -400,7 +400,7 @@ export default function IsPlani({ dark }) {
   };
 
   const fieldClass = dark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400';
-  const cardClass = dark ? 'bg-[#1c2333] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900';
+  const cardClass = dark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'yuzey bg-yuzey border-white/10 shadow-soft text-slate-900';
   const subClass = dark ? 'text-slate-400' : 'text-slate-500';
 
   return (
@@ -409,7 +409,7 @@ export default function IsPlani({ dark }) {
         <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
           📄 İş Planı Mimarisi
         </div>
-        <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-[#0f172a]'}`}>Modüler İş Planı Oluşturucu</h2>
+        <h2 className={`text-3xl font-black mb-3 ${dark ? 'text-white' : 'text-slate-900'}`}>Modüler İş Planı Oluşturucu</h2>
         <p className={`max-w-2xl mx-auto ${subClass}`}>
           Tek sayfalık hızlı özet, banka/KGF odaklı klasik plan ve yatırımcı odaklı büyüme planı arasında kolayca geçiş yapın.
         </p>
@@ -427,7 +427,7 @@ export default function IsPlani({ dark }) {
           value={aktifId ?? ''}
           onChange={e => planDegistir(e.target.value)}
           disabled={!yuklendi}
-          className={`min-w-[200px] flex-1 sm:flex-none border rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`}
+          className={`min-w-[200px] flex-1 sm:flex-none border rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`}
         >
           {plans.map(p => (
             <option key={p.id} value={p.id}>
@@ -435,10 +435,10 @@ export default function IsPlani({ dark }) {
             </option>
           ))}
         </select>
-        <button onClick={() => yeniPlan()} disabled={!yuklendi} className="rounded-xl bg-[#1E293B] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">＋ Yeni plan</button>
+        <button onClick={() => yeniPlan()} disabled={!yuklendi} className="rounded-xl bg-bronz-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">＋ Yeni plan</button>
         <button onClick={planiSil} disabled={!yuklendi} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-50 ${dark ? 'bg-slate-700 text-slate-200' : 'bg-slate-100 text-slate-600'}`}>Sil</button>
         {formBos && yuklendi && (
-          <button onClick={() => degistir({ ...ORNEK_FORM, sector: form.sector || ORNEK_FORM.sector }, template)} className={`rounded-xl px-3 py-2 text-xs font-bold ${dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}>
+          <button onClick={() => degistir({ ...ORNEK_FORM, sector: form.sector || ORNEK_FORM.sector }, template)} className={`rounded-xl px-3 py-2 text-xs font-bold ${dark ? 'bg-slate-700 text-slate-200' : 'bg-defne-100 text-defne-800'}`}>
             Örnek verilerle doldur
           </button>
         )}
@@ -460,7 +460,7 @@ export default function IsPlani({ dark }) {
             <button
               key={item.id}
               onClick={() => degistir(form, item.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${template === item.id ? 'bg-[#1E293B] text-white' : dark ? 'bg-[#2A3544] text-slate-200' : 'bg-[#F3D5D8] text-[#4A1525]'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${template === item.id ? 'bg-bronz-600 text-white' : dark ? 'bg-slate-700 text-slate-200' : 'bg-defne-100 text-defne-800'}`}
             >
               {item.label}
             </button>
@@ -472,38 +472,38 @@ export default function IsPlani({ dark }) {
         <div className={`${cardClass} border rounded-2xl p-5 shadow-xl`}>
           <h3 className="text-lg font-black mb-5">İşletme Bilgileri</h3>
           <div className="grid md:grid-cols-2 gap-4">
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">İş adı
-              <input value={form.projectName} placeholder={ORNEK_FORM.projectName} onChange={e => handleField('projectName', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">İş adı
+              <input value={form.projectName} placeholder={ORNEK_FORM.projectName} onChange={e => handleField('projectName', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Sektör
-              <input value={form.sector} placeholder={ORNEK_FORM.sector} onChange={e => handleField('sector', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Sektör
+              <input value={form.sector} placeholder={ORNEK_FORM.sector} onChange={e => handleField('sector', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık gelir (TL)
-              <input type="number" value={form.monthlyRevenue} placeholder={ORNEK_FORM.monthlyRevenue} onChange={e => handleSayi('monthlyRevenue', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Aylık gelir (TL)
+              <input type="number" value={form.monthlyRevenue} placeholder={ORNEK_FORM.monthlyRevenue} onChange={e => handleSayi('monthlyRevenue', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık gider (TL)
-              <input type="number" value={form.monthlyExpense} placeholder={ORNEK_FORM.monthlyExpense} onChange={e => handleSayi('monthlyExpense', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Aylık gider (TL)
+              <input type="number" value={form.monthlyExpense} placeholder={ORNEK_FORM.monthlyExpense} onChange={e => handleSayi('monthlyExpense', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Aylık kredi taksiti (TL)
-              <input type="number" value={form.monthlyDebtService} placeholder={ORNEK_FORM.monthlyDebtService} onChange={e => handleSayi('monthlyDebtService', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Aylık kredi taksiti (TL)
+              <input type="number" value={form.monthlyDebtService} placeholder={ORNEK_FORM.monthlyDebtService} onChange={e => handleSayi('monthlyDebtService', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Başlangıç maliyeti (TL)
-              <input type="number" value={form.startupCost} placeholder={ORNEK_FORM.startupCost} onChange={e => handleSayi('startupCost', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Başlangıç maliyeti (TL)
+              <input type="number" value={form.startupCost} placeholder={ORNEK_FORM.startupCost} onChange={e => handleSayi('startupCost', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Öz sermaye (TL)
-              <input type="number" value={form.equity} placeholder={ORNEK_FORM.equity} onChange={e => handleSayi('equity', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Öz sermaye (TL)
+              <input type="number" value={form.equity} placeholder={ORNEK_FORM.equity} onChange={e => handleSayi('equity', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Kredi tutarı (TL)
-              <input type="number" value={form.loanAmount} placeholder={ORNEK_FORM.loanAmount} onChange={e => handleSayi('loanAmount', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Kredi tutarı (TL)
+              <input type="number" value={form.loanAmount} placeholder={ORNEK_FORM.loanAmount} onChange={e => handleSayi('loanAmount', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#1E293B]">Çalışan sayısı
-              <input type="number" value={form.teamSize} placeholder={ORNEK_FORM.teamSize} onChange={e => handleSayi('teamSize', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-900">Çalışan sayısı
+              <input type="number" value={form.teamSize} placeholder={ORNEK_FORM.teamSize} onChange={e => handleSayi('teamSize', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Pazar hedefi
-              <textarea rows={3} value={form.market} placeholder={ORNEK_FORM.market} onChange={e => handleField('market', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-slate-900">Pazar hedefi
+              <textarea rows={3} value={form.market} placeholder={ORNEK_FORM.market} onChange={e => handleField('market', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
-            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-[#1E293B]">Büyüme hedefi / şimdiye kadarki ilerleme
-              <textarea rows={3} value={form.traction} placeholder={ORNEK_FORM.traction} onChange={e => handleField('traction', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3D5D8] ${fieldClass}`} />
+            <label className="block md:col-span-2 text-xs font-bold uppercase tracking-wide text-slate-900">Büyüme hedefi / şimdiye kadarki ilerleme
+              <textarea rows={3} value={form.traction} placeholder={ORNEK_FORM.traction} onChange={e => handleField('traction', e.target.value)} className={`mt-1 w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bronz-200 ${fieldClass}`} />
             </label>
           </div>
         </div>
@@ -517,7 +517,7 @@ export default function IsPlani({ dark }) {
             </div>
             <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
               <div className={`text-[10px] uppercase tracking-wide ${subClass}`} title="Başlangıç maliyetinin, aylık kalan nakitle kaç ayda geri kazanılacağı">Yatırımı geri kazanma (break-even)</div>
-              <div className="mt-2 text-xl font-black text-[#1E293B]">{breakEven}</div>
+              <div className="mt-2 text-xl font-black text-slate-900">{breakEven}</div>
             </div>
             <div className={`${dark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-3`}>
               <div className={`text-[10px] uppercase tracking-wide ${subClass}`} title="Faaliyet kârının kredi taksitlerini kaç kez karşıladığı (DSCR). Bankalar genelde 1,25 ve üzerini görmek ister.">Taksit ödeme gücü (DSCR)</div>
@@ -535,9 +535,9 @@ export default function IsPlani({ dark }) {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => exportPlan('txt')} className="bg-[#1E293B] text-white px-4 py-2.5 rounded-xl text-sm font-bold">TXT Dışa Aktar</button>
+            <button onClick={() => exportPlan('txt')} className="bg-bronz-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold">TXT Dışa Aktar</button>
             <button onClick={printExport} className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold">PDF / Yazdır</button>
-            <button onClick={() => exportPlan('html')} className="bg-slate-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold">Word Formatı</button>
+            <button onClick={() => exportPlan('html')} className="bg-bronz-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold">Word Formatı</button>
           </div>
         </div>
       </div>

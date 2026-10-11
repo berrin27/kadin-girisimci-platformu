@@ -48,7 +48,7 @@ export default function HatirlatmaBandi({ dark, onPanoyaGit }) {
         </p>
         <div className="flex items-center gap-2">
           <button type="button" disabled={isleniyor === kart.id} onClick={() => cevapla(kart, true)}
-            className="rounded-xl bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50">
+            className="rounded-xl bg-bronz-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50">
             Evet, başvurdum
           </button>
           <button type="button" disabled={isleniyor === kart.id} onClick={() => cevapla(kart, false)}

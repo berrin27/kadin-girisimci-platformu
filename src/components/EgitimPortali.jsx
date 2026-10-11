@@ -38,8 +38,8 @@ export default function EgitimPortali({ dark }) {
     (konu === 'hepsi' || e.konu === konu) && (!secilenAdim || e.adim === secilenAdim),
   ), [konu, secilenAdim]);
 
-  const card = dark ? 'bg-[#1c2333] border-slate-700' : 'bg-white border-slate-200';
-  const text = dark ? 'text-slate-100' : 'text-[#0f172a]';
+  const card = dark ? 'bg-slate-900 border-slate-700' : 'yuzey bg-yuzey border-white/10 shadow-soft';
+  const text = dark ? 'text-slate-100' : 'text-slate-900';
   const sub = dark ? 'text-slate-400' : 'text-slate-500';
 
   const adimSec = (adim) => { setSecilenAdim(secilenAdim === adim ? null : adim); setKonu('hepsi'); };
@@ -66,20 +66,20 @@ export default function EgitimPortali({ dark }) {
                 onClick={() => adimSec(adim)}
                 aria-pressed={secili}
                 className={`relative rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 ${
-                  secili ? 'border-[#4A1525] bg-[#F3D5D8] text-[#4A1525]' : `${card} hover:border-[#F3D5D8]`
+                  secili ? 'border-defne-800 bg-defne-100 text-defne-800' : `${card} hover:border-defne-200`
                 }`}
               >
                 {onerilen === adim && (
-                  <span className="absolute right-4 top-4 rounded-full bg-[#1E293B] px-2.5 py-1 text-[10px] font-bold text-white">Sana önerilen</span>
+                  <span className="absolute right-4 top-4 rounded-full bg-bronz-600 px-2.5 py-1 text-[10px] font-bold text-white">Sana önerilen</span>
                 )}
                 <div className="flex items-center gap-3">
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${secili ? 'bg-white/70' : dark ? 'bg-slate-800 text-[#F3D5D8]' : 'bg-[#F3D5D8] text-[#4A1525]'}`}>
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${secili ? 'bg-white/70' : dark ? 'bg-slate-800 text-defne-200' : 'bg-defne-100 text-defne-800'}`}>
                     {adim}
                   </span>
                   <Ikon className={`h-5 w-5 ${secili ? '' : sub}`} />
                 </div>
                 <div className={`mt-3 text-base font-black ${secili ? '' : text}`}>{baslik}</div>
-                <p className={`mt-1 text-sm leading-relaxed ${secili ? 'text-[#4A1525]/80' : sub}`}>{aciklama}</p>
+                <p className={`mt-1 text-sm leading-relaxed ${secili ? 'text-defne-800/80' : sub}`}>{aciklama}</p>
                 <div className={`mt-3 text-xs font-bold ${secili ? '' : sub}`}>
                   {egitimler.filter(e => e.adim === adim).length} eğitim {secili ? '· gösteriliyor' : '→'}
                 </div>
@@ -97,7 +97,7 @@ export default function EgitimPortali({ dark }) {
             type="button"
             onClick={() => { setKonu(k.id); setSecilenAdim(null); }}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              konu === k.id && !secilenAdim ? 'bg-[#1E293B] text-white' : dark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              konu === k.id && !secilenAdim ? 'bg-bronz-600 text-white' : dark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
             {k.ad}
@@ -130,7 +130,7 @@ export default function EgitimPortali({ dark }) {
             <div className="mt-4 flex items-center justify-between gap-3">
               <a href={e.kaynak} target="_blank" rel="noreferrer" className={`text-[11px] hover:underline ${sub}`}>Kaynak · {SON_KONTROL}</a>
               <a href={e.link} target="_blank" rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#1E293B] px-4 py-2 text-sm font-bold text-white hover:opacity-90">
+                className="inline-flex items-center gap-1.5 rounded-xl bg-bronz-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90">
                 Eğitime git <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>

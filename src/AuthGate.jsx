@@ -23,8 +23,8 @@ export default function AuthGate({ children }) {
 
   if (user === undefined) {
     return (
-      <div className="min-h-screen bg-[#F5F5DC] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2B5472]" />
+      <div className="min-h-screen bg-krem-100 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-bronz-700" />
       </div>
     );
   }
