@@ -9,7 +9,19 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.DB_PATH || resolve(__dirname, 'data', 'fortuno.db');
+// Railway'de bağlı volume'un yolu otomatik gelir; DB_PATH verilmemişse oraya yazılır.
+const VOLUME = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+const DB_PATH = process.env.DB_PATH
+  || (VOLUME ? resolve(VOLUME, 'fortuno.db') : resolve(__dirname, 'data', 'fortuno.db'));
+
+console.log(`[db] veritabanı: ${DB_PATH}`);
+if (process.env.RAILWAY_SERVICE_NAME) {
+  if (!VOLUME) {
+    console.warn('[db] UYARI: Railway servisine volume bağlı değil — her yeni yayında tüm veriler silinir!');
+  } else if (!resolve(DB_PATH).startsWith(resolve(VOLUME) + '/')) {
+    console.warn(`[db] UYARI: veritabanı volume (${VOLUME}) dışında — her yeni yayında tüm veriler silinir! DB_PATH'i ${VOLUME}/fortuno.db yap ya da sil.`);
+  }
+}
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
 

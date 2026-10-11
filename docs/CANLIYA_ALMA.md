@@ -18,11 +18,13 @@ kullanıcı verisi silinir.
 ## 3. Ortam değişkenleri (Variables sekmesi)
 | Değişken | Değer |
 |---|---|
-| `DB_PATH` | `/data/fortuno.db` |
 | `JWT_SECRET` | Uzun rastgele değer — üretmek için: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
 | `GEMINI_API_KEY` | Google AI Studio'dan yeni anahtar (boş bırakılırsa sohbet hazır yanıtlarla çalışır) |
 
-`NODE_ENV=production` gerekmez; `npm start` bunu zaten ayarlar.
+`DB_PATH` gerekmez: sunucu Railway'in verdiği `RAILWAY_VOLUME_MOUNT_PATH`'e
+(volume'a) otomatik yazar. Deploy Logs'ta `[db] veritabanı: /data/fortuno.db`
+satırını görmelisin; `UYARI` satırı varsa veriler kalıcı değildir.
+`NODE_ENV=production` da gerekmez; `npm start` bunu zaten ayarlar.
 ⚠️ `JWT_SECRET` değişirse herkesin oturumu kapanır — bir kez belirle, değiştirme.
 
 ## 4. Sağlık kontrolü (Settings → Deploy)
