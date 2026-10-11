@@ -35,6 +35,8 @@ npm run dev            # frontend (5173) + API (3001) birlikte başlar
 | `npm start` | Production: API + derlenmiş frontend tek sunucuda |
 | `npm run lint` | oxlint ile kod kontrolü |
 
+Canlıya alma adımları: [docs/CANLIYA_ALMA.md](docs/CANLIYA_ALMA.md)
+
 ## Proje yapısı
 
 ```
